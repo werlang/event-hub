@@ -1,13 +1,10 @@
 import express from 'express';
 import mustacheExpress from 'mustache-express';
+import { renderMiddleware } from './middleware/render.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
 const host = '0.0.0.0';
-const appConfig = {
-    apiUrl: process.env.API_URL || 'http://localhost:3000',
-    appName: 'Agenda Acadêmica',
-};
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -16,22 +13,21 @@ app.engine('html', mustacheExpress());
 app.set('view engine', 'html');
 app.set('views', new URL('./src/html/', import.meta.url).pathname);
 
-app.use((req, res, next) => {
-    res.locals.app = appConfig;
-    res.locals.configJson = JSON.stringify({ apiUrl: appConfig.apiUrl });
-    next();
-});
+// render middleware, setting some variables to be used in all views
+app.use(renderMiddleware({
+    apiUrl: process.env.API_URL,
+}));
 
 app.get('/', (req, res) => {
-    res.render('index', { page: 'home' });
+    res.templateRender('index', { page: 'home' });
 });
 
 app.get('/login', (req, res) => {
-    res.render('login', { page: 'login', redirect: req.query.redirect || '' });
+    res.templateRender('login', { page: 'login', redirect: req.query.redirect || '' });
 });
 
-app.get('/publicar', (req, res) => {
-    res.render('publish', { page: 'publish', redirect: req.query.redirect || '' });
+app.get('/publish', (req, res) => {
+    res.templateRender('publish', { page: 'publish', redirect: req.query.redirect || '' });
 });
 
 // static assets
