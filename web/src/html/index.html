@@ -4,17 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agenda Acadêmica · Eventos</title>
-    <meta name="api-url" content="{{app.apiUrl}}">
-    <link rel="stylesheet" href="/css/home.min.css">
-    <script>window.APP_CONFIG = {{{configJson}}};</script>
-    <script type="module" src="/js/home.min.js"></script>
+    <link rel="stylesheet" href="/css/index.min.css">
+    <script type="module" src="/js/index.min.js"></script>
 </head>
 <body>
     <header class="topbar">
         <a class="brand" href="/">Agenda Acadêmica</a>
         <nav class="topbar__actions">
             <a class="button button--ghost" href="/login">Entrar</a>
-            <a class="button button--primary" href="/publicar">Criar evento</a>
+            <a class="button button--primary" href="/publish">Criar evento</a>
         </nav>
     </header>
 
@@ -24,20 +22,20 @@
             <h1>Eventos universitários com filtros compartilháveis.</h1>
             <p class="subtitle">Use a URL com parâmetros para salvar ou compartilhar o estado dos filtros.</p>
             <div class="hero__actions">
-                <a class="button button--primary" href="#eventos">Ver eventos</a>
-                <a class="button button--ghost" href="/publicar">Publicar um evento</a>
+                <a class="button button--primary" href="#events">Ver eventos</a>
+                <a class="button button--ghost" href="/publish">Publicar um evento</a>
             </div>
         </div>
         <div class="hero__glow"></div>
     </section>
 
     <main>
-        <section class="panel" id="eventos">
+        <section class="panel" id="events">
             <div class="panel__header">
                 <div>
                     <p class="pill">Explorar</p>
                     <h2>Filtrar eventos</h2>
-                    <p class="hint">Campos aplicados viram parâmetros da URL (ex.: ?search=oficina&category=Pesquisa).</p>
+                    <p class="hint">Use os filtros para encontrar eventos de seu interesse. Você pode combinar vários filtros para refinar sua busca.</p>
                 </div>
                 <div class="filters">
                     <label>
