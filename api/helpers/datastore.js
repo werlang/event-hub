@@ -1,7 +1,14 @@
-import { promises as fs } from 'fs';
-import { dirname } from 'path';
+import mysql from 'mysql2/promise';
 import { User } from '../model/user.js';
 import { Event } from '../model/event.js';
+
+const configFromEnv = () => ({
+    host: process.env.DB_HOST || '127.0.0.1',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'academic_events',
+    port: Number(process.env.DB_PORT || 3306),
+});
 
 const defaultData = () => {
     const admin = new User({
@@ -38,97 +45,258 @@ const defaultData = () => {
 
 export class DataStore {
 
-    #filePath;
-    #data;
+    #pool;
     #ready;
 
-    constructor(filePath = new URL('../data/database.json', import.meta.url).pathname) {
-        this.#filePath = filePath;
+    constructor(pool) {
+        this.#pool = pool || mysql.createPool({
+            ...configFromEnv(),
+            waitForConnections: true,
+            connectionLimit: 10,
+            namedPlaceholders: true,
+        });
         this.#ready = this.#bootstrap();
     }
 
     async #bootstrap() {
-        const dir = dirname(this.#filePath);
-        await fs.mkdir(dir, { recursive: true });
-        try {
-            const contents = await fs.readFile(this.#filePath, 'utf-8');
-            this.#data = JSON.parse(contents);
-        } catch (err) {
-            if (err.code !== 'ENOENT') throw err;
-            this.#data = defaultData();
-            await this.#persist();
-        }
+        await this.#pool.execute(`
+            CREATE TABLE IF NOT EXISTS users (
+                id CHAR(36) PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL UNIQUE,
+                salt VARCHAR(64) NOT NULL,
+                password_hash VARCHAR(128) NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+        `);
+
+        await this.#pool.execute(`
+            CREATE TABLE IF NOT EXISTS events (
+                id CHAR(36) PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                description TEXT NOT NULL,
+                date DATETIME NOT NULL,
+                category VARCHAR(64) DEFAULT 'Geral',
+                location VARCHAR(255) DEFAULT 'A definir',
+                audience JSON NULL,
+                organizer_id CHAR(36) NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (organizer_id) REFERENCES users(id) ON DELETE CASCADE
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+        `);
+
+        await this.#seedDefaults();
     }
 
-    async #persist() {
-        await fs.writeFile(this.#filePath, JSON.stringify(this.#data, null, 2));
+    async #seedDefaults() {
+        const seeds = defaultData();
+        const [usersCount] = await this.#pool.query('SELECT COUNT(*) as count FROM users');
+        if (usersCount?.[0]?.count > 0) {
+            return;
+        }
+
+        const admin = seeds.users[0];
+        await this.#pool.execute(
+            'INSERT INTO users (id, name, email, salt, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+            [admin.id, admin.name, admin.email, admin.salt, admin.passwordHash, new Date()]
+        );
+
+        for (const event of seeds.events) {
+            await this.#pool.execute(
+                `INSERT INTO events (id, title, description, date, category, location, audience, organizer_id, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    event.id,
+                    event.title,
+                    event.description,
+                    new Date(event.date),
+                    event.category,
+                    event.location,
+                    JSON.stringify(event.audience || []),
+                    event.organizerId,
+                    new Date(event.createdAt || Date.now()),
+                ],
+            );
+        }
     }
 
     async ready() {
         await this.#ready;
     }
 
+    #normalizeUser(row) {
+        if (!row) return null;
+        return {
+            id: row.id,
+            name: row.name,
+            email: row.email,
+            salt: row.salt,
+            passwordHash: row.passwordHash || row.password_hash,
+            createdAt: row.createdAt || row.created_at ? new Date(row.createdAt || row.created_at).toISOString() : undefined,
+        };
+    }
+
+    #normalizeEvent(row) {
+        if (!row) return null;
+        const toIso = (value) => value ? new Date(value).toISOString() : value;
+        return {
+            id: row.id,
+            title: row.title,
+            description: row.description,
+            date: toIso(row.date),
+            category: row.category,
+            location: row.location,
+            audience: this.#parseAudience(row.audience),
+            organizerId: row.organizerId || row.organizer_id,
+            createdAt: toIso(row.createdAt || row.created_at),
+        };
+    }
+
+    #parseAudience(raw) {
+        if (!raw) return [];
+        if (Array.isArray(raw)) return raw;
+        if (typeof raw === 'object') return Object.values(raw);
+        try {
+            return JSON.parse(raw);
+        } catch (err) {
+            return [];
+        }
+    }
+
     async listUsers() {
         await this.ready();
-        return this.#data.users.map(u => ({ ...u }));
+        const [rows] = await this.#pool.query(`
+            SELECT id, name, email, salt, password_hash as passwordHash, created_at as createdAt
+            FROM users
+        `);
+        return rows.map(row => this.#normalizeUser(row));
     }
 
     async findUserByEmail(email) {
         if (!email) return null;
         await this.ready();
-        return this.#data.users.find(u => u.email.toLowerCase() === email.toLowerCase()) || null;
+        const [rows] = await this.#pool.query(`
+            SELECT id, name, email, salt, password_hash as passwordHash, created_at as createdAt
+            FROM users
+            WHERE email = ?
+            LIMIT 1
+        `, [email.toLowerCase()]);
+        return this.#normalizeUser(rows[0]);
     }
 
     async findUserById(id) {
         if (!id) return null;
         await this.ready();
-        return this.#data.users.find(u => u.id === id) || null;
+        const [rows] = await this.#pool.query(`
+            SELECT id, name, email, salt, password_hash as passwordHash, created_at as createdAt
+            FROM users
+            WHERE id = ?
+            LIMIT 1
+        `, [id]);
+        return this.#normalizeUser(rows[0]);
     }
 
     async addUser(user) {
         await this.ready();
-        this.#data.users.push(user);
-        await this.#persist();
-        return user;
+        const payload = new User(user).toJSON();
+        await this.#pool.execute(
+            'INSERT INTO users (id, name, email, salt, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+            [payload.id, payload.name, payload.email, payload.salt, payload.passwordHash, new Date()]
+        );
+        return payload;
     }
 
     async listEvents(filters = {}) {
         await this.ready();
         const { search, category, from, to, audience } = filters;
-        return this.#data.events
-            .filter(event => {
-                if (category && event.category?.toLowerCase() !== category.toLowerCase()) return false;
-                if (from && new Date(event.date) < new Date(from)) return false;
-                if (to && new Date(event.date) > new Date(to)) return false;
-                if (audience && !event.audience?.some(tag => tag.toLowerCase().includes(audience.toLowerCase()))) return false;
-                if (search) {
-                    const hay = [event.title, event.description, event.location, event.category].join(' ').toLowerCase();
-                    if (!hay.includes(search.toLowerCase())) return false;
-                }
-                return true;
-            })
-            .sort((a, b) => new Date(a.date) - new Date(b.date))
-            .map(ev => ({ ...ev }));
+        const conditions = [];
+        const values = [];
+
+        if (category) {
+            conditions.push('LOWER(category) = ?');
+            values.push(category.toLowerCase());
+        }
+        if (from) {
+            conditions.push('date >= ?');
+            values.push(new Date(from));
+        }
+        if (to) {
+            conditions.push('date <= ?');
+            values.push(new Date(to));
+        }
+        if (audience) {
+            conditions.push('audience IS NOT NULL AND LOWER(JSON_UNQUOTE(JSON_EXTRACT(audience, "$"))) LIKE ?');
+            values.push(`%${audience.toLowerCase()}%`);
+        }
+        if (search) {
+            const pattern = `%${search.toLowerCase()}%`;
+            conditions.push('(LOWER(title) LIKE ? OR LOWER(description) LIKE ? OR LOWER(location) LIKE ? OR LOWER(category) LIKE ?)');
+            values.push(pattern, pattern, pattern, pattern);
+        }
+
+        const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+        const [rows] = await this.#pool.query(`
+            SELECT
+                id,
+                title,
+                description,
+                date,
+                category,
+                location,
+                audience,
+                organizer_id,
+                created_at
+            FROM events
+            ${whereClause}
+            ORDER BY date ASC
+        `, values);
+
+        return rows.map(row => this.#normalizeEvent(row));
     }
 
     async findEventById(id) {
         await this.ready();
-        return this.#data.events.find(ev => ev.id === id) || null;
+        const [rows] = await this.#pool.query(`
+            SELECT
+                id,
+                title,
+                description,
+                date,
+                category,
+                location,
+                audience,
+                organizer_id,
+                created_at
+            FROM events
+            WHERE id = ?
+            LIMIT 1
+        `, [id]);
+        return this.#normalizeEvent(rows[0]);
     }
 
     async addEvent(event) {
         await this.ready();
-        this.#data.events.push(event);
-        await this.#persist();
-        return event;
+        const payload = new Event(event).toJSON();
+        await this.#pool.execute(
+            `INSERT INTO events (id, title, description, date, category, location, audience, organizer_id, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                payload.id,
+                payload.title,
+                payload.description,
+                new Date(payload.date),
+                payload.category,
+                payload.location,
+                JSON.stringify(payload.audience || []),
+                payload.organizerId,
+                new Date(payload.createdAt || Date.now()),
+            ],
+        );
+        return payload;
     }
 
     async deleteEvent(id) {
         await this.ready();
-        const before = this.#data.events.length;
-        this.#data.events = this.#data.events.filter(ev => ev.id !== id);
-        if (this.#data.events.length !== before) {
-            await this.#persist();
-        }
+        await this.#pool.execute('DELETE FROM events WHERE id = ?', [id]);
     }
 }

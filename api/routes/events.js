@@ -14,17 +14,27 @@ router.get('/', async (req, res) => {
         audience: req.query.audience,
     };
 
-    const events = await store.listEvents(filters);
-    res.json({ events });
+    try {
+        const events = await store.listEvents(filters);
+        res.json({ events });
+    } catch (err) {
+        console.error('Erro ao listar eventos', err);
+        res.status(500).json({ error: 'Não foi possível carregar os eventos.' });
+    }
 });
 
 router.get('/:id', async (req, res) => {
-    const event = await store.findEventById(req.params.id);
-    if (!event) {
-        return res.status(404).json({ error: 'Evento não encontrado.' });
-    }
+    try {
+        const event = await store.findEventById(req.params.id);
+        if (!event) {
+            return res.status(404).json({ error: 'Evento não encontrado.' });
+        }
 
-    res.json({ event });
+        res.json({ event });
+    } catch (err) {
+        console.error('Erro ao carregar evento', err);
+        res.status(500).json({ error: 'Não foi possível carregar o evento.' });
+    }
 });
 
 router.post('/', authMiddleware, async (req, res) => {
@@ -50,6 +60,11 @@ router.post('/', authMiddleware, async (req, res) => {
         organizerId: req.user.id,
     });
 
-    await store.addEvent(event.toJSON());
-    res.status(201).json({ event: event.toJSON() });
+    try {
+        await store.addEvent(event.toJSON());
+        res.status(201).json({ event: event.toJSON() });
+    } catch (err) {
+        console.error('Erro ao salvar evento', err);
+        res.status(500).json({ error: 'Não foi possível salvar o evento.' });
+    }
 });

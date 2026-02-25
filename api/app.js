@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { router as auth } from './routes/auth.js';
 import { router as events } from './routes/events.js';
+import { store } from './helpers/store.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -19,8 +20,18 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Internal Server Error' });
 });
 
-app.listen(port, host, () => {
-    console.log(`Academic Events API running on http://${host}:${port}`);
-});
+async function start() {
+    try {
+        await store.ready();
+        app.listen(port, host, () => {
+            console.log(`Academic Events API running on http://${host}:${port}`);
+        });
+    } catch (err) {
+        console.error('Não foi possível inicializar o banco de dados MySQL.', err);
+        process.exit(1);
+    }
+}
+
+start();
 
 export { app };

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publicar evento · Agenda Acadêmica</title>
+    <meta name="api-url" content="{{app.apiUrl}}">
+    <link rel="stylesheet" href="/css/publish.min.css">
+    <script>window.APP_CONFIG = {{{configJson}}};</script>
+    <script type="module" src="/js/publish.min.js"></script>
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" href="/">Agenda Acadêmica</a>
+        <nav class="topbar__actions">
+            <a class="button button--ghost" href="/">Eventos</a>
+            <a class="button button--ghost" href="/login">Trocar usuário</a>
+        </nav>
+    </header>
+
+    <section class="hero hero--compact">
+        <div class="hero__content">
+            <p class="pill">Cadastro</p>
+            <h1>Publique um novo evento.</h1>
+            <p class="subtitle">Apenas usuários autenticados podem cadastrar. Vamos validar seu token antes de abrir o formulário.</p>
+        </div>
+        <div class="hero__glow"></div>
+    </section>
+
+    <main>
+        <section class="panel">
+            <div id="auth-state" class="alert" hidden></div>
+            <form id="event-form" class="form form--disabled">
+                <div class="form-row">
+                    <label>Título<input type="text" name="title" placeholder="Workshop de IA aplicada" required></label>
+                    <label>Data e hora<input type="datetime-local" name="date" required></label>
+                </div>
+                <div class="form-row">
+                    <label>Categoria
+                        <select name="category">
+                            <option value="Geral">Geral</option>
+                            <option value="Comunidade">Comunidade</option>
+                            <option value="Pesquisa">Pesquisa</option>
+                            <option value="Extensão">Extensão</option>
+                            <option value="Esportes">Esportes</option>
+                        </select>
+                    </label>
+                    <label>Local<input type="text" name="location" placeholder="Auditório Central"></label>
+                </div>
+                <label>Segmentos (separados por vírgula)<input type="text" name="audience" placeholder="calouros, pesquisa, esportes"></label>
+                <label>Descrição<textarea name="description" rows="4" placeholder="Resumo, palestrantes e links úteis." required></textarea></label>
+                <button class="button button--primary" type="submit">Publicar evento</button>
+            </form>
+            <div id="event-success" class="toast" hidden>Evento publicado! Ele já aparece na agenda pública.</div>
+        </section>
+    </main>
+</body>
+</html>

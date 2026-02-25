@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar · Agenda Acadêmica</title>
+    <meta name="api-url" content="{{app.apiUrl}}">
+    <link rel="stylesheet" href="/css/auth.min.css">
+    <script>window.APP_CONFIG = {{{configJson}}};</script>
+    <script type="module" src="/js/auth.min.js"></script>
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" href="/">Agenda Acadêmica</a>
+        <nav class="topbar__actions">
+            <a class="button button--ghost" href="/">Eventos</a>
+            <a class="button button--primary" href="/publicar">Criar evento</a>
+        </nav>
+    </header>
+
+    <section class="hero hero--compact">
+        <div class="hero__content">
+            <p class="pill">Acesso</p>
+            <h1>Entre ou crie sua conta.</h1>
+            <p class="subtitle">Ao autenticar, você poderá publicar eventos rapidamente.</p>
+        </div>
+        <div class="hero__glow"></div>
+    </section>
+
+    <main>
+        <section class="panel grid-2">
+            <div class="panel__block">
+                <div class="tabs">
+                    <button class="tab tab--active" data-tab="login">Entrar</button>
+                    <button class="tab" data-tab="register">Registrar</button>
+                </div>
+                <div id="auth-message" class="alert" hidden></div>
+                <form id="login-form" class="form form--visible">
+                    <label>E-mail<input type="email" name="email" required></label>
+                    <label>Senha<input type="password" name="password" required></label>
+                    <button class="button button--primary" type="submit">Entrar</button>
+                </form>
+                <form id="register-form" class="form">
+                    <label>Nome completo<input type="text" name="name" required></label>
+                    <label>E-mail institucional<input type="email" name="email" required></label>
+                    <label>Senha<input type="password" name="password" required></label>
+                    <button class="button button--primary" type="submit">Criar conta</button>
+                </form>
+                <p class="hint">Use seu e-mail institucional para acelerar a validação.</p>
+            </div>
+            <div class="panel__block">
+                <h2>Dicas rápidas</h2>
+                <ul class="list">
+                    <li>O token fica salvo localmente para reutilizar em outras páginas.</li>
+                    <li>Use a URL de retorno para voltar à tela desejada após autenticar.</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

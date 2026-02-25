@@ -3,30 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agenda Acadêmica</title>
-    <link rel="stylesheet" href="/css/index.min.css">
-    <script type="module" src="/js/index.min.js"></script>
+    <title>Agenda Acadêmica · Eventos</title>
+    <meta name="api-url" content="{{app.apiUrl}}">
+    <link rel="stylesheet" href="/css/home.min.css">
+    <script>window.APP_CONFIG = {{{configJson}}};</script>
+    <script type="module" src="/js/home.min.js"></script>
 </head>
 <body>
-    <header class="hero">
+    <header class="topbar">
+        <a class="brand" href="/">Agenda Acadêmica</a>
+        <nav class="topbar__actions">
+            <a class="button button--ghost" href="/login">Entrar</a>
+            <a class="button button--primary" href="/publicar">Criar evento</a>
+        </nav>
+    </header>
+
+    <section class="hero">
         <div class="hero__content">
-            <p class="pill">Nova plataforma · Eventos acadêmicos</p>
-            <h1>Publique, filtre e compartilhe eventos da comunidade universitária.</h1>
-            <p class="subtitle">Autenticação simples para organizadores, descoberta rápida para a comunidade. Tudo em um só lugar.</p>
+            <p class="pill">Agenda pública</p>
+            <h1>Eventos universitários com filtros compartilháveis.</h1>
+            <p class="subtitle">Use a URL com parâmetros para salvar ou compartilhar o estado dos filtros.</p>
             <div class="hero__actions">
-                <a class="button button--primary" href="#criar">Criar evento</a>
-                <a class="button button--ghost" href="#eventos">Ver agenda pública</a>
+                <a class="button button--primary" href="#eventos">Ver eventos</a>
+                <a class="button button--ghost" href="/publicar">Publicar um evento</a>
             </div>
         </div>
         <div class="hero__glow"></div>
-    </header>
+    </section>
 
     <main>
         <section class="panel" id="eventos">
             <div class="panel__header">
                 <div>
-                    <p class="pill">Agenda pública</p>
-                    <h2>Explorar eventos</h2>
+                    <p class="pill">Explorar</p>
+                    <h2>Filtrar eventos</h2>
+                    <p class="hint">Campos aplicados viram parâmetros da URL (ex.: ?search=oficina&category=Pesquisa).</p>
                 </div>
                 <div class="filters">
                     <label>
@@ -56,57 +67,11 @@
                         <span>Segmento</span>
                         <input type="text" id="filter-audience" placeholder="calouros, pesquisa, esportes..." />
                     </label>
-                    <button class="button button--primary" id="apply-filters">Filtrar</button>
+                    <button class="button button--primary" id="apply-filters">Aplicar filtros</button>
                 </div>
             </div>
             <div id="events-grid" class="grid"></div>
             <p id="empty-state" class="empty-state">Nenhum evento encontrado para os filtros aplicados.</p>
-        </section>
-
-        <section class="panel grid-2" id="criar">
-            <div class="panel__block">
-                <p class="pill">Acesso</p>
-                <h2>Entrar ou criar conta</h2>
-                <div class="tabs">
-                    <button class="tab tab--active" data-tab="login">Entrar</button>
-                    <button class="tab" data-tab="register">Registrar</button>
-                </div>
-                <form id="login-form" class="form form--visible">
-                    <label>E-mail<input type="email" name="email" required></label>
-                    <label>Senha<input type="password" name="password" required></label>
-                    <button class="button button--primary" type="submit">Entrar</button>
-                </form>
-                <form id="register-form" class="form">
-                    <label>Nome completo<input type="text" name="name" required></label>
-                    <label>E-mail institucional<input type="email" name="email" required></label>
-                    <label>Senha<input type="password" name="password" required></label>
-                    <button class="button button--primary" type="submit">Criar conta</button>
-                </form>
-                <p class="hint" id="auth-hint">Use seu e-mail institucional para acelerar a validação.</p>
-            </div>
-            <div class="panel__block">
-                <p class="pill">Cadastro</p>
-                <h2>Publicar novo evento</h2>
-                <div id="auth-required" class="alert">Faça login para cadastrar eventos.</div>
-                <form id="event-form" class="form form--disabled">
-                    <label>Título<input type="text" name="title" placeholder="Workshop de IA aplicada" required></label>
-                    <label>Data<input type="datetime-local" name="date" required></label>
-                    <label>Categoria
-                        <select name="category">
-                            <option value="Geral">Geral</option>
-                            <option value="Comunidade">Comunidade</option>
-                            <option value="Pesquisa">Pesquisa</option>
-                            <option value="Extensão">Extensão</option>
-                            <option value="Esportes">Esportes</option>
-                        </select>
-                    </label>
-                    <label>Local<input type="text" name="location" placeholder="Auditório Central"></label>
-                    <label>Segmentos (separados por vírgula)<input type="text" name="audience" placeholder="calouros, pesquisa, esportes"></label>
-                    <label>Descrição<textarea name="description" rows="4" placeholder="Resumo, palestrantes e links úteis." required></textarea></label>
-                    <button class="button button--primary" type="submit">Publicar</button>
-                </form>
-                <div id="event-success" class="toast" hidden>Evento publicado! Ele já aparece na agenda pública.</div>
-            </div>
         </section>
     </main>
 </body>
