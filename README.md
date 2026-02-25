@@ -48,3 +48,7 @@ Abra `http://localhost:4001` para usar. A agenda pública não requer autentica�
 - ES Modules, Express 5, classes para modelos (`api/model/`), rotas puras em `api/routes/`.
 - JWT via `helpers/token.js`; armazenamento simples em JSON via `helpers/datastore.js`.
 - UI SSR com Mustache + assets estáticos em `web/public/` (`css` e `js`).
+
+## TODO List
+
+- Revisar e refazer todo o front. Basicamente só o boilerplate está concluído.
