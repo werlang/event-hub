@@ -26,6 +26,7 @@ Always generate commit messages using **Semantic Commit** format and keep them s
 ### Scope guidance
 
 - Always specify the specific module or component affected by the change in parentheses after the type (e.g., `feat(api)`, `fix(auth)`, `docs(setup)`).
+- Never omit the scope. If unsure, use a general scope like `core` or `app`.
 - Use the name of the module or component affected (e.g., `api`, `web`, `auth`, `events`).
 - If multiple modules are affected, choose the most relevant one or use a general scope like `core`.
 
