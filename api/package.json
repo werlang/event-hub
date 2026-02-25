@@ -1,0 +1,18 @@
+{
+  "name": "academic-events-api",
+  "version": "0.1.0",
+  "description": "API para autenticação e cadastro de eventos acadêmicos.",
+  "type": "module",
+  "scripts": {
+    "production": "node app.js",
+    "development": "node --watch app.js"
+  },
+  "keywords": [],
+  "author": "Pablo Werlang",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3"
+  }
+}

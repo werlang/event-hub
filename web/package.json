@@ -1,0 +1,29 @@
+{
+  "name": "academic-events-web",
+  "version": "0.1.0",
+  "description": "Interface web para autenticação e visualização de eventos acadêmicos.",
+  "type": "module",
+  "scripts": {
+    "production": "node app.js",
+    "development": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "node --inspect=0.0.0.0 --watch app.js",
+    "dev:client": "webpack serve"
+  },
+  "keywords": [],
+  "author": "Pablo Werlang",
+  "license": "MIT",
+  "dependencies": {
+    "css-loader": "^7.1.4",
+    "css-minimizer-webpack-plugin": "^7.0.4",
+    "express": "^5.2.1",
+    "mini-css-extract-plugin": "^2.10.0",
+    "mustache-express": "^1.3.2",
+    "terser-webpack-plugin": "^5.3.16",
+    "webpack": "^5.105.2",
+    "webpack-cli": "^6.0.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "webpack-dev-server": "^5.2.2"
+  }
+}
