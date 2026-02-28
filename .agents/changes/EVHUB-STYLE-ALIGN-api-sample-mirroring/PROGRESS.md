@@ -16,7 +16,7 @@
 |------|-------|--------|-----------------|
 | 01 | API Primitives and App Pipeline Alignment | ✅ Completed | Final re-inspection on commit `de61ee0` passed mandatory preflight sequence in order (`just preflight`, `just sct`, `make checks`) and runtime sanity evidence (`/ready` 200, unknown route 404, authenticated forced `/events` 500) confirms standardized envelopes. |
 | 02 | Model/Driver Architecture Refactor | ✅ Completed | Inspector re-validation on commit `2aa702d` confirmed shared base model adoption (`User`/`Event`), thin datastore orchestration, mandatory gate success in strict order (`just preflight`, `just sct`, `make checks`), and manual register/create/list API flow on compose stack. |
-| 03 | Audience Relation Modeling and Data Migration | ✅ Completed | Implemented relation-backed audience persistence, idempotent legacy JSON migration, and validated mandatory gate + runtime API/DB checks. |
+| 03 | Audience Relation Modeling and Data Migration | ✅ Completed | Inspector validated commit `e03c17d` with mandatory gate success in strict order (`just preflight`, `just sct`, `make checks`) and runtime proof for relation persistence, deduplication, and idempotent legacy migration. |
 
 **Phase Status**: ✅ Completed
 
@@ -87,3 +87,4 @@
 | 2026-02-28 | 02 | Confirmed complete by inspection | GitHub Copilot (Inspector) | Re-verified commit `2aa702d` against task acceptance criteria, reran mandatory gate in order (`just preflight`, `just sct`, `make checks`), and confirmed practical API flow (`/auth/register` → `POST /events` auth → `GET /events?search=...`) remains functional. |
 | 2026-02-28 | 03 | Rework started | GitHub Copilot | Began audience relation migration task to persist event audiences via relation rows with idempotent migration and stable API output shape (`audience: string[]`). |
 | 2026-02-28 | 03 | Rework completed | GitHub Copilot | Added `event_audiences` relation table + idempotent migration from legacy `events.audience` JSON, refactored Event read/write to relation-backed audiences, updated create route to return persisted event, and validated with mandatory sequence plus runtime API/DB checks. |
+| 2026-02-28 | 03 | Confirmed complete by inspection | GitHub Copilot (Inspector) | Validated latest commit `e03c17d` with required gate sequence (`just preflight`, `just sct`, `make checks`) and runtime evidence: created event persisted deduplicated relation rows (`REL_COUNT=2`), list/detail returned `audience: string[]`, and legacy JSON migration remained idempotent after two API restarts (`2 -> 2`). |
