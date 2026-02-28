@@ -2,10 +2,12 @@ import express from 'express';
 import { Event } from '../model/event.js';
 import { store } from '../helpers/store.js';
 import { authMiddleware } from '../middleware/auth.js';
+import CustomError from '../helpers/error.js';
+import { sendSuccess } from '../helpers/response.js';
 
 export const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
     const filters = {
         search: req.query.search || req.query.q,
         category: req.query.category,
@@ -16,36 +18,34 @@ router.get('/', async (req, res) => {
 
     try {
         const events = await store.listEvents(filters);
-        res.json({ events });
+        return sendSuccess(res, { data: { events } });
     } catch (err) {
-        console.error('Erro ao listar eventos', err);
-        res.status(500).json({ error: 'Não foi possível carregar os eventos.' });
+        return next(new CustomError(500, 'Não foi possível carregar os eventos.'));
     }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
     try {
         const event = await store.findEventById(req.params.id);
         if (!event) {
-            return res.status(404).json({ error: 'Evento não encontrado.' });
+            return next(new CustomError(404, 'Evento não encontrado.'));
         }
 
-        res.json({ event });
+        return sendSuccess(res, { data: { event } });
     } catch (err) {
-        console.error('Erro ao carregar evento', err);
-        res.status(500).json({ error: 'Não foi possível carregar o evento.' });
+        return next(new CustomError(500, 'Não foi possível carregar o evento.'));
     }
 });
 
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, async (req, res, next) => {
     const { title, description, date, category, location, audience } = req.body || {};
     if (!title || !description || !date) {
-        return res.status(400).json({ error: 'Título, descrição e data são obrigatórios.' });
+        return next(new CustomError(400, 'Título, descrição e data são obrigatórios.'));
     }
 
     const parsedDate = new Date(date);
     if (Number.isNaN(parsedDate.getTime())) {
-        return res.status(400).json({ error: 'Data inválida.' });
+        return next(new CustomError(400, 'Data inválida.'));
     }
 
     const event = new Event({
@@ -62,9 +62,11 @@ router.post('/', authMiddleware, async (req, res) => {
 
     try {
         await store.addEvent(event.toJSON());
-        res.status(201).json({ event: event.toJSON() });
+        return sendSuccess(res, {
+            status: 201,
+            data: { event: event.toJSON() },
+        });
     } catch (err) {
-        console.error('Erro ao salvar evento', err);
-        res.status(500).json({ error: 'Não foi possível salvar o evento.' });
+        return next(new CustomError(500, 'Não foi possível salvar o evento.'));
     }
 });
