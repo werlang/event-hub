@@ -33,7 +33,7 @@
 
 | Task | Title | Status | Inspector Notes |
 |------|-------|--------|-----------------|
-| 06 | Documentation Audit and Realignment | ✅ Completed | Rework after re-inspection corrected the API URL troubleshooting reference in `.github/skills/docker-deployment/SKILL.md` to `web/src/js/helpers/api.js` (`resolveApiUrl()`/`requestApi()`), and mandatory preflight re-validation passed in strict order (`just preflight`, `just sct`, `make checks`). |
+| 06 | Documentation Audit and Realignment | ✅ Completed | Latest re-review on commit `a1bcb174` reconfirmed the Docker skill troubleshooting reference points to `web/src/js/helpers/api.js` (`resolveApiUrl()`/`requestApi()`), with mandatory preflight re-validation passed in strict order (`just preflight`, `just sct`, `make checks`). |
 | 07 | Final Wrap-up and Delivery Artifacts | ⬜ Not Started | |
 
 **Phase Status**: 🔄 In Progress
@@ -127,3 +127,4 @@
 | 2026-02-28 | 06 | Rework completed | GitHub Copilot | Updated `.github` instructions/skills/references and README to match current implementation contracts (MySQL model/driver persistence, envelope responses, JWT production policy, relation-backed audience mapping, web page-dispatch modules, compose topology), then passed mandatory gate in strict order (`just preflight`, `just sct`, `make checks`). |
 | 2026-02-28 | 06 | Marked incomplete by inspection | GitHub Copilot (Inspector) | Mandatory gate passed in strict order (`just preflight`, `just sct`, `make checks`), but docs audit acceptance is not fully met due to mismatch in `.github/skills/docker-deployment/SKILL.md` (API URL troubleshooting references `web/src/js/index.js` instead of actual resolver in `web/src/js/helpers/api.js`). |
 | 2026-02-28 | 06 | Rework completed (docs mismatch fixed) | GitHub Copilot | Corrected `.github/skills/docker-deployment/SKILL.md` to reference API URL resolution in `web/src/js/helpers/api.js` (`resolveApiUrl()`/`requestApi()`), re-ran required gate in strict order (`just preflight`, `just sct`, `make checks`), and restored Task 06 to ✅. |
+| 2026-02-28 | 06 | Confirmed complete by re-review | GitHub Copilot (Inspector) | Re-inspected latest coder commit `a1bcb174`; mandatory gate again passed in strict order (`just preflight`, `just sct`, `make checks`), and prior blocking docs mismatch in `.github/skills/docker-deployment/SKILL.md` remains fixed with API URL troubleshooting pointing to `web/src/js/helpers/api.js`. |
