@@ -25,9 +25,9 @@
 | Task | Title | Status | Inspector Notes |
 |------|-------|--------|-----------------|
 | 04 | Route, Auth, and Envelope Contract Refactor | ✅ Completed | Inspector confirmed commit `e1f5be8`: mandatory gate passed in strict order (`just preflight`, `just sct`, `make checks`), centralized route `next(error)` flow is applied, JWT-only auth and production secret hardening are preserved, and envelope contract remains consistent across auth/events paths. |
-| 05 | Web Client Contract Alignment | ⬜ Not Started | |
+| 05 | Web Client Contract Alignment | ✅ Completed | Web client now consumes standardized success/error envelopes across login/register/session, publish, and events list/filter flows; mandatory gate passed in strict order (`just preflight`, `just sct`, `make checks`). |
 
-**Phase Status**: 🔄 In Progress
+**Phase Status**: ✅ Completed
 
 ### Phase 3: Documentation and Delivery
 
@@ -53,10 +53,10 @@
 ## Completion Summary
 
 - **Total Tasks**: 7
-- **Completed**: 4
+- **Completed**: 5
 - **Incomplete**: 0
 - **In Progress**: 0
-- **Remaining**: 3
+- **Remaining**: 2
 
 ---
 
@@ -65,7 +65,7 @@
 | Phase | Completed | Phase Inspector Report | Validated By | Validation Date | Status |
 |-------|-----------|------------------------|--------------|-----------------|--------|
 | Phase 1 | ✅ | Full phase re-inspection (cumulative Tasks 01–03) passed: scope coverage confirmed against phase artifacts/commits, mandatory gate in strict order (`just preflight` → `just sct` → `make checks`) passed, and runtime envelope sanity (`/ready` 200, unknown route 404) remained compliant; integration intent across primitives + model refactor + audience relation migration remains intact. | GitHub Copilot | 2026-02-28 | ✅ Approved for Progression |
-| Phase 2 | 🔄 | Task 04 delivered; awaiting Task 05 completion and cumulative phase re-inspection. | GitHub Copilot | 2026-02-28 | In Progress |
+| Phase 2 | ✅ | Tasks 04–05 delivered; Task 05 aligned web parsing/UX to the standardized API envelope and passed mandatory gate in strict order (`just preflight` → `just sct` → `make checks`). | GitHub Copilot | 2026-02-28 | ✅ Completed |
 | Phase 3 | ⬜ | (pending) | (pending) | (pending) | Not Started |
 
 ---
@@ -92,3 +92,5 @@
 | 2026-02-28 | 04 | Rework started | GitHub Copilot | Started route/auth/envelope contract refactor with production JWT secret hardening while preserving JWT-only auth and stable route paths. |
 | 2026-02-28 | 04 | Rework completed | GitHub Copilot | Refactored auth/events handlers to strict centralized error flow, normalized bearer parsing/auth failures, added shared created-response helper, hardened JWT helper to enforce strong production secrets, validated mandatory gate sequence (`just preflight`, `just sct`, `make checks`) and manual API/runtime checks (register/login/me/events + weak/strong production JWT secret policy). |
 | 2026-02-28 | 04 | Confirmed complete by inspection | GitHub Copilot (Inspector) | Verified latest coder commit `e1f5be8`; mandatory preflight sequence passed in strict order (`just preflight`, `just sct`, `make checks`) and code-level inspection confirms centralized error pipeline, JWT-only auth behavior, production JWT secret policy enforcement, and consistent success envelopes on affected auth/events endpoints. |
+| 2026-02-28 | 05 | Rework started | GitHub Copilot | Started web contract alignment to consume standardized API success/error envelopes while preserving login/register/publish/filter UX flows. |
+| 2026-02-28 | 05 | Rework completed | GitHub Copilot | Implemented envelope-aware frontend API helper and page flows in `web/src/js/{index,login,publish}.js`, then validated mandatory gate sequence in strict order (`just preflight`, `just sct`, `make checks`). |

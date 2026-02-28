@@ -115,3 +115,21 @@ Align auth and events routes with sample-style `try/catch` + `next(error)` contr
 - [x] Production token configuration enforces secret policy
 - [x] All affected endpoints return consistent success envelope
 - [x] Manual validation completed
+
+## [TODO-EVHUB-STYLE-ALIGN-05] Align web client with standardized API envelope
+- Status: done
+- Priority: P1
+- Type: feature
+- Scope: web
+- Source: .agents/changes/EVHUB-STYLE-ALIGN-api-sample-mirroring/03-tasks-05-web-contract-alignment.md
+- Dependencies: TODO-EVHUB-STYLE-ALIGN-04
+
+### Context
+Adapt frontend API integration to parse the standardized success/error envelope while preserving existing auth and event listing/publish/filter user flows.
+
+### Acceptance Criteria
+- [x] No frontend runtime errors caused by API contract changes
+- [x] Auth flows still work end-to-end
+- [x] Event listing/filtering/publishing still work end-to-end
+- [x] Envelope errors are surfaced cleanly in UI
+- [x] Manual validation completed
