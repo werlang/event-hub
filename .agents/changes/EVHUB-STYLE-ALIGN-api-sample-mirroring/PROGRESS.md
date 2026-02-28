@@ -4,7 +4,7 @@
 **Started**: 2026-02-28
 **Last Updated**: 2026-02-28
 **HITL Mode**: false
-**Current Phase**: Phase 1
+**Current Phase**: Phase 2
 
 ---
 
@@ -64,7 +64,7 @@
 
 | Phase | Completed | Phase Inspector Report | Validated By | Validation Date | Status |
 |-------|-----------|------------------------|--------------|-----------------|--------|
-| Phase 1 | ✅ | Audience relation migration validated with mandatory preflight gate and runtime audience persistence/idempotency checks. | GitHub Copilot | 2026-02-28 | Completed |
+| Phase 1 | ✅ | Full phase re-inspection (cumulative Tasks 01–03) passed: scope coverage confirmed against phase artifacts/commits, mandatory gate in strict order (`just preflight` → `just sct` → `make checks`) passed, and runtime envelope sanity (`/ready` 200, unknown route 404) remained compliant; integration intent across primitives + model refactor + audience relation migration remains intact. | GitHub Copilot | 2026-02-28 | ✅ Approved for Progression |
 | Phase 2 | ⬜ | (pending) | (pending) | (pending) | Not Started |
 | Phase 3 | ⬜ | (pending) | (pending) | (pending) | Not Started |
 
@@ -88,3 +88,4 @@
 | 2026-02-28 | 03 | Rework started | GitHub Copilot | Began audience relation migration task to persist event audiences via relation rows with idempotent migration and stable API output shape (`audience: string[]`). |
 | 2026-02-28 | 03 | Rework completed | GitHub Copilot | Added `event_audiences` relation table + idempotent migration from legacy `events.audience` JSON, refactored Event read/write to relation-backed audiences, updated create route to return persisted event, and validated with mandatory sequence plus runtime API/DB checks. |
 | 2026-02-28 | 03 | Confirmed complete by inspection | GitHub Copilot (Inspector) | Validated latest commit `e03c17d` with required gate sequence (`just preflight`, `just sct`, `make checks`) and runtime evidence: created event persisted deduplicated relation rows (`REL_COUNT=2`), list/detail returned `audience: string[]`, and legacy JSON migration remained idempotent after two API restarts (`2 -> 2`). |
+| 2026-02-28 | Phase 1 | Approved for progression | GitHub Copilot (Phase Inspector) | Executed full phase inspection in Auto mode: confirmed all completed tasks (01–03) satisfy acceptance intent cumulatively, mandatory gate passed in order, no phase-scope side effects found, and phase marked ready for next phase. |
