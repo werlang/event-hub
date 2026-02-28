@@ -133,3 +133,37 @@ Adapt frontend API integration to parse the standardized success/error envelope 
 - [x] Event listing/filtering/publishing still work end-to-end
 - [x] Envelope errors are surfaced cleanly in UI
 - [x] Manual validation completed
+
+## [TODO-EVHUB-STYLE-ALIGN-06] Audit and realign documentation context
+- Status: done
+- Priority: P1
+- Type: docs
+- Scope: shared
+- Source: .agents/changes/EVHUB-STYLE-ALIGN-api-sample-mirroring/03-tasks-06-docs-audit.md
+- Dependencies: TODO-EVHUB-STYLE-ALIGN-05
+
+### Context
+Run the documentation audit prompt and align `.github` instructions/skills/prompts with the actual API/Web/Compose implementation, removing stale claims and updating contracts/security/build notes.
+
+### Acceptance Criteria
+- [x] `.github` docs align with current implementation
+- [x] No stale references to non-existent systems remain
+- [x] Skills and prompts are actionable for future agents
+- [x] Audit summary is produced
+- [x] Manual review completed
+
+## [TODO-EVHUB-STYLE-ALIGN-07] Final wrap-up and delivery artifacts
+- Status: todo
+- Priority: P1
+- Type: docs
+- Scope: shared
+- Source: .agents/changes/EVHUB-STYLE-ALIGN-api-sample-mirroring/03-tasks-07-release-artifacts.md
+- Dependencies: TODO-EVHUB-STYLE-ALIGN-06
+
+### Context
+Produce final release artifacts (`04-commit-msg.md`, `05-gitlab-mr.md`) and compile the delivery summary after all implementation and documentation tasks are complete.
+
+### Acceptance Criteria
+- [ ] Final artifact files are created and coherent with delivered implementation
+- [ ] Progress trackers reflect final state
+- [ ] Delivery summary includes validations and known residual risks

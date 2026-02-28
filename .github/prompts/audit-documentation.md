@@ -35,6 +35,9 @@ Remove references to non-existent features (Redis, timetable entities, proposal 
 - `api/middleware/auth.js`
 - `web/app.js`
 - `web/src/js/index.js`
+- `web/src/js/login.js`
+- `web/src/js/publish.js`
+- `web/src/js/helpers/api.js`
 - `web/src/html/index.html`
 - `web/webpack.config.js`
 - `compose.dev.yaml`

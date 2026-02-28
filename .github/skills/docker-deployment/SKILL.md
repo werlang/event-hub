@@ -11,6 +11,7 @@ description: Configure and run the Academic Events API and Web services with Doc
 - Services:
   - `api` (`3000:3000`, `9229:9229`)
   - `web` (`80:80`, Webpack dev server)
+  - `mysql` (`3306:3306`)
 - There is no `compose.yaml` production file in this repository today.
 
 ## Environment Variables
@@ -20,6 +21,8 @@ Expected in root `.env`:
 - `NODE_ENV`
 - `API_URL`
 - `JWT_SECRET`
+- `MYSQL_DATABASE`
+- `MYSQL_ROOT_PASSWORD`
 
 ## Start / Stop
 
@@ -54,4 +57,4 @@ docker compose -f compose.dev.yaml up -d
 ```
 
 - If service is not reachable, verify mapped ports and host binds in compose logs.
-- If frontend cannot reach API, inspect `API_URL` handling in `web/src/js/index.js`.
+- If frontend cannot reach API, inspect `API_URL` handling in `web/src/js/helpers/api.js` (`resolveApiUrl()`/`requestApi()`).

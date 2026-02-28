@@ -22,8 +22,9 @@ docker compose -f compose.dev.yaml logs --tail=100 api
 docker compose -f compose.dev.yaml logs --tail=100 web
 
 # API routes
+curl http://localhost:3000/ready
 curl http://localhost:3000/events
-curl http://localhost:3000/auth/me
+curl http://localhost:3000/auth/me -H "Authorization: Bearer <token>"
 ```
 
 ## Auth Flow Debugging
@@ -70,10 +71,17 @@ curl "http://localhost:3000/events?search=workshop&category=Geral"
 
 ## Common Failure Points
 
+- Calling protected endpoints without bearer token returns `401` with envelope error payload.
 - Missing/invalid `JWT_SECRET` causes token mismatch between services/restarts.
 - Missing `Authorization: Bearer` prefix returns `401`.
 - Invalid `date` payload in `POST /events` returns `400`.
-- Frontend API base URL may be empty if `window.APP_CONFIG.apiUrl` or `<meta name="api-url">` is not set.
+- Frontend API base URL may be empty if template `apiUrl` or `<meta name="api-url">` is not set.
+
+## Envelope Checks
+
+- Success payload shape: `{ error: false, status, data, message? }`
+- Error payload shape: `{ error: true, status, type, message, data? }`
+- If payload shape diverges, inspect route helper usage (`sendSuccess`, `sendCreated`) and error forwarding (`next(error)`).
 
 ## Useful Files During Debugging
 

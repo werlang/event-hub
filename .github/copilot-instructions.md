@@ -11,13 +11,17 @@
 - **API service** (`api/`): REST endpoints for auth and events.
 - **Web service** (`web/`): SSR shell with Mustache and client behavior bundled with Webpack.
 - **No shared package**: `api/` and `web/` are independent Node projects.
-- **Persistence**: JSON file datastore in `api/data/database.json` managed by `DataStore`.
+- **Persistence**: MySQL datastore managed by `DataStore` + model/driver classes (`api/helpers/mysql.js`, `api/model/*.js`).
 
 ## API Overview
-- Base middleware in `api/app.js`: `cors()`, JSON/urlencoded parsing, and error middleware.
+- Base middleware in `api/app.js`: `cors()`, JSON/urlencoded parsing, readiness route (`GET /ready`), explicit 404 forwarding, and terminal error middleware.
 - Registered route groups:
   - `app.use('/auth', auth)`
   - `app.use('/events', events)`
+
+### Response contract
+- Success envelope: `{ error: false, status, data, message? }`
+- Error envelope: `{ error: true, status, type, message, data? }`
 
 ### Auth routes (`api/routes/auth.js`)
 - `POST /auth/register` → create user and return JWT.
@@ -33,6 +37,7 @@
 - JWT helpers are in `api/helpers/token.js`.
 - Default JWT expiry is `12h`.
 - `JWT_SECRET` comes from env, with a local fallback for development.
+- In production, `JWT_SECRET` is mandatory and must be at least 32 chars (weak/common secrets are rejected).
 - API auth is Bearer-token based (`Authorization: Bearer <token>`).
 
 ## Data Model Conventions
@@ -42,6 +47,7 @@
 - **Event** (`api/model/event.js`):
   - generated UUID when `id` is absent.
   - defaults: `category = 'Geral'`, `location = 'A definir'`, `audience = []`.
+  - audience persistence is relation-backed via `event_audiences` (`audience: string[]` in API output).
   - `createdAt` set automatically when omitted.
 
 ## Build and Run
@@ -59,21 +65,24 @@
 - Services currently configured:
   - `api` (port `3000`, inspector `9229`)
   - `web` (Webpack dev server on port `80`)
+  - `mysql` (port `3306`)
 - There is no production `compose.yaml` in this repository at the moment.
 
 ## Frontend Notes
 - Web entry route: `GET /` renders `web/src/html/index.html`.
 - Static assets are served from `web/public/`.
-- Client entry is `web/src/js/index.js` and controls:
-  - auth forms (login/register),
-  - event publishing form,
-  - public event filtering/list rendering.
+- Client entry is `web/src/js/index.js` and dispatches by page:
+  - `web/src/js/login.js` handles login/register flows,
+  - `web/src/js/publish.js` handles authenticated event publishing,
+  - `web/src/js/index.js` handles public event filtering/list rendering.
 
 ## Environment Variables
 - Root `.env` currently contains:
   - `NODE_ENV`
   - `API_URL`
   - `JWT_SECRET`
+  - `MYSQL_DATABASE`
+  - `MYSQL_ROOT_PASSWORD`
 
 ## Testing
 - No automated test suite is currently configured.

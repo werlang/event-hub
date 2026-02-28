@@ -33,10 +33,10 @@
 
 | Task | Title | Status | Inspector Notes |
 |------|-------|--------|-----------------|
-| 06 | Documentation Audit and Realignment | ⬜ Not Started | |
+| 06 | Documentation Audit and Realignment | ✅ Completed | Rework after re-inspection corrected the API URL troubleshooting reference in `.github/skills/docker-deployment/SKILL.md` to `web/src/js/helpers/api.js` (`resolveApiUrl()`/`requestApi()`), and mandatory preflight re-validation passed in strict order (`just preflight`, `just sct`, `make checks`). |
 | 07 | Final Wrap-up and Delivery Artifacts | ⬜ Not Started | |
 
-**Phase Status**: ⬜ Not Started
+**Phase Status**: 🔄 In Progress
 
 ---
 
@@ -53,10 +53,10 @@
 ## Completion Summary
 
 - **Total Tasks**: 7
-- **Completed**: 5
+- **Completed**: 6
 - **Incomplete**: 0
 - **In Progress**: 0
-- **Remaining**: 2
+- **Remaining**: 1
 
 ---
 
@@ -66,7 +66,34 @@
 |-------|-----------|------------------------|--------------|-----------------|--------|
 | Phase 1 | ✅ | Full phase re-inspection (cumulative Tasks 01–03) passed: scope coverage confirmed against phase artifacts/commits, mandatory gate in strict order (`just preflight` → `just sct` → `make checks`) passed, and runtime envelope sanity (`/ready` 200, unknown route 404) remained compliant; integration intent across primitives + model refactor + audience relation migration remains intact. | GitHub Copilot | 2026-02-28 | ✅ Approved for Progression |
 | Phase 2 | ✅ | Full phase re-inspection (cumulative Tasks 04–05) passed: mandatory gate re-run in strict order (`just preflight` → `just sct` → `make checks`) succeeded, cumulative commit integration from Phase 1 (`e03c17d`) through web alignment (`71cb050`) remains coherent with no post-task code drift, and runtime sanity reconfirmed API readiness plus web routes (`/`, `/login`, `/publish`) at `200` with envelope-compatible auth/events flows maintained. | GitHub Copilot | 2026-02-28 | ✅ Approved for Progression |
-| Phase 3 | ⬜ | (pending) | (pending) | (pending) | Not Started |
+| Phase 3 | 🔄 | (pending) | (pending) | (pending) | In Progress |
+
+## Task 06 Audit Summary
+
+### Files Updated (12 files)
+- `.github/copilot-instructions.md`
+- `.github/skills/api-development/SKILL.md`
+- `.github/skills/api-development/references/route-examples.md`
+- `.github/skills/entity-models/SKILL.md`
+- `.github/skills/web-frontend/SKILL.md`
+- `.github/skills/web-frontend/references/component-patterns.md`
+- `.github/skills/docker-deployment/SKILL.md`
+- `.github/skills/debugging-operations/SKILL.md`
+- `.github/prompts/audit-documentation.md`
+- `README.md`
+- `tasks/backlog.md`
+- `.agents/changes/EVHUB-STYLE-ALIGN-api-sample-mirroring/PROGRESS.md`
+
+### Key Discrepancies Fixed
+- Fixed stale persistence claims (`api/data/database.json`) to MySQL + model/driver + `DataStore` bootstrap reality.
+- Fixed API contract docs from ad-hoc JSON responses to standardized success/error envelopes.
+- Added explicit JWT production hardening requirement (mandatory strong `JWT_SECRET`).
+- Added relation-backed `event_audiences` behavior while preserving `audience: string[]` output contract.
+- Corrected web architecture docs to page-dispatch split (`index.js`, `login.js`, `publish.js`) and envelope-aware `requestApi` helper.
+- Corrected Compose/docs environment notes to include actual `mysql` service and `MYSQL_DATABASE`/`MYSQL_ROOT_PASSWORD` variables.
+
+### Remaining Issues (Code, not Docs)
+- No automated test suite is configured; validation remains command gate + manual/runtime checks.
 
 ---
 
@@ -96,3 +123,7 @@
 | 2026-02-28 | 05 | Rework completed | GitHub Copilot | Implemented envelope-aware frontend API helper and page flows in `web/src/js/{index,login,publish}.js`, then validated mandatory gate sequence in strict order (`just preflight`, `just sct`, `make checks`). |
 | 2026-02-28 | 05 | Confirmed complete by inspection | GitHub Copilot (Inspector) | Verified latest coder commit `71cb050`; mandatory preflight sequence passed in strict order (`just preflight`, `just sct`, `make checks`), web routes (`/`, `/login`, `/publish`) returned 200, and runtime auth/events flows confirmed envelope compatibility for success and failure responses consumed by UI (`401`, `400`). |
 | 2026-02-28 | Phase 2 | Approved for progression | GitHub Copilot (Phase Inspector) | Executed full Phase 2 inspection in Auto mode: identified completed tasks (04–05), re-ran mandatory gate in strict order (`just preflight`, `just sct`, `make checks`) successfully, reviewed cumulative phase commits against prior phase integration (`e03c17d..71cb050`) with no post-task code drift, and confirmed phase-level acceptance coverage. |
+| 2026-02-28 | 06 | Rework started | GitHub Copilot | Started documentation audit and realignment by executing `.github/prompts/audit-documentation.md` against current API/Web/Compose implementation. |
+| 2026-02-28 | 06 | Rework completed | GitHub Copilot | Updated `.github` instructions/skills/references and README to match current implementation contracts (MySQL model/driver persistence, envelope responses, JWT production policy, relation-backed audience mapping, web page-dispatch modules, compose topology), then passed mandatory gate in strict order (`just preflight`, `just sct`, `make checks`). |
+| 2026-02-28 | 06 | Marked incomplete by inspection | GitHub Copilot (Inspector) | Mandatory gate passed in strict order (`just preflight`, `just sct`, `make checks`), but docs audit acceptance is not fully met due to mismatch in `.github/skills/docker-deployment/SKILL.md` (API URL troubleshooting references `web/src/js/index.js` instead of actual resolver in `web/src/js/helpers/api.js`). |
+| 2026-02-28 | 06 | Rework completed (docs mismatch fixed) | GitHub Copilot | Corrected `.github/skills/docker-deployment/SKILL.md` to reference API URL resolution in `web/src/js/helpers/api.js` (`resolveApiUrl()`/`requestApi()`), re-ran required gate in strict order (`just preflight`, `just sct`, `make checks`), and restored Task 06 to ✅. |

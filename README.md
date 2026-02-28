@@ -4,51 +4,48 @@ Projeto inspirado na arquitetura do TrocaAula: dois serviços independentes (API
 
 ## Serviços
 
-- **API** (`academic-events/api`, porta padrão `4000`): autenticação, cadastro e listagem filtrada de eventos.
-- **Web** (`academic-events/web`, porta padrão `4001`): interface SSR Mustache com UI moderna para login/registro, publicação e exploração pública dos eventos.
+- **API** (`api/`, porta padrão `3000`): autenticação, cadastro e listagem filtrada de eventos.
+- **Web** (`web/`, porta padrão `3000` local no processo; exposta como `80` no Compose): interface SSR Mustache para login/registro, publicação e exploração pública dos eventos.
 
 ## Execução rápida
 
 ```bash
-# Banco de dados (MySQL)
-# Ajuste as variáveis de ambiente conforme seu usuário local.
-DB_HOST=localhost DB_USER=root DB_PASSWORD=senha DB_NAME=academic_events
-
 # API
-cd academic-events/api
+cd api
 npm install
-PORT=4000 JWT_SECRET=troca-aula-academic node app.js
+NODE_ENV=development MYSQL_DATABASE=academic_events MYSQL_ROOT_PASSWORD=changeme JWT_SECRET=dev-academic-events-local-secret-change-me npm run development
 
 # Web (em outro terminal)
-cd academic-events/web
+cd ../web
 npm install
-PORT=4001 API_URL=http://localhost:4000 node app.js
+API_URL=http://localhost:3000 npm run development
 ```
 
-Abra `http://localhost:4001` para usar. A agenda pública não requer autenticação; o cadastro de eventos exige login.
+Abra `http://localhost:80` (Compose) ou `http://localhost:3000` (execução local direta da web) para usar. A agenda pública não requer autenticação; o cadastro de eventos exige login.
 
 ## Fluxos principais
 
-- **Páginas web**: `/` lista e filtra eventos via query string; `/login` centraliza login/registro e persiste o token; `/publicar` valida o token e abre o formulário de novo evento.
+- **Páginas web**: `/` lista e filtra eventos via query string; `/login` centraliza login/registro e persiste o token; `/publish` valida o token e abre o formulário de novo evento.
 - **Autenticação**: `/auth/register`, `/auth/login`, `/auth/me` retornam token JWT (12h) e dados do usuário.
 - **Eventos (API)**:
   - `POST /events` (Bearer token) — cria evento com `title`, `description`, `date`, `category`, `location`, `audience[]`.
   - `GET /events` — lista pública com filtros `search|q`, `category`, `from`, `to`, `audience`.
   - `GET /events/:id` — detalhe público.
 
+## Contrato de resposta
+
+- **Sucesso**: `{ error: false, status, data, message? }`
+- **Erro**: `{ error: true, status, type, message, data? }`
+
 ## Dados e seeds
 
-- A API inicializa tabelas MySQL (ver `DB_*` acima) e insere:
+- A API inicializa tabelas MySQL (`users`, `events`, `event_audiences`) e insere:
   - Usuário administrador: `admin@universidade.test` / senha `changeme`.
   - Dois eventos de exemplo para testes visuais.
-  - Para desenvolvimento via Docker Compose, use `compose.dev.yaml`, que já sobe um MySQL 8 com credenciais padrão (`DB_HOST=db`, `DB_USER=academic`, `DB_PASSWORD=academic`, `DB_NAME=academic_events`).
+  - Para desenvolvimento via Docker Compose, use `compose.dev.yaml`, que sobe `api`, `web` e `mysql`.
 
 ## Convenções de código
 
 - ES Modules, Express 5, classes para modelos (`api/model/`), rotas puras em `api/routes/`.
-- JWT via `helpers/token.js`; armazenamento simples em JSON via `helpers/datastore.js`.
+- JWT via `helpers/token.js`; persistência MySQL com helper/driver em `api/helpers/mysql.js` e orquestração em `api/helpers/datastore.js`.
 - UI SSR com Mustache + assets estáticos em `web/public/` (`css` e `js`).
-
-## TODO List
-
-- Revisar e refazer todo o front. Basicamente só o boilerplate está concluído.

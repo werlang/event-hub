@@ -15,11 +15,14 @@ Server (`web/app.js`):
 
 Client (`web/src/js/index.js`):
 
-- Handles login/register submits
-- Persists token in `localStorage` key `ae_token`
-- Calls API endpoints for profile/events
-- Renders event cards and filter results
-- Handles event publish flow
+- Imports page modules and dispatches by template variable `page`
+- Home page behavior: filter serialization, URL sync, events rendering
+
+Client modules:
+
+- `web/src/js/login.js`: login/register submit handling and session check
+- `web/src/js/publish.js`: auth gate and publish submit behavior
+- `web/src/js/helpers/api.js`: API base URL resolution + envelope normalization + token helpers (`ae_token`)
 
 Build (`web/webpack.config.js`):
 
@@ -35,6 +38,11 @@ Build (`web/webpack.config.js`):
 2. `<meta name="api-url">`
 3. fallback `''` (relative paths)
 
+Response handling:
+
+- Envelope-aware via `requestApi()`, which normalizes both enveloped and non-enveloped payloads.
+- Error UI should read `response.message` from normalized API results.
+
 When changing API integration behavior, keep this precedence explicit.
 
 ## Implementation Guidance
@@ -42,7 +50,7 @@ When changing API integration behavior, keep this precedence explicit.
 1. Keep client logic modular by function (rendering, fetch, auth, events).
 2. Preserve current UX flows before adding new UI states.
 3. Keep CSS updates in `web/src/css/index.css` unless a clear split is needed.
-4. Use existing naming conventions (`state`, `els`, helper functions) in `index.js`.
+4. Keep page-specific logic in `login.js` and `publish.js`; keep home listing/filter logic in `index.js`.
 5. Maintain Portuguese-facing text consistency already present in forms and messages.
 
 ## Common Tasks
@@ -57,11 +65,11 @@ When changing API integration behavior, keep this precedence explicit.
   - Add styles in `index.css`
 
 - Change auth behavior:
-  - Update `fetchProfile()`, `handleAuthSubmit()`, and token storage logic together
+  - Update `login.js`, `publish.js`, and `helpers/api.js` token/session behavior together
 
 ## References
 
-- Read [references/component-patterns.md](references/component-patterns.md) when extending state management, submit handlers, query helpers, or init flow in `web/src/js/index.js`.
+- Read [references/component-patterns.md](references/component-patterns.md) when extending page dispatch, query helpers, normalized API calls, or submit handlers.
 
 ## Out of Scope (Not in This Repo)
 

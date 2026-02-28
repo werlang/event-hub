@@ -11,7 +11,8 @@ Base app: `api/app.js`
 
 - `app.use('/auth', auth)`
 - `app.use('/events', events)`
-- global middleware: `cors()`, `express.json()`, `express.urlencoded()`
+- global middleware: `cors()`, `express.json()`, `express.urlencoded()`, explicit 404 forwarding, and terminal error middleware
+- readiness endpoint: `GET /ready`
 
 Routes:
 
@@ -38,8 +39,9 @@ Routes:
 
 Persistence (`api/helpers/datastore.js`):
 
-- JSON file persistence in `api/data/database.json`
-- Bootstraps default admin user and two sample events when file does not exist
+- MySQL-backed persistence through `Mysql` driver + `Model` classes
+- Bootstraps tables (`users`, `events`, `event_audiences`) and seeds default admin plus sample events
+- Executes idempotent migration from legacy `events.audience` JSON into `event_audiences`
 - Filtering supported in `listEvents({ search, category, from, to, audience })`
 
 ## Authentication Pattern
@@ -54,13 +56,21 @@ Auth middleware (`api/middleware/auth.js`):
 
 - reads bearer token from `Authorization` header
 - sets `req.user` when valid
-- returns `401` on missing/invalid token
+- forwards `401` errors on missing/invalid token to centralized middleware
+
+## Response Envelope Contract
+
+- Success: `{ error: false, status: <code>, data: <payload>, message?: <string> }`
+- Error: `{ error: true, status: <code>, type: <string>, message: <string>, data?: <any> }`
+
+Use `sendSuccess`/`sendCreated` (`api/helpers/response.js`) for success responses and `next(error)` with `CustomError` for failures.
 
 ## Implementation Guidance
 
 - Keep route handlers in `api/routes/*.js`.
-- Keep business/data operations in models and helpers.
-- Preserve the existing JSON error format: `{ error: 'message' }`.
+- Keep route handlers in `api/routes/*.js` with `try/catch` + `next(error)` orchestration.
+- Keep business/data operations in models/helpers and avoid writing SQL in route/model orchestration layers.
+- Preserve the global envelope format for both success and errors.
 - Reuse established HTTP status codes:
    - `201` for created resources
    - `400` for validation errors
@@ -92,6 +102,6 @@ Auth middleware (`api/middleware/auth.js`):
 Do not assume the following exist (they currently do not):
 
 - Redis caching
-- Edupage/external timetable APIs
+- Edupage/external APIs
 - entity expansion parameters
 - proposal/check-conflicts endpoints

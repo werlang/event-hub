@@ -7,26 +7,41 @@ Patterns aligned with this repository (`auth` + `events`).
 ```javascript
 import express from 'express';
 import { authMiddleware } from '../middleware/auth.js';
+import { sendSuccess } from '../helpers/response.js';
+import CustomError from '../helpers/error.js';
 
 export const router = express.Router();
 
-router.get('/me', authMiddleware, async (req, res) => {
-    // req.user is set by auth middleware
-    res.json({ user: { id: req.user.id, name: req.user.name, email: req.user.email } });
+router.get('/me', authMiddleware, async (req, res, next) => {
+    try {
+        if (!req.user?.id) {
+            throw new CustomError(401, 'Sessão inválida ou expirada.');
+        }
+
+        return sendSuccess(res, {
+            data: { user: { id: req.user.id, name: req.user.name, email: req.user.email } },
+        });
+    } catch (error) {
+        return next(error);
+    }
 });
 ```
 
 ## Basic Validation + 400
 
 ```javascript
-router.post('/register', async (req, res) => {
-    const { name, email, password } = req.body || {};
-    if (!name || !email || !password) {
-        return res.status(400).json({ error: 'Nome, e-mail e senha são obrigatórios.' });
-    }
+router.post('/register', async (req, res, next) => {
+    try {
+        const { name, email, password } = req.body || {};
+        if (!name || !email || !password) {
+            throw new CustomError(400, 'Nome, e-mail e senha são obrigatórios.');
+        }
 
-    // create user...
-    return res.status(201).json({ user, token });
+        // create user...
+        return sendCreated(res, { data: { user, token } });
+    } catch (error) {
+        return next(error);
+    }
 });
 ```
 
@@ -35,35 +50,44 @@ router.post('/register', async (req, res) => {
 ```javascript
 const existing = await store.findUserByEmail(email);
 if (existing) {
-    return res.status(409).json({ error: 'Já existe uma conta com este e-mail.' });
+    throw new CustomError(409, 'Já existe uma conta com este e-mail.');
 }
 ```
 
 ## Filtered List Endpoint
 
 ```javascript
-router.get('/', async (req, res) => {
-    const filters = {
-        search: req.query.search || req.query.q,
-        category: req.query.category,
-        from: req.query.from,
-        to: req.query.to,
-        audience: req.query.audience,
-    };
+router.get('/', async (req, res, next) => {
+    try {
+        const filters = {
+            search: req.query.search || req.query.q,
+            category: req.query.category,
+            from: req.query.from,
+            to: req.query.to,
+            audience: req.query.audience,
+        };
 
-    const events = await store.listEvents(filters);
-    res.json({ events });
+        const events = await store.listEvents(filters);
+        return sendSuccess(res, { data: { events } });
+    } catch (error) {
+        return next(error);
+    }
 });
 ```
 
 ## Not Found + 404
 
 ```javascript
-router.get('/:id', async (req, res) => {
-    const event = await store.findEventById(req.params.id);
-    if (!event) {
-        return res.status(404).json({ error: 'Evento não encontrado.' });
+router.get('/:id', async (req, res, next) => {
+    try {
+        const event = await store.findEventById(req.params.id);
+        if (!event) {
+            throw new CustomError(404, 'Evento não encontrado.');
+        }
+
+        return sendSuccess(res, { data: { event } });
+    } catch (error) {
+        return next(error);
     }
-    res.json({ event });
 });
 ```

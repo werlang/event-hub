@@ -1,61 +1,72 @@
 # Frontend Patterns
 
-Patterns aligned with `web/src/js/index.js` in this repository.
+Patterns aligned with `web/src/js/{index,login,publish}.js` and `web/src/js/helpers/api.js`.
 
-## State + DOM Cache
+## Page Dispatch
 
 ```javascript
-const state = {
-    token: localStorage.getItem('ae_token'),
-    user: null,
-    events: [],
-};
+const page = TemplateVar.get('page');
 
-const els = {
-    eventsGrid: document.querySelector('#events-grid'),
-    emptyState: document.querySelector('#empty-state'),
-};
+if (page === 'login') {
+    initLoginPage();
+} else if (page === 'publish') {
+    initPublishPage();
+} else {
+    initHomePage();
+}
 ```
 
 ## Query String Helper
 
 ```javascript
-function qs(params) {
-    const entries = Object.entries(params)
-        .filter(([, value]) => value !== undefined && value !== null && value !== '');
-    return new URLSearchParams(entries).toString();
+function serializeFilters() {
+    const params = new URLSearchParams();
+    const map = {
+        search: homeElements.filterSearch?.value,
+        category: homeElements.filterCategory?.value,
+        from: homeElements.filterFrom?.value,
+        to: homeElements.filterTo?.value,
+        audience: homeElements.filterAudience?.value,
+    };
+
+    Object.entries(map).forEach(([key, value]) => {
+        const trimmed = typeof value === 'string' ? value.trim() : '';
+        if (trimmed) params.set(key, trimmed);
+    });
+
+    return params;
 }
 ```
 
-## Fetch + Render Flow
+## Envelope-Aware Request Pattern
 
 ```javascript
-async function fetchEvents() {
-    const query = qs({ search: filterSearch.value, category: filterCategory.value });
-    const response = await fetch(`${API_URL}/events${query ? `?${query}` : ''}`);
-    if (!response.ok) return;
+const response = await requestApi('/events');
 
-    const payload = await response.json();
-    state.events = payload.events || [];
-    renderEvents();
+if (!response.ok) {
+    showMessage(response.message || 'Falha ao processar a requisição.');
+    return;
 }
+
+const events = response.data?.events || [];
+renderEvents(events);
 ```
 
 ## Form Submit Handler Pattern
 
 ```javascript
-async function handleAuthSubmit(event) {
+async function handlePublishSubmit(event) {
     event.preventDefault();
-    const formData = Object.fromEntries(new FormData(event.target).entries());
-    const response = await fetch(`${API_URL}/auth/login`, {
+    const payload = toEventPayload(elements.eventForm);
+
+    const response = await requestApi('/events', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        token,
+        body: payload,
     });
 
-    const payload = await response.json();
     if (!response.ok) {
-        alert(payload.error || 'Falha na autenticação');
+        showAuthState(response.message || 'Não foi possível publicar o evento.');
         return;
     }
 }
@@ -65,16 +76,14 @@ async function handleAuthSubmit(event) {
 
 ```javascript
 function bindEvents() {
-    loginForm.addEventListener('submit', handleAuthSubmit);
-    registerForm.addEventListener('submit', handleAuthSubmit);
-    eventForm.addEventListener('submit', handleEventSubmit);
+    homeElements.applyFilters.addEventListener('click', () => {
+        loadEvents();
+    });
 }
 
-async function init() {
+function initHomePage() {
     bindEvents();
-    await fetchProfile();
-    await fetchEvents();
+    hydrateFiltersFromUrl();
+    loadEvents();
 }
-
-init();
 ```

@@ -1,6 +1,6 @@
 ---
 name: entity-models
-description: Work with domain models for users and events, including password hashing, defaults, serialization, and JSON persistence. Use when changing `User` or `Event` behavior, datastore seeding, filtering semantics, or model fields that affect API contracts.
+description: Work with domain models for users and events, including password hashing, defaults, serialization, and relation-backed audience persistence. Use when changing `User` or `Event` behavior, datastore seeding/migration logic, filtering semantics, or model fields that affect API contracts.
 ---
 
 # Entity Models and Domain Logic
@@ -28,11 +28,19 @@ description: Work with domain models for users and events, including password ha
 
 `DataStore` in `api/helpers/datastore.js`:
 
-- Loads `api/data/database.json` or creates it if missing
-- Seeds default admin user and two initial events
+- Connects to MySQL via `Mysql`
+- Creates `users`, `events`, and `event_audiences` tables
+- Migrates legacy `events.audience` JSON data into `event_audiences` (idempotent)
+- Seeds default admin user and two initial events when users table is empty
 - Provides CRUD-ish methods used by routes:
   - users: `findUserByEmail`, `findUserById`, `addUser`
   - events: `listEvents`, `findEventById`, `addEvent`, `deleteEvent`
+
+`Event` audience persistence:
+
+- `event_audiences` is the source of truth
+- API output still exposes `audience: string[]`
+- Writes use relation replacement with deduplication semantics
 
 ## Filtering Rules (`listEvents`)
 
@@ -49,6 +57,7 @@ description: Work with domain models for users and events, including password ha
 - If adding model fields, update all affected surfaces:
   - model constructor
   - `toJSON()`
+  - `serialize()` and `normalize()`
   - datastore seed/defaults
   - route validation and docs
 - Avoid cross-service coupling; API and Web remain independent packages.
