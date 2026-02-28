@@ -15,7 +15,7 @@
 | Task | Title | Status | Inspector Notes |
 |------|-------|--------|-----------------|
 | 01 | API Primitives and App Pipeline Alignment | ✅ Completed | Final re-inspection on commit `de61ee0` passed mandatory preflight sequence in order (`just preflight`, `just sct`, `make checks`) and runtime sanity evidence (`/ready` 200, unknown route 404, authenticated forced `/events` 500) confirms standardized envelopes. |
-| 02 | Model/Driver Architecture Refactor | ✅ Completed | Shared base model introduced (`api/model/model.js`) and adopted by `User`/`Event`; datastore reduced to bootstrap/seed orchestration; mandatory preflight gate passed in strict order (`just preflight`, `just sct`, `make checks`) with manual login/create/list validation against running compose stack. |
+| 02 | Model/Driver Architecture Refactor | ✅ Completed | Inspector re-validation on commit `2aa702d` confirmed shared base model adoption (`User`/`Event`), thin datastore orchestration, mandatory gate success in strict order (`just preflight`, `just sct`, `make checks`), and manual register/create/list API flow on compose stack. |
 | 03 | Audience Relation Modeling and Data Migration | ⬜ Not Started | |
 
 **Phase Status**: 🔄 In Progress
@@ -84,3 +84,4 @@
 | 2026-02-28 | 01 | Marked complete by final re-inspection | GitHub Copilot (Inspector) | Verified latest coder commit `de61ee0`; mandatory gate passed in strict order (`just preflight`, `just sct`, `make checks`) and runtime envelope sanity checks passed for 200/404/500 paths |
 | 2026-02-28 | 02 | Rework started | GitHub Copilot | Started model/driver architecture refactor with shared base model and reduced SQL in datastore layer |
 | 2026-02-28 | 02 | Rework completed | GitHub Copilot | Introduced shared base model + refactored User/Event/Relation + reduced DataStore to bootstrap/seed orchestration; validated strict gate sequence (`just preflight`, `just sct`, `make checks`) and manual API flows (login, authenticated event create, events list). |
+| 2026-02-28 | 02 | Confirmed complete by inspection | GitHub Copilot (Inspector) | Re-verified commit `2aa702d` against task acceptance criteria, reran mandatory gate in order (`just preflight`, `just sct`, `make checks`), and confirmed practical API flow (`/auth/register` → `POST /events` auth → `GET /events?search=...`) remains functional. |
