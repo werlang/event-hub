@@ -1,9 +1,11 @@
 import crypto from 'crypto';
 import { Model } from './model.js';
+import Relation from './relation.js';
 
 export class Event extends Model {
 
     static table = 'events';
+    static audienceTable = 'event_audiences';
     static view = [
         'id',
         'title',
@@ -11,7 +13,6 @@ export class Event extends Model {
         'date',
         'category',
         'location',
-        'audience',
         'organizer_id',
         'created_at',
     ];
@@ -53,16 +54,60 @@ export class Event extends Model {
         };
     }
 
-    static #parseAudience(raw) {
-        if (!raw) return [];
-        if (Array.isArray(raw)) return raw;
-        if (typeof raw === 'object') return Object.values(raw);
+    static #normalizeAudienceValues(values = []) {
+        return [
+            ...new Set(
+                (values || [])
+                    .map(value => String(value || '').trim())
+                    .filter(Boolean),
+            ),
+        ];
+    }
 
-        try {
-            return JSON.parse(raw);
-        } catch (error) {
+    static #audienceRelation(eventId) {
+        return new Relation(
+            this.audienceTable,
+            { event_id: eventId },
+            'audience',
+            this.driver,
+        );
+    }
+
+    static async #attachAudience(event) {
+        if (!event) return null;
+        const relations = await this.#audienceRelation(event.id).get();
+
+        return {
+            ...event,
+            audience: this.#normalizeAudienceValues(relations.map(relation => relation.audience)),
+        };
+    }
+
+    static async #attachAudienceMany(events = []) {
+        if (events.length === 0) {
             return [];
         }
+
+        const eventIds = events.map(event => event.id);
+        const relationRows = await this.driver.find(this.audienceTable, {
+            filter: { event_id: eventIds },
+            view: [
+                'event_id',
+                'audience',
+            ],
+        });
+
+        const groupedAudience = new Map();
+        for (const relation of relationRows) {
+            const values = groupedAudience.get(relation.event_id) || [];
+            values.push(relation.audience);
+            groupedAudience.set(relation.event_id, values);
+        }
+
+        return events.map(event => ({
+            ...event,
+            audience: this.#normalizeAudienceValues(groupedAudience.get(event.id) || []),
+        }));
     }
 
     static normalize(row) {
@@ -75,7 +120,7 @@ export class Event extends Model {
             date: row.date ? new Date(row.date).toISOString() : row.date,
             category: row.category,
             location: row.location,
-            audience: this.#parseAudience(row.audience),
+            audience: [],
             organizerId: row.organizerId || row.organizer_id,
             createdAt: row.createdAt || row.created_at
                 ? new Date(row.createdAt || row.created_at).toISOString()
@@ -92,10 +137,14 @@ export class Event extends Model {
             date: this.driver.toDateTime(event.date),
             category: event.category,
             location: event.location,
-            audience: JSON.stringify(event.audience || []),
             organizer_id: event.organizerId,
             created_at: this.driver.toDateTime(event.createdAt || Date.now()),
         };
+    }
+
+    static async get(clause, { view = this.view } = {}) {
+        const event = await super.get(clause, { view });
+        return this.#attachAudience(event);
     }
 
     static async findById(id) {
@@ -104,7 +153,10 @@ export class Event extends Model {
     }
 
     static async create(payload) {
-        const serialized = await this.insert(payload);
+        const event = payload instanceof Event ? payload.toJSON() : new Event(payload).toJSON();
+        const serialized = await this.insert(event);
+        const relation = this.#audienceRelation(serialized.id);
+        await relation.replace(this.#normalizeAudienceValues(event.audience));
         return this.get(serialized.id);
     }
 
@@ -123,20 +175,17 @@ export class Event extends Model {
             queryFilter.date = this.driver.lte(this.driver.toDateTime(to));
         }
 
-        if (audience) {
-            queryFilter.audience = this.driver.like(audience);
-        }
-
         const rows = await this.find({
             filter: queryFilter,
             opt: { order: { date: 1 } },
         });
+        const events = await this.#attachAudienceMany(rows);
 
         const normalizedCategory = category?.toLowerCase();
         const normalizedSearch = search?.toLowerCase();
         const normalizedAudience = audience?.toLowerCase();
 
-        return rows.filter(event => {
+        return events.filter(event => {
             if (normalizedCategory && (event.category || '').toLowerCase() !== normalizedCategory) {
                 return false;
             }

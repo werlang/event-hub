@@ -74,7 +74,40 @@ export class DataStore {
             ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
         `, []);
 
+        await this.#driver.query(`
+            CREATE TABLE IF NOT EXISTS event_audiences (
+                event_id CHAR(36) NOT NULL,
+                audience VARCHAR(255) NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (event_id, audience),
+                FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+        `, []);
+
+        await this.#migrateLegacyAudienceData();
+
         await this.#seedDefaults();
+    }
+
+    async #migrateLegacyAudienceData() {
+        await this.#driver.query(`
+            INSERT IGNORE INTO event_audiences (event_id, audience)
+            SELECT
+                events.id,
+                TRIM(audience_rows.audience)
+            FROM events
+            JOIN JSON_TABLE(
+                CASE
+                    WHEN events.audience IS NULL THEN JSON_ARRAY()
+                    WHEN JSON_TYPE(events.audience) <> 'ARRAY' THEN JSON_ARRAY()
+                    ELSE events.audience
+                END,
+                '$[*]' COLUMNS (
+                    audience VARCHAR(255) PATH '$'
+                )
+            ) AS audience_rows
+            WHERE TRIM(audience_rows.audience) <> ''
+        `, []);
     }
 
     async #seedDefaults() {

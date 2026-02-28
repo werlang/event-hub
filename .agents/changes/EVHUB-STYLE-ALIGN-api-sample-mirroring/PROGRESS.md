@@ -16,9 +16,9 @@
 |------|-------|--------|-----------------|
 | 01 | API Primitives and App Pipeline Alignment | ✅ Completed | Final re-inspection on commit `de61ee0` passed mandatory preflight sequence in order (`just preflight`, `just sct`, `make checks`) and runtime sanity evidence (`/ready` 200, unknown route 404, authenticated forced `/events` 500) confirms standardized envelopes. |
 | 02 | Model/Driver Architecture Refactor | ✅ Completed | Inspector re-validation on commit `2aa702d` confirmed shared base model adoption (`User`/`Event`), thin datastore orchestration, mandatory gate success in strict order (`just preflight`, `just sct`, `make checks`), and manual register/create/list API flow on compose stack. |
-| 03 | Audience Relation Modeling and Data Migration | ⬜ Not Started | |
+| 03 | Audience Relation Modeling and Data Migration | ✅ Completed | Implemented relation-backed audience persistence, idempotent legacy JSON migration, and validated mandatory gate + runtime API/DB checks. |
 
-**Phase Status**: 🔄 In Progress
+**Phase Status**: ✅ Completed
 
 ### Phase 2: Contract and Client Alignment
 
@@ -53,10 +53,10 @@
 ## Completion Summary
 
 - **Total Tasks**: 7
-- **Completed**: 2
+- **Completed**: 3
 - **Incomplete**: 0
 - **In Progress**: 0
-- **Remaining**: 5
+- **Remaining**: 4
 
 ---
 
@@ -64,7 +64,7 @@
 
 | Phase | Completed | Phase Inspector Report | Validated By | Validation Date | Status |
 |-------|-----------|------------------------|--------------|-----------------|--------|
-| Phase 1 | ⬜ | (pending) | (pending) | (pending) | Not Started |
+| Phase 1 | ✅ | Audience relation migration validated with mandatory preflight gate and runtime audience persistence/idempotency checks. | GitHub Copilot | 2026-02-28 | Completed |
 | Phase 2 | ⬜ | (pending) | (pending) | (pending) | Not Started |
 | Phase 3 | ⬜ | (pending) | (pending) | (pending) | Not Started |
 
@@ -85,3 +85,5 @@
 | 2026-02-28 | 02 | Rework started | GitHub Copilot | Started model/driver architecture refactor with shared base model and reduced SQL in datastore layer |
 | 2026-02-28 | 02 | Rework completed | GitHub Copilot | Introduced shared base model + refactored User/Event/Relation + reduced DataStore to bootstrap/seed orchestration; validated strict gate sequence (`just preflight`, `just sct`, `make checks`) and manual API flows (login, authenticated event create, events list). |
 | 2026-02-28 | 02 | Confirmed complete by inspection | GitHub Copilot (Inspector) | Re-verified commit `2aa702d` against task acceptance criteria, reran mandatory gate in order (`just preflight`, `just sct`, `make checks`), and confirmed practical API flow (`/auth/register` → `POST /events` auth → `GET /events?search=...`) remains functional. |
+| 2026-02-28 | 03 | Rework started | GitHub Copilot | Began audience relation migration task to persist event audiences via relation rows with idempotent migration and stable API output shape (`audience: string[]`). |
+| 2026-02-28 | 03 | Rework completed | GitHub Copilot | Added `event_audiences` relation table + idempotent migration from legacy `events.audience` JSON, refactored Event read/write to relation-backed audiences, updated create route to return persisted event, and validated with mandatory sequence plus runtime API/DB checks. |

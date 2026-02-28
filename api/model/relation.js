@@ -25,12 +25,44 @@ export default class Relation {
         return relation ? true : false;
     }
 
-    async insert(fieldValue) {
-        if (await this.check(fieldValue)) throw new CustomError(400, 'Relation already exists.');
+    async insert(fieldValue, { ignoreDuplicates = false } = {}) {
+        if (await this.check(fieldValue)) {
+            if (ignoreDuplicates) return null;
+            throw new CustomError(400, 'Relation already exists.');
+        }
+
         return this.driver.insert(this.tableName, {
             ...this.nativeObject,
             [this.relatedField]: fieldValue,
         });
+    }
+
+    async insertMany(fieldValues = [], { ignoreDuplicates = false } = {}) {
+        const normalizedValues = [
+            ...new Set(
+                (fieldValues || [])
+                    .map(value => String(value || '').trim())
+                    .filter(Boolean),
+            ),
+        ];
+
+        const inserted = [];
+        for (const value of normalizedValues) {
+            const relation = await this.insert(value, { ignoreDuplicates });
+            if (relation) {
+                inserted.push(relation);
+            }
+        }
+
+        return inserted;
+    }
+
+    async replace(fieldValues = [], { ignoreDuplicates = true } = {}) {
+        await this.driver.delete(this.tableName, {
+            ...this.nativeObject,
+        });
+
+        return this.insertMany(fieldValues, { ignoreDuplicates });
     }
 
     async delete(fieldValue) {

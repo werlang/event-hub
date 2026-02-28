@@ -61,10 +61,10 @@ router.post('/', authMiddleware, async (req, res, next) => {
     });
 
     try {
-        await store.addEvent(event.toJSON());
+        const createdEvent = await store.addEvent(event.toJSON());
         return sendSuccess(res, {
             status: 201,
-            data: { event: event.toJSON() },
+            data: { event: createdEvent },
         });
     } catch (err) {
         return next(new CustomError(500, 'Não foi possível salvar o evento.'));
