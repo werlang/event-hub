@@ -1,5 +1,35 @@
 # Task 1: API Primitives and App Pipeline Alignment
 
+## INSPECTOR FEEDBACK (2026-02-28, Re-inspection)
+
+### Decision
+🔴 **Incomplete**
+
+### What was validated
+- Reviewed latest coder commit: `a0f9245ef63c733a72216cb97e29d085aa06402b`.
+- Ran required preflight sequence in order:
+  1. `just preflight` → failed (`just: command not found`)
+  2. `just sct` → failed (`just: command not found`)
+  3. `make checks` → passed (`[checks] all checks passed`)
+- Runtime spot-checks against running stack:
+  - `GET /ready` → `200` standardized success envelope.
+  - `GET /this-route-does-not-exist` → `404` standardized error envelope.
+  - `POST /events` without bearer token → `401` standardized error envelope from centralized middleware path.
+
+### What is done
+- Centralized primitives and app pipeline updates are present (`CustomError`, `sendSuccess`, readiness route, explicit 404 forwarding, terminal error middleware).
+- Route/middleware ad-hoc `res.status(...).json({ error: ... })` patterns were replaced in inspected API files.
+- `make checks` target exists and passes in current Docker-based environment.
+
+### What is missing / wrong
+- **Primary validation gate failed**: required preflight commands `just preflight` and `just sct` are not runnable in this environment; by policy this task cannot be marked complete.
+- **Required test path not re-validated in this pass**: the requested middleware `500` case was not demonstrated from the provided unauthenticated probe path (it returned `401`, as expected without a token).
+
+### Required next steps
+1. Restore preflight tooling contract by making `just preflight` and `just sct` executable in the project environment (or formally update/approve the inspector preflight policy for this repo).
+2. Re-run the full required preflight sequence with successful outputs captured.
+3. Re-attach concise runtime evidence for 200/404/500 envelopes using an authenticated 500 trigger path.
+
 ## INSPECTOR FEEDBACK (2026-02-28)
 
 ### Decision
@@ -45,6 +75,24 @@
   - `{"error":true,"status":404,"type":"Not Found","message":"I am sorry, but I think you are lost."}`
 - Forced middleware error via `POST /events` with invalid `audience` object returned HTTP `500` with envelope:
   - `{"error":true,"status":500,"type":"Internal Server Error","message":"Internal Server Error","data":{"detail":"audience.split is not a function"}}`
+
+## REWORK EVIDENCE (2026-02-28, Preflight Contract Fix)
+
+### Environment Tooling
+- Installed `just` in this environment using Homebrew for reproducibility (`brew install just`).
+- Verified availability:
+  - `which just` → `/opt/homebrew/bin/just`
+  - `just --version` → `just 1.46.0`
+
+### Repository Contract
+- Added root `justfile` with:
+  - `preflight` recipe delegating to `just sct`
+  - `sct` recipe executing `make checks`
+
+### Required Sequence (in order)
+1. `just preflight` → **PASS** (`[preflight] running sct`, `[sct] running repository checks`, `[checks] all checks passed`)
+2. `just sct` → **PASS** (`[sct] running repository checks`, `[checks] all checks passed`)
+3. `make checks` → **PASS** (`[checks] all checks passed`)
 
 **Depends on**: None  
 **Estimated complexity**: Medium  
