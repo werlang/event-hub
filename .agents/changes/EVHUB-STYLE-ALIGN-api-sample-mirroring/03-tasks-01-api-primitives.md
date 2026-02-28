@@ -1,5 +1,25 @@
 # Task 1: API Primitives and App Pipeline Alignment
 
+## INSPECTOR FEEDBACK (2026-02-28, Final Re-inspection)
+
+### Decision
+🟢 **Complete**
+
+### What was validated
+- Reviewed latest coder commit: `de61ee0bf1713cad0c07036e19d99cc9aa7e41f8`.
+- Ran required preflight sequence in strict order:
+  1. `just preflight` → passed (`[preflight] running sct` → `[checks] all checks passed`)
+  2. `just sct` → passed (`[sct] running repository checks` → `[checks] all checks passed`)
+  3. `make checks` → passed (`[checks] all checks passed`)
+- Runtime sanity re-checks on live stack:
+  - `GET /ready` → `200` with success envelope `{"error":false,"status":200,"data":{"ready":true},"message":"I am ready!"}`.
+  - `GET /this-route-does-not-exist` → `404` with standardized error envelope.
+  - Authenticated forced error via `POST /events` (`audience: {}`) → `500` with standardized middleware envelope and safe debug detail in non-production.
+
+### Completion notes
+- Acceptance criteria are satisfied for Task 1 in current repository state.
+- Preflight policy gate is now enforceable and passing in this environment.
+
 ## INSPECTOR FEEDBACK (2026-02-28, Re-inspection)
 
 ### Decision

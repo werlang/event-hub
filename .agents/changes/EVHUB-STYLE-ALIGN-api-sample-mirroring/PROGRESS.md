@@ -14,7 +14,7 @@
 
 | Task | Title | Status | Inspector Notes |
 |------|-------|--------|-----------------|
-| 01 | API Primitives and App Pipeline Alignment | ✅ Completed | Rework restored inspector preflight tooling contract (`just preflight`, `just sct`) with runnable root `justfile`, installed `just` (`1.46.0`) in environment, and required sequence now passes (`just preflight`, `just sct`, `make checks`). |
+| 01 | API Primitives and App Pipeline Alignment | ✅ Completed | Final re-inspection on commit `de61ee0` passed mandatory preflight sequence in order (`just preflight`, `just sct`, `make checks`) and runtime sanity evidence (`/ready` 200, unknown route 404, authenticated forced `/events` 500) confirms standardized envelopes. |
 | 02 | Model/Driver Architecture Refactor | ⬜ Not Started | |
 | 03 | Audience Relation Modeling and Data Migration | ⬜ Not Started | |
 
@@ -81,3 +81,4 @@
 | 2026-02-28 | 01 | Rework completed | GitHub Copilot | Added root `make checks` preflight target (passing in Docker), routed auth/events/auth-middleware error paths via `next(CustomError)`, and captured manual evidence for `/ready` (200), unknown route (404), and forced middleware 500 envelope |
 | 2026-02-28 | 01 | Marked incomplete by re-inspection | GitHub Copilot (Inspector) | Latest commit `a0f9245` still fails mandatory preflight sequence because `just` commands are unavailable (`just preflight`/`just sct`), therefore task cannot retain ✅ under current inspection policy |
 | 2026-02-28 | 01 | Rework completed (preflight gate fixed) | GitHub Copilot | Added root `justfile` with `preflight`/`sct` recipes, installed `just` via Homebrew (`just 1.46.0`), and validated required sequence success: `just preflight`, `just sct`, `make checks` |
+| 2026-02-28 | 01 | Marked complete by final re-inspection | GitHub Copilot (Inspector) | Verified latest coder commit `de61ee0`; mandatory gate passed in strict order (`just preflight`, `just sct`, `make checks`) and runtime envelope sanity checks passed for 200/404/500 paths |
