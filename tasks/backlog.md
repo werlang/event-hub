@@ -153,7 +153,7 @@ Run the documentation audit prompt and align `.github` instructions/skills/promp
 - [x] Manual review completed
 
 ## [TODO-EVHUB-STYLE-ALIGN-07] Final wrap-up and delivery artifacts
-- Status: todo
+- Status: done
 - Priority: P1
 - Type: docs
 - Scope: shared
@@ -164,6 +164,6 @@ Run the documentation audit prompt and align `.github` instructions/skills/promp
 Produce final release artifacts (`04-commit-msg.md`, `05-gitlab-mr.md`) and compile the delivery summary after all implementation and documentation tasks are complete.
 
 ### Acceptance Criteria
-- [ ] Final artifact files are created and coherent with delivered implementation
-- [ ] Progress trackers reflect final state
-- [ ] Delivery summary includes validations and known residual risks
+- [x] Final artifact files are created and coherent with delivered implementation
+- [x] Progress trackers reflect final state
+- [x] Delivery summary includes validations and known residual risks
