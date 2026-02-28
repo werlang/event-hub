@@ -97,3 +97,21 @@ Replace JSON-backed event audience persistence with relation-backed rows while p
 - [x] API consumers still receive audience arrays
 - [x] Duplicate relation insertion is prevented
 - [x] Manual validation completed
+
+## [TODO-EVHUB-STYLE-ALIGN-04] Refactor route/auth envelope contract and harden JWT config
+- Status: done
+- Priority: P1
+- Type: refactor
+- Scope: api
+- Source: .agents/changes/EVHUB-STYLE-ALIGN-api-sample-mirroring/03-tasks-04-routes-auth-envelope.md
+- Dependencies: TODO-EVHUB-STYLE-ALIGN-01, TODO-EVHUB-STYLE-ALIGN-02, TODO-EVHUB-STYLE-ALIGN-03
+
+### Context
+Align auth and events routes with sample-style `try/catch` + `next(error)` control flow, ensure fully consistent response envelopes, and enforce production-safe JWT secret requirements without changing existing route paths or JWT-only auth behavior.
+
+### Acceptance Criteria
+- [x] Route handlers use centralized error pipeline (no ad-hoc catch responses)
+- [x] JWT-only auth remains in place
+- [x] Production token configuration enforces secret policy
+- [x] All affected endpoints return consistent success envelope
+- [x] Manual validation completed

@@ -17,9 +17,13 @@ export default function errorMiddleware(err, req, res, next) {
         return;
     }
 
+    const derivedStatus = err?.name === 'TokenExpiredError' || err?.name === 'JsonWebTokenError'
+        ? 401
+        : null;
+
     const status = Number.isInteger(err.status)
         ? err.status
-        : (Number.isInteger(err.code) ? err.code : 500);
+        : (Number.isInteger(err.code) ? err.code : (derivedStatus || 500));
 
     const safeStatus = ERROR_TYPES[status] ? status : 500;
     const payload = {

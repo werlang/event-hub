@@ -24,10 +24,10 @@
 
 | Task | Title | Status | Inspector Notes |
 |------|-------|--------|-----------------|
-| 04 | Route, Auth, and Envelope Contract Refactor | ⬜ Not Started | |
+| 04 | Route, Auth, and Envelope Contract Refactor | ✅ Completed | Completed implementation with centralized route error flow, consistent envelopes across auth/events endpoints, and production JWT secret hardening validated via compose runtime checks. |
 | 05 | Web Client Contract Alignment | ⬜ Not Started | |
 
-**Phase Status**: ⬜ Not Started
+**Phase Status**: 🔄 In Progress
 
 ### Phase 3: Documentation and Delivery
 
@@ -53,10 +53,10 @@
 ## Completion Summary
 
 - **Total Tasks**: 7
-- **Completed**: 3
+- **Completed**: 4
 - **Incomplete**: 0
 - **In Progress**: 0
-- **Remaining**: 4
+- **Remaining**: 3
 
 ---
 
@@ -65,7 +65,7 @@
 | Phase | Completed | Phase Inspector Report | Validated By | Validation Date | Status |
 |-------|-----------|------------------------|--------------|-----------------|--------|
 | Phase 1 | ✅ | Full phase re-inspection (cumulative Tasks 01–03) passed: scope coverage confirmed against phase artifacts/commits, mandatory gate in strict order (`just preflight` → `just sct` → `make checks`) passed, and runtime envelope sanity (`/ready` 200, unknown route 404) remained compliant; integration intent across primitives + model refactor + audience relation migration remains intact. | GitHub Copilot | 2026-02-28 | ✅ Approved for Progression |
-| Phase 2 | ⬜ | (pending) | (pending) | (pending) | Not Started |
+| Phase 2 | 🔄 | Task 04 delivered; awaiting Task 05 completion and cumulative phase re-inspection. | GitHub Copilot | 2026-02-28 | In Progress |
 | Phase 3 | ⬜ | (pending) | (pending) | (pending) | Not Started |
 
 ---
@@ -89,3 +89,5 @@
 | 2026-02-28 | 03 | Rework completed | GitHub Copilot | Added `event_audiences` relation table + idempotent migration from legacy `events.audience` JSON, refactored Event read/write to relation-backed audiences, updated create route to return persisted event, and validated with mandatory sequence plus runtime API/DB checks. |
 | 2026-02-28 | 03 | Confirmed complete by inspection | GitHub Copilot (Inspector) | Validated latest commit `e03c17d` with required gate sequence (`just preflight`, `just sct`, `make checks`) and runtime evidence: created event persisted deduplicated relation rows (`REL_COUNT=2`), list/detail returned `audience: string[]`, and legacy JSON migration remained idempotent after two API restarts (`2 -> 2`). |
 | 2026-02-28 | Phase 1 | Approved for progression | GitHub Copilot (Phase Inspector) | Executed full phase inspection in Auto mode: confirmed all completed tasks (01–03) satisfy acceptance intent cumulatively, mandatory gate passed in order, no phase-scope side effects found, and phase marked ready for next phase. |
+| 2026-02-28 | 04 | Rework started | GitHub Copilot | Started route/auth/envelope contract refactor with production JWT secret hardening while preserving JWT-only auth and stable route paths. |
+| 2026-02-28 | 04 | Rework completed | GitHub Copilot | Refactored auth/events handlers to strict centralized error flow, normalized bearer parsing/auth failures, added shared created-response helper, hardened JWT helper to enforce strong production secrets, validated mandatory gate sequence (`just preflight`, `just sct`, `make checks`) and manual API/runtime checks (register/login/me/events + weak/strong production JWT secret policy). |

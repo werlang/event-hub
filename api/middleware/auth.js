@@ -2,9 +2,13 @@ import { verifyToken } from '../helpers/token.js';
 import CustomError from '../helpers/error.js';
 
 export function authMiddleware(req, res, next) {
-    const header = req.headers.authorization || '';
-    const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-    if (!token) {
+    const header = req.headers.authorization;
+    if (!header || typeof header !== 'string') {
+        return next(new CustomError(401, 'Autenticação necessária.'));
+    }
+
+    const [scheme, token] = header.split(' ');
+    if (scheme !== 'Bearer' || !token) {
         return next(new CustomError(401, 'Autenticação necessária.'));
     }
 
