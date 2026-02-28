@@ -24,7 +24,7 @@
 
 | Task | Title | Status | Inspector Notes |
 |------|-------|--------|-----------------|
-| 04 | Route, Auth, and Envelope Contract Refactor | ✅ Completed | Completed implementation with centralized route error flow, consistent envelopes across auth/events endpoints, and production JWT secret hardening validated via compose runtime checks. |
+| 04 | Route, Auth, and Envelope Contract Refactor | ✅ Completed | Inspector confirmed commit `e1f5be8`: mandatory gate passed in strict order (`just preflight`, `just sct`, `make checks`), centralized route `next(error)` flow is applied, JWT-only auth and production secret hardening are preserved, and envelope contract remains consistent across auth/events paths. |
 | 05 | Web Client Contract Alignment | ⬜ Not Started | |
 
 **Phase Status**: 🔄 In Progress
@@ -91,3 +91,4 @@
 | 2026-02-28 | Phase 1 | Approved for progression | GitHub Copilot (Phase Inspector) | Executed full phase inspection in Auto mode: confirmed all completed tasks (01–03) satisfy acceptance intent cumulatively, mandatory gate passed in order, no phase-scope side effects found, and phase marked ready for next phase. |
 | 2026-02-28 | 04 | Rework started | GitHub Copilot | Started route/auth/envelope contract refactor with production JWT secret hardening while preserving JWT-only auth and stable route paths. |
 | 2026-02-28 | 04 | Rework completed | GitHub Copilot | Refactored auth/events handlers to strict centralized error flow, normalized bearer parsing/auth failures, added shared created-response helper, hardened JWT helper to enforce strong production secrets, validated mandatory gate sequence (`just preflight`, `just sct`, `make checks`) and manual API/runtime checks (register/login/me/events + weak/strong production JWT secret policy). |
+| 2026-02-28 | 04 | Confirmed complete by inspection | GitHub Copilot (Inspector) | Verified latest coder commit `e1f5be8`; mandatory preflight sequence passed in strict order (`just preflight`, `just sct`, `make checks`) and code-level inspection confirms centralized error pipeline, JWT-only auth behavior, production JWT secret policy enforcement, and consistent success envelopes on affected auth/events endpoints. |
