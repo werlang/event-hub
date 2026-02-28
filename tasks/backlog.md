@@ -61,3 +61,21 @@ Introduce centralized API response/error primitives and align `api/app.js` boot 
 - [x] Readiness and explicit 404 handling are present
 - [x] No route-specific ad-hoc error response format introduced
 - [x] Manual validation completed
+
+## [TODO-EVHUB-STYLE-ALIGN-02] Refactor API model/driver architecture
+- Status: done
+- Priority: P1
+- Type: refactor
+- Scope: api
+- Source: .agents/changes/EVHUB-STYLE-ALIGN-api-sample-mirroring/03-tasks-02-model-driver-refactor.md
+- Dependencies: TODO-EVHUB-STYLE-ALIGN-01
+
+### Context
+Introduce a shared base model abstraction for UUID-based entities, move generic persistence operations to model primitives backed by `api/helpers/mysql.js`, and keep `api/helpers/datastore.js` focused on bootstrap/seed orchestration.
+
+### Acceptance Criteria
+- [x] Shared base model abstraction exists and is used by domain models
+- [x] UUID strategy remains intact for users/events
+- [x] SQL statements are not authored in route/model orchestration layers
+- [x] Existing core data flows still function
+- [x] Manual validation completed
