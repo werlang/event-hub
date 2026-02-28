@@ -25,7 +25,7 @@
 | Task | Title | Status | Inspector Notes |
 |------|-------|--------|-----------------|
 | 04 | Route, Auth, and Envelope Contract Refactor | ✅ Completed | Inspector confirmed commit `e1f5be8`: mandatory gate passed in strict order (`just preflight`, `just sct`, `make checks`), centralized route `next(error)` flow is applied, JWT-only auth and production secret hardening are preserved, and envelope contract remains consistent across auth/events paths. |
-| 05 | Web Client Contract Alignment | ✅ Completed | Web client now consumes standardized success/error envelopes across login/register/session, publish, and events list/filter flows; mandatory gate passed in strict order (`just preflight`, `just sct`, `make checks`). |
+| 05 | Web Client Contract Alignment | ✅ Completed | Inspector validated commit `71cb050`: mandatory gate passed in strict order (`just preflight`, `just sct`, `make checks`) and runtime sanity confirmed web routes 200 plus auth/events envelope compatibility for register/login/me/publish/list, including surfaced error messages (`401`, `400`). |
 
 **Phase Status**: ✅ Completed
 
@@ -94,3 +94,4 @@
 | 2026-02-28 | 04 | Confirmed complete by inspection | GitHub Copilot (Inspector) | Verified latest coder commit `e1f5be8`; mandatory preflight sequence passed in strict order (`just preflight`, `just sct`, `make checks`) and code-level inspection confirms centralized error pipeline, JWT-only auth behavior, production JWT secret policy enforcement, and consistent success envelopes on affected auth/events endpoints. |
 | 2026-02-28 | 05 | Rework started | GitHub Copilot | Started web contract alignment to consume standardized API success/error envelopes while preserving login/register/publish/filter UX flows. |
 | 2026-02-28 | 05 | Rework completed | GitHub Copilot | Implemented envelope-aware frontend API helper and page flows in `web/src/js/{index,login,publish}.js`, then validated mandatory gate sequence in strict order (`just preflight`, `just sct`, `make checks`). |
+| 2026-02-28 | 05 | Confirmed complete by inspection | GitHub Copilot (Inspector) | Verified latest coder commit `71cb050`; mandatory preflight sequence passed in strict order (`just preflight`, `just sct`, `make checks`), web routes (`/`, `/login`, `/publish`) returned 200, and runtime auth/events flows confirmed envelope compatibility for success and failure responses consumed by UI (`401`, `400`). |
