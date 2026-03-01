@@ -4,7 +4,7 @@
 |---|---|---|---|---|
 | 01 | Backend contract: convite único e tipos de usuário | ✅ Completed | Coder | 2026-03-01 |
 | 02 | Refatoração frontend para pages/components/helpers | ✅ Completed | Inspector | 2026-03-01 |
-| 03 | Home com modos por query + filtros/chips | ⏳ Pending | - | 2026-03-01 |
+| 03 | Home com modos por query + filtros/chips | ✅ Completed | Coder | 2026-03-01 |
 | 04 | Login/register com registro por convite | ⏳ Pending | - | 2026-03-01 |
 | 05 | Publicação com data padrão e horário opcional | ⏳ Pending | - | 2026-03-01 |
 | 06 | Estilo mobile-first, cues de passado e ordenação | ⏳ Pending | - | 2026-03-01 |
@@ -54,3 +54,17 @@
 	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps web sh -lc 'npm run dev:client & pid=$!; sleep 12; kill $pid; wait $pid || true'`
 - **Validação manual independente**: rotas web `/`, `/login` e `/publish` responderam HTTP `200` e renderizaram títulos esperados.
 - **Conclusão de qualidade**: critérios de aceite da task 02 atendidos nesta rodada de inspeção.
+
+## Task 03 Validation Evidence (2026-03-01)
+- Implementado modo por query na home com regra centralizada em `query-state` (`hasSpecificHomeQuery`):
+	- Sem query relevante: não busca eventos automaticamente e mantém superfícies de entrada visíveis.
+	- Com query relevante: executa busca inicial e oculta superfícies de entrada (`hero`, auth da topbar e bloco de filtros/chips).
+- Filtros e chips rápidos sincronizados com query string compartilhável (busca, categoria, de/até, esta semana, próximos 7 dias, categorias-chave).
+- Helper de semana local Domingo→Sábado criado e validado (`week-range`).
+- Preflight obrigatório executado com fallback Docker (host sem `npm/node/docker` no `PATH`):
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3100 api sh -lc 'npm run production & pid=$!; sleep 5; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3200 web sh -lc 'npm run production & pid=$!; sleep 5; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps web sh -lc 'npm run dev:client & pid=$!; sleep 12; kill $pid; wait $pid || true'`.
+- Smoke checks executados:
+	- `GET /` e `GET /?from=2026-03-01&to=2026-03-07&category=Pesquisa` retornando HTTP `200`.
+	- Execução de helpers em Node validando: modo sem query `false`, modo com query `true`, serialização de filtros e intervalo semanal `2026-03-01` → `2026-03-07`.

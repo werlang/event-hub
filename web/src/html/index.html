@@ -10,13 +10,13 @@
 <body>
     <header class="topbar">
         <a class="brand" href="/">Agenda Acadêmica</a>
-        <nav class="topbar__actions">
+        <nav class="topbar__actions" id="home-auth-surface">
             <a class="button button--ghost" href="/login">Entrar</a>
             <a class="button button--primary" href="/publish">Criar evento</a>
         </nav>
     </header>
 
-    <section class="hero">
+    <section class="hero" id="home-entry-surface">
         <div class="hero__content">
             <p class="pill">Agenda pública</p>
             <h1>Eventos universitários com filtros compartilháveis.</h1>
@@ -31,13 +31,13 @@
 
     <main>
         <section class="panel" id="events">
-            <div class="panel__header">
+            <div class="panel__header" id="home-filter-surface">
                 <div>
                     <p class="pill">Explorar</p>
                     <h2>Filtrar eventos</h2>
                     <p class="hint">Use os filtros para encontrar eventos de seu interesse. Você pode combinar vários filtros para refinar sua busca.</p>
                 </div>
-                <div class="filters">
+                <form class="filters" id="filter-form">
                     <label>
                         <span>Busca</span>
                         <input type="search" id="filter-search" placeholder="Palestras, oficinas, simpósios..." />
@@ -61,11 +61,12 @@
                         <span>Até</span>
                         <input type="date" id="filter-to" />
                     </label>
-                    <button class="button button--primary" id="apply-filters">Aplicar filtros</button>
-                </div>
+                    <button class="button button--primary" id="apply-filters" type="submit">Aplicar filtros</button>
+                </form>
+                <div class="chips" id="quick-chips"></div>
             </div>
             <div id="events-grid" class="grid"></div>
-            <p id="empty-state" class="empty-state">Nenhum evento encontrado para os filtros aplicados.</p>
+            <p id="empty-state" class="empty-state" hidden>Nenhum evento encontrado para os filtros aplicados.</p>
         </section>
     </main>
 </body>

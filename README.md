@@ -25,7 +25,8 @@ Abra `http://localhost:80` (Compose) ou `http://localhost:3000` (execução loca
 
 ## Fluxos principais
 
-- **Páginas web**: `/` lista e filtra eventos via query string; `/login` centraliza login/registro e persiste o token; `/publish` valida o token e abre o formulário de novo evento.
+- **Páginas web**: `/` opera em dois modos (neutro sem carregar eventos por padrão, ou agenda-only quando acessada com query de filtro); `/login` centraliza login/registro e persiste o token; `/publish` valida o token e abre o formulário de novo evento.
+- **Home (`/`)**: filtros por busca/categoria/período e chips rápidos (esta semana, próximos 7 dias e categorias) sincronizam a URL para compartilhamento de estado.
 - **Autenticação**:
   - `POST /auth/register` exige `inviteToken` válido e retorna token JWT (12h) + usuário.
   - `POST /auth/login` retorna token JWT (12h) + usuário.

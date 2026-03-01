@@ -2,6 +2,8 @@ function cleanText(value) {
 	return typeof value === 'string' ? value.trim() : '';
 }
 
+const HOME_QUERY_KEYS = ['search', 'q', 'category', 'from', 'to'];
+
 function normalizeFilters(source = {}) {
 	const params = new URLSearchParams();
 	const map = {
@@ -19,6 +21,16 @@ function normalizeFilters(source = {}) {
 	});
 
 	return params;
+}
+
+function hasTruthyQueryValue(params, key) {
+	const value = cleanText(params.get(key));
+	return Boolean(value);
+}
+
+export function hasSpecificHomeQuery(search = window.location.search) {
+	const params = new URLSearchParams(search);
+	return HOME_QUERY_KEYS.some((key) => hasTruthyQueryValue(params, key));
 }
 
 export function readHomeFiltersFromUrl(search = window.location.search) {
@@ -51,12 +63,16 @@ export function hydrateHomeFilters(elements) {
 	}
 }
 
+export function createHomeFilterParams(filters = {}) {
+	return normalizeFilters(filters);
+}
+
 export function serializeHomeFilters(elements) {
 	if (!elements) {
 		return new URLSearchParams();
 	}
 
-	return normalizeFilters({
+	return createHomeFilterParams({
 		search: elements.filterSearch?.value,
 		category: elements.filterCategory?.value,
 		from: elements.filterFrom?.value,

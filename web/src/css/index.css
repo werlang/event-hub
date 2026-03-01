@@ -169,6 +169,27 @@ main {
     align-items: end;
 }
 
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+}
+
+.chip {
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.chip:hover {
+    background: rgba(124, 58, 237, 0.16);
+}
+
 label {
     display: flex;
     flex-direction: column;

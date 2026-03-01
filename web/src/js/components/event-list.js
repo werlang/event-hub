@@ -4,16 +4,19 @@ export class EventList {
 	constructor({ grid, emptyState }) {
 		this.grid = grid;
 		this.emptyState = emptyState;
+		this.defaultEmptyMessage = this.emptyState?.textContent || 'Nenhum evento encontrado.';
 	}
 
 	isReady() {
 		return Boolean(this.grid && this.emptyState);
 	}
 
-	render(events) {
+	render(events, { emptyMessage } = {}) {
 		if (!this.isReady()) {
 			return;
 		}
+
+		this.emptyState.textContent = emptyMessage || this.defaultEmptyMessage;
 
 		if (!Array.isArray(events) || events.length === 0) {
 			this.grid.innerHTML = '';
