@@ -60,3 +60,10 @@ Abra `http://localhost:80` (Compose) ou `http://localhost:3000` (execução loca
 - ES Modules, Express 5, classes para modelos (`api/model/`), rotas puras em `api/routes/`.
 - JWT via `helpers/token.js`; persistência MySQL com helper/driver em `api/helpers/mysql.js`.
 - UI SSR com Mustache + assets estáticos em `web/public/` (`css` e `js`).
+
+## Arquitetura frontend (web/src/js)
+
+- `index.js`: dispatcher por página usando `TemplateVar.get('page')`.
+- `pages/*`: orquestração de fluxo por rota (`home-page`, `login-page`, `publish-page`).
+- `components/*`: blocos de UI reutilizáveis e desacoplados de chamadas de API.
+- `helpers/*`: utilitários não-UI (request, template vars, query state, data e ordenação).
