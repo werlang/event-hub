@@ -3,7 +3,7 @@
 | Task | Title | Status | Owner | Updated At |
 |---|---|---|---|---|
 | 01 | Backend contract: convite único e tipos de usuário | ✅ Completed | Coder | 2026-03-01 |
-| 02 | Refatoração frontend para pages/components/helpers | ✅ Completed | Coder | 2026-03-01 |
+| 02 | Refatoração frontend para pages/components/helpers | ✅ Completed | Inspector | 2026-03-01 |
 | 03 | Home com modos por query + filtros/chips | ⏳ Pending | - | 2026-03-01 |
 | 04 | Login/register com registro por convite | ⏳ Pending | - | 2026-03-01 |
 | 05 | Publicação com data padrão e horário opcional | ⏳ Pending | - | 2026-03-01 |
@@ -11,6 +11,8 @@
 | 07 | Wrap-up docs + 04-commit-msg + 05-gitlab-mr | ⏳ Pending | - | 2026-03-01 |
 
 ## Last Inspector Feedback
+- 2026-03-01: Task 02 aprovada após revalidação completa do inspector (preflight obrigatório passing via Docker + revisão cética do commit `01edb19` + checagem manual de `/`, `/login` e `/publish` com HTTP `200`).
+- 2026-03-01: Task 02 marcada como incompleta por bloqueio no preflight obrigatório na inspeção atual (ambiente do inspector sem `docker`, `npm` e `node`), impedindo validação independente do gate.
 - 2026-03-01: Task 01 marcada como incompleta por falha no preflight obrigatório (`npm run production` em `api/` retornou `command not found: npm`). Pelo protocolo, nenhuma validação adicional substitui preflight com falha.
 
 ## Rework Validation Evidence (2026-03-01)
@@ -42,3 +44,13 @@
 - Verificação manual do fluxo alterado:
 	- Navegação para `/`, `/login` e `/publish` confirmada em ambiente local durante validação funcional.
 	- Build de assets concluído sem erros (`webpack ... compiled successfully`).
+
+## Inspector Re-review Task 02 (2026-03-01)
+- **Status**: ✅ Complete (Task 02 approved).
+- **Revisão de código (cética)**: commit `01edb19` confirma dispatcher em `web/src/js/index.js`, estrutura modular em `pages/components/helpers` e desacoplamento básico entre UI e request.
+- **Preflight gate**: aprovado pelo inspector com sucesso em ambiente Docker usando caminho absoluto do binário:
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3100 api sh -lc 'npm run production & pid=$!; sleep 5; kill $pid; wait $pid || true'`
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3200 web sh -lc 'npm run production & pid=$!; sleep 5; kill $pid; wait $pid || true'`
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps web sh -lc 'npm run dev:client & pid=$!; sleep 12; kill $pid; wait $pid || true'`
+- **Validação manual independente**: rotas web `/`, `/login` e `/publish` responderam HTTP `200` e renderizaram títulos esperados.
+- **Conclusão de qualidade**: critérios de aceite da task 02 atendidos nesta rodada de inspeção.
