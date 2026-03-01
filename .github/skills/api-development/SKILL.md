@@ -27,8 +27,8 @@ Routes:
 
 `User` model (`api/model/user.js`):
 
-- Uses PBKDF2 password hashing (`sha256`, 310000 iterations)
-- Stores per-user salt and password hash
+- Uses bcrypt password hashing (`12` rounds)
+- Stores password hash only (`password_hash`)
 - Normalizes email to lowercase
 
 `Event` model (`api/model/event.js`):

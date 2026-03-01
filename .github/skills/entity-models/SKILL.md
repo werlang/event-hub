@@ -9,11 +9,11 @@ description: Work with domain models for users and events, including password ha
 
 ### User (`api/model/user.js`)
 
-- Fields: `id`, `name`, `email`, private `#salt`, private `#passwordHash`
+- Fields: `id`, `name`, `email`, private `#passwordHash`
 - `id` defaults to `crypto.randomUUID()`
 - `email` normalized to lowercase
-- Password hash: `pbkdf2Sync(plain, salt, 310000, 32, 'sha256')`
-- Password validation uses `crypto.timingSafeEqual`
+- Password hash: `bcrypt.hashSync(plain, 12)`
+- Password validation uses `bcrypt.compareSync`
 
 ### Event (`api/model/event.js`)
 
@@ -53,7 +53,7 @@ description: Work with domain models for users and events, including password ha
 ## Safe Change Guidelines
 
 - Keep `toJSON()` stable unless API contracts intentionally change.
-- Preserve secure password handling (salted hash plus timing-safe comparison).
+- Preserve secure password handling (bcrypt hashing and comparison).
 - If adding model fields, update all affected surfaces:
   - model constructor
   - `toJSON()`

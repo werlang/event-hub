@@ -42,7 +42,7 @@
 
 ## Data Model Conventions
 - **User** (`api/model/user.js`):
-  - password hashing via PBKDF2 (`sha256`, 310000 iterations, per-user salt).
+  - password hashing via bcrypt (`12` rounds).
   - email normalized to lowercase.
 - **Event** (`api/model/event.js`):
   - generated UUID when `id` is absent.
