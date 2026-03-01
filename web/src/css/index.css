@@ -48,6 +48,23 @@ a { color: inherit; text-decoration: none; }
     align-items: center;
 }
 
+.session-badge {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--panel-strong);
+    color: var(--muted);
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.session-badge--active {
+    color: var(--text);
+    border-color: rgba(124, 58, 237, 0.5);
+}
+
 .hero {
     position: relative;
     padding: 64px 7vw;
@@ -291,6 +308,11 @@ textarea { resize: vertical; }
 .tab--active {
     background: rgba(124, 58, 237, 0.2);
     color: #f8fafc;
+}
+
+.tab--disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .list {

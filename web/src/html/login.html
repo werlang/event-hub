@@ -11,6 +11,7 @@
     <header class="topbar">
         <a class="brand" href="/">Agenda Acadêmica</a>
         <nav class="topbar__actions">
+            <span id="session-badge" class="session-badge" aria-live="polite">Verificando sessão...</span>
             <a class="button button--ghost" href="/">Eventos</a>
             <a class="button button--primary" href="/publish">Criar evento</a>
         </nav>
@@ -30,7 +31,7 @@
             <div class="panel__block">
                 <div class="tabs">
                     <button class="tab tab--active" data-tab="login">Entrar</button>
-                    <button class="tab" data-tab="register">Registrar</button>
+                    <button class="tab tab--disabled" data-tab="register" aria-disabled="true">Registrar</button>
                 </div>
                 <div id="auth-message" class="alert" hidden></div>
                 <form id="login-form" class="form form--visible">
@@ -38,13 +39,14 @@
                     <label>Senha<input type="password" name="password" required></label>
                     <button class="button button--primary" type="submit">Entrar</button>
                 </form>
-                <form id="register-form" class="form">
+                <form id="register-form" class="form form--disabled" aria-disabled="true">
                     <label>Nome completo<input type="text" name="name" required></label>
                     <label>E-mail institucional<input type="email" name="email" required></label>
                     <label>Senha<input type="password" name="password" required></label>
+                    <input type="hidden" name="inviteToken" value="">
                     <button class="button button--primary" type="submit">Criar conta</button>
                 </form>
-                <p class="hint">Use seu e-mail institucional para acelerar a validação.</p>
+                <p id="invite-hint" class="hint">Registro disponível apenas com link de convite válido.</p>
             </div>
             <div class="panel__block">
                 <h2>Dicas rápidas</h2>

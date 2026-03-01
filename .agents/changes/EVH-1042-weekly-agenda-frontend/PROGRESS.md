@@ -4,13 +4,14 @@
 |---|---|---|---|---|
 | 01 | Backend contract: convite único e tipos de usuário | ✅ Completed | Coder | 2026-03-01 |
 | 02 | Refatoração frontend para pages/components/helpers | ✅ Completed | Inspector | 2026-03-01 |
-| 03 | Home com modos por query + filtros/chips | ✅ Completed | Coder | 2026-03-01 |
-| 04 | Login/register com registro por convite | ⏳ Pending | - | 2026-03-01 |
+| 03 | Home com modos por query + filtros/chips | ✅ Completed | Inspector | 2026-03-01 |
+| 04 | Login/register com registro por convite | ✅ Completed | Coder | 2026-03-01 |
 | 05 | Publicação com data padrão e horário opcional | ⏳ Pending | - | 2026-03-01 |
 | 06 | Estilo mobile-first, cues de passado e ordenação | ⏳ Pending | - | 2026-03-01 |
 | 07 | Wrap-up docs + 04-commit-msg + 05-gitlab-mr | ⏳ Pending | - | 2026-03-01 |
 
 ## Last Inspector Feedback
+- 2026-03-01: Task 03 aprovada pelo inspector após preflight obrigatório (fallback Docker), revisão cética dos módulos de home/query/chips e smoke checks HTTP independentes via container (`home=200`, `home_query=200`, `events_query=200`).
 - 2026-03-01: Task 02 aprovada após revalidação completa do inspector (preflight obrigatório passing via Docker + revisão cética do commit `01edb19` + checagem manual de `/`, `/login` e `/publish` com HTTP `200`).
 - 2026-03-01: Task 02 marcada como incompleta por bloqueio no preflight obrigatório na inspeção atual (ambiente do inspector sem `docker`, `npm` e `node`), impedindo validação independente do gate.
 - 2026-03-01: Task 01 marcada como incompleta por falha no preflight obrigatório (`npm run production` em `api/` retornou `command not found: npm`). Pelo protocolo, nenhuma validação adicional substitui preflight com falha.
@@ -68,3 +69,34 @@
 - Smoke checks executados:
 	- `GET /` e `GET /?from=2026-03-01&to=2026-03-07&category=Pesquisa` retornando HTTP `200`.
 	- Execução de helpers em Node validando: modo sem query `false`, modo com query `true`, serialização de filtros e intervalo semanal `2026-03-01` → `2026-03-07`.
+
+## Inspector Re-review Task 03 (2026-03-01)
+- **Status**: ✅ Complete (Task 03 approved).
+- **Preflight gate**: aprovado em fallback Docker com evidências:
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3100 api sh -lc 'npm run production & pid=$!; sleep 6; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3200 web sh -lc 'npm run production & pid=$!; sleep 8; kill $pid; wait $pid || true'`.
+	- Evidência de `webpack ... compiled successfully` coletada em `/usr/local/bin/docker compose -f compose.dev.yaml logs --tail=80 web`.
+- **Revisão de código (cética)**: regra de modo por query centralizada em `query-state` (`hasSpecificHomeQuery`), home neutra sem auto-fetch em `home-page`, filtros/chips sincronizando URL, helper `week-range` com semana local Domingo→Sábado.
+- **Validação manual independente**: checks HTTP via Node no container `web` retornaram `home=200`, `home_query=200` e `events_query=200`; helper checks confirmaram `modeDefault=false`, `modeQuery=true`, serialização de filtros e faixa semanal `2026-03-01` → `2026-03-07`.
+- **Conclusão de qualidade**: critérios de aceite da task 03 atendidos nesta rodada de inspeção.
+
+## Task 04 Validation Evidence (2026-03-01)
+- Implementação concluída para login/register por convite em frontend:
+	- Registro visível e desabilitado por padrão em `web/src/html/login.html`.
+	- Componente `AuthTabs` com estado bloqueado/habilitado para aba de registro.
+	- Novo helper `invite-token` para leitura/validação preliminar via query (`inviteToken|invite|token`).
+	- `login-page` com mensagens claras para convite ausente/inválido/expirado/usado e bloqueio de registro nesses cenários.
+	- `SessionBadge` adicionado e integrado ao topo para refletir estado de sessão.
+	- Redirecionamento pós-login preservado para `/publish`.
+- Preflight obrigatório executado via fallback Docker (host sem `npm`):
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3100 api sh -lc 'npm run production & pid=$!; sleep 6; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3200 web sh -lc 'npm run production & pid=$!; sleep 6; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps web sh -lc 'npm run dev:client & pid=$!; sleep 14; kill $pid; wait $pid || true'` com `webpack ... compiled successfully`.
+- Verificações manuais/smoke:
+	- `GET /login` sem convite retornando HTTP `200`.
+	- Convite válido gerado via API (`POST /auth/login` admin + `POST /auth/invites`) e abertura de `/login?inviteToken=<token>` retornando HTTP `200`.
+	- Asserções de template e source dentro do container `web` confirmando:
+		- aba de registro desabilitada por padrão,
+		- presença de campo oculto `inviteToken`,
+		- presença de `session-badge`,
+		- fallback de redirect para `/publish` no `login-page`.
