@@ -7,7 +7,7 @@
 | 03 | Home com modos por query + filtros/chips | ✅ Completed | Inspector | 2026-03-01 |
 | 04 | Login/register com registro por convite | ✅ Completed | Inspector | 2026-03-01 |
 | 05 | Publicação com data padrão e horário opcional | ✅ Completed | Inspector | 2026-03-01 |
-| 06 | Estilo mobile-first, cues de passado e ordenação | ⏳ Pending | - | 2026-03-01 |
+| 06 | Estilo mobile-first, cues de passado e ordenação | ✅ Completed | Coder | 2026-03-01 |
 | 07 | Wrap-up docs + 04-commit-msg + 05-gitlab-mr | ⏳ Pending | - | 2026-03-01 |
 
 ## Last Inspector Feedback
@@ -145,3 +145,20 @@
 	- Publicação sem sessão válida retornou HTTP `401`.
 	- `GET /publish` retornou HTTP `200` com marcadores esperados de UX (`has_toggle=true`, `time_disabled_default=true`).
 - **Conclusão de qualidade**: critérios de aceite da task 05 atendidos nesta rodada de inspeção.
+
+## Task 06 Validation Evidence (2026-03-01)
+- Implementação concluída para cues visuais de passado, ordenação e polimento mobile-first:
+	- `web/src/js/helpers/event-sort.js` atualizado com ordenação determinística por dia e regra `data-only` antes de `data+hora` no mesmo dia.
+	- `web/src/js/components/event-list.js` passou a aplicar ordenação centralizada antes da renderização.
+	- `web/src/js/components/event-card.js` atualizado para marcar eventos passados com estado visual explícito (`card--past`) e selo `Evento passado`.
+	- `web/src/css/index.css` ajustado para baseline mobile-first (espaçamentos compactos por padrão + escalonamento em `min-width`) e estilo de legibilidade para cartões passados.
+- Preflight obrigatório executado via fallback Docker e sucesso:
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3100 api sh -lc 'npm run production & pid=$!; sleep 6; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3200 web sh -lc 'npm run production & pid=$!; sleep 6; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps web sh -lc 'npm run dev:client & pid=$!; sleep 14; kill $pid; wait $pid || true'` com `webpack ... compiled successfully`.
+- Verificações manuais/smoke concluídas:
+	- Home em modo padrão e com query retornando HTTP `200` (`/` e `/?from=2026-03-01&to=2026-03-07`).
+	- Script de validação do helper/card confirmou:
+		- ordenação no mesmo dia: `Sem horário > Com horário > Dia seguinte`;
+		- classificação de passado: `past_flag=true`;
+		- cue visual no card: `has_past_class=true` e `has_past_label=true`.

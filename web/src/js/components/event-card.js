@@ -1,4 +1,5 @@
 import { formatDateTimePtBr } from '../helpers/date-format.js';
+import { isPastEvent } from '../helpers/event-sort.js';
 
 function escapeHtml(value) {
 	return String(value)
@@ -10,8 +11,13 @@ function escapeHtml(value) {
 }
 
 export function renderEventCard(event) {
+	const pastEvent = isPastEvent(event);
+	const cardClass = pastEvent ? 'card card--past' : 'card';
+	const pastEventLabel = pastEvent ? '<span class="card__state">Evento passado</span>' : '';
+
 	return `
-		<article class="card">
+		<article class="${cardClass}">
+			${pastEventLabel}
 			<div class="card__title">${escapeHtml(event?.title || 'Sem título')}</div>
 			<p>${escapeHtml(event?.description || 'Sem descrição.')}</p>
 			<div class="card__meta">

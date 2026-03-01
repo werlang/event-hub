@@ -1,4 +1,5 @@
 import { renderEventCard } from './event-card.js';
+import { sortEventsByDate } from '../helpers/event-sort.js';
 
 export class EventList {
 	constructor({ grid, emptyState }) {
@@ -25,6 +26,7 @@ export class EventList {
 		}
 
 		this.emptyState.hidden = true;
-		this.grid.innerHTML = events.map(renderEventCard).join('');
+		const sortedEvents = sortEventsByDate(events);
+		this.grid.innerHTML = sortedEvents.map(renderEventCard).join('');
 	}
 }
