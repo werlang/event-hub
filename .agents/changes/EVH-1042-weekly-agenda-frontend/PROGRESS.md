@@ -8,7 +8,26 @@
 | 04 | Login/register com registro por convite | ✅ Completed | Inspector | 2026-03-01 |
 | 05 | Publicação com data padrão e horário opcional | ✅ Completed | Inspector | 2026-03-01 |
 | 06 | Estilo mobile-first, cues de passado e ordenação | ✅ Completed | Inspector | 2026-03-01 |
-| 07 | Wrap-up docs + 04-commit-msg + 05-gitlab-mr | ⏳ Pending | - | 2026-03-01 |
+| 07 | Wrap-up docs + 04-commit-msg + 05-gitlab-mr | ✅ Completed | Coder | 2026-03-01 |
+
+## Task 07 Validation Evidence (2026-03-01)
+- Artefatos de documentação concluídos:
+	- `README.md` atualizado com fluxo final (home por query, registro por convite e publish com data-only/hora opcional).
+	- `.agents/changes/EVH-1042-weekly-agenda-frontend/04-commit-msg.md` criado com mensagem consolidada.
+	- `.agents/changes/EVH-1042-weekly-agenda-frontend/05-gitlab-mr.md` criado com contexto, escopo, uso e impacto.
+- Preflight obrigatório executado com fallback Docker e sucesso:
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3100 api sh -lc 'npm run production & pid=$!; sleep 6; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3200 web sh -lc 'npm run production & pid=$!; sleep 6; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps web sh -lc 'npm run dev:client & pid=$!; sleep 14; kill $pid; wait $pid || true'` com `webpack ... compiled successfully`.
+- Checklist manual final (smoke) executado:
+	- `home_http=200`
+	- `home_query_http=200`
+	- `login_no_http=200`
+	- `login_invite_http=200`
+	- `publish_http=200`
+	- `register_disabled_marker=true`
+	- `invite_hidden_input=true`
+	- `publish_has_time_toggle=true`
 
 ## Last Inspector Feedback
 - 2026-03-01: Task 06 aprovada pelo inspector após preflight obrigatório (fallback Docker), revisão cética do commit `43e0afc` e validação independente da ordenação (`data-only` antes de `data+hora` no mesmo dia), cue visual de passado e smoke HTTP dos modos da home.

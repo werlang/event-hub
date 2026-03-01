@@ -27,15 +27,29 @@ Abra `http://localhost:80` (Compose) ou `http://localhost:3000` (execução loca
 
 - **Páginas web**: `/` opera em dois modos (neutro sem carregar eventos por padrão, ou agenda-only quando acessada com query de filtro); `/login` centraliza login/registro e persiste o token; `/publish` valida o token e abre o formulário de novo evento.
 - **Home (`/`)**: filtros por busca/categoria/período e chips rápidos (esta semana, próximos 7 dias e categorias) sincronizam a URL para compartilhamento de estado.
+- **Home em modo agenda-only por link**: ao acessar `/` com query relevante (`search|q`, `category`, `from`, `to`), a tela prioriza apenas os resultados da agenda e oculta superfícies de entrada.
 - **Autenticação**:
   - `POST /auth/register` exige `inviteToken` válido e retorna token JWT (12h) + usuário.
   - `POST /auth/login` retorna token JWT (12h) + usuário.
   - `GET /auth/me` retorna sessão atual (incluindo `role`).
   - `POST /auth/invites` (Bearer admin) gera convite one-time com expiração.
+- **Login/Register (`/login`)**: registro permanece visível porém desabilitado sem convite válido; com `inviteToken` válido na URL, o envio de registro é habilitado.
+- **Publicação (`/publish`)**: formulário aceita data obrigatória com horário opcional via toggle `Informar horário`.
+  - Toggle desligado: envia `date` como `YYYY-MM-DD` (data-only).
+  - Toggle ligado: envia `date` como `YYYY-MM-DDTHH:mm` (data+hora).
 - **Eventos (API)**:
   - `POST /events` (Bearer token) — cria evento com `title`, `description`, `date`, `category`, `location`.
   - `GET /events` — lista pública com filtros `search|q`, `category`, `from`, `to`.
   - `GET /events/:id` — detalhe público.
+
+## Exemplos de links compartilháveis
+
+- Agenda semanal (Domingo→Sábado):
+  - `/?from=2026-03-01&to=2026-03-07`
+- Agenda semanal por categoria:
+  - `/?from=2026-03-01&to=2026-03-07&category=Pesquisa`
+- Busca textual com recorte de período:
+  - `/?search=edital&from=2026-03-01&to=2026-03-31`
 
 ## Contrato de resposta
 
