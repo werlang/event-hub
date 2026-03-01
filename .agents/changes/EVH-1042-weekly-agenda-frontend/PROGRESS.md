@@ -5,12 +5,13 @@
 | 01 | Backend contract: convite único e tipos de usuário | ✅ Completed | Coder | 2026-03-01 |
 | 02 | Refatoração frontend para pages/components/helpers | ✅ Completed | Inspector | 2026-03-01 |
 | 03 | Home com modos por query + filtros/chips | ✅ Completed | Inspector | 2026-03-01 |
-| 04 | Login/register com registro por convite | ✅ Completed | Coder | 2026-03-01 |
-| 05 | Publicação com data padrão e horário opcional | ⏳ Pending | - | 2026-03-01 |
+| 04 | Login/register com registro por convite | ✅ Completed | Inspector | 2026-03-01 |
+| 05 | Publicação com data padrão e horário opcional | ✅ Completed | Coder | 2026-03-01 |
 | 06 | Estilo mobile-first, cues de passado e ordenação | ⏳ Pending | - | 2026-03-01 |
 | 07 | Wrap-up docs + 04-commit-msg + 05-gitlab-mr | ⏳ Pending | - | 2026-03-01 |
 
 ## Last Inspector Feedback
+- 2026-03-01: Task 04 aprovada pelo inspector após preflight obrigatório (fallback Docker), revisão cética do commit `0acd5b2` e validação independente da tela `/login` (sem e com `inviteToken`) com HTTP `200` e marcadores de UX esperados.
 - 2026-03-01: Task 03 aprovada pelo inspector após preflight obrigatório (fallback Docker), revisão cética dos módulos de home/query/chips e smoke checks HTTP independentes via container (`home=200`, `home_query=200`, `events_query=200`).
 - 2026-03-01: Task 02 aprovada após revalidação completa do inspector (preflight obrigatório passing via Docker + revisão cética do commit `01edb19` + checagem manual de `/`, `/login` e `/publish` com HTTP `200`).
 - 2026-03-01: Task 02 marcada como incompleta por bloqueio no preflight obrigatório na inspeção atual (ambiente do inspector sem `docker`, `npm` e `node`), impedindo validação independente do gate.
@@ -100,3 +101,32 @@
 		- presença de campo oculto `inviteToken`,
 		- presença de `session-badge`,
 		- fallback de redirect para `/publish` no `login-page`.
+
+## Inspector Re-review Task 04 (2026-03-01)
+- **Status**: ✅ Complete (Task 04 approved).
+- **Preflight gate**: aprovado com fallback Docker:
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3100 api sh -lc 'npm run production & pid=$!; sleep 6; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3200 web sh -lc 'npm run production & pid=$!; sleep 6; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps web sh -lc 'npm run dev:client & pid=$!; sleep 14; kill $pid; wait $pid || true'`.
+- **Revisão de código (cética)**: commit `0acd5b2` cobre os artefatos esperados da task (`login.html`, `login-page`, `auth-tabs`, `session-badge`, `invite-token`) e mantém redirect pós-login para `/publish`.
+- **Validação independente**:
+	- `GET /login` e `GET /login?inviteToken=<token>` com HTTP `200`.
+	- Marcadores da UX no HTML de `/login`: `tab--disabled=true`, `hidden_invite_token=true`, `session_badge=true`, `invite_hint=true`, `redirect_publish=true`.
+	- Convite válido emitido via API com fluxo admin (`POST /auth/login` + `POST /auth/invites`) para teste da URL com token.
+- **Observação operacional**: em modo desenvolvimento, foi necessário reiniciar o serviço `web` para invalidar cache de template e refletir o HTML atualizado durante a inspeção.
+
+## Task 05 Validation Evidence (2026-03-01)
+- Implementação concluída para publicação com data obrigatória e horário opcional:
+	- `web/src/html/publish.html` atualizado com toggle `Informar horário` e campo de hora desabilitado por padrão.
+	- `web/src/js/components/event-form.js` criado para controlar estado do toggle, validação e serialização do payload.
+	- `web/src/js/helpers/date-serialize.js` criado para compor `date` em modo data-only (`YYYY-MM-DD`) ou data+hora (`YYYY-MM-DDTHH:mm`).
+	- `web/src/js/pages/publish-page.js` ajustado para usar o novo componente mantendo gate de sessão e mensagens de sucesso/erro.
+- Preflight obrigatório executado com fallback Docker e sucesso:
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3100 api sh -lc 'npm run production & pid=$!; sleep 6; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3200 web sh -lc 'npm run production & pid=$!; sleep 6; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps web sh -lc 'npm run dev:client & pid=$!; sleep 14; kill $pid; wait $pid || true'` com `webpack ... compiled successfully`.
+- Verificações manuais/smoke concluídas:
+	- Publicar com data-only: HTTP `201`.
+	- Publicar com data+hora: HTTP `201`.
+	- Tentar publicar sem sessão válida: HTTP `401`.
+	- `GET /publish`: HTTP `200`, `has_toggle=true`, `time_disabled_default=true`.

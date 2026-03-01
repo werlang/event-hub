@@ -31,7 +31,14 @@
             <form id="event-form" class="form form--disabled">
                 <div class="form-row">
                     <label>Título<input type="text" name="title" placeholder="Workshop de IA aplicada" required></label>
-                    <label>Data e hora<input type="datetime-local" name="date" required></label>
+                    <label>Data<input type="date" name="date" required></label>
+                </div>
+                <div class="form-row">
+                    <label>
+                        <input type="checkbox" name="hasTime" id="event-has-time">
+                        Informar horário
+                    </label>
+                    <label>Horário<input type="time" name="time" id="event-time" disabled></label>
                 </div>
                 <div class="form-row">
                     <label>Categoria

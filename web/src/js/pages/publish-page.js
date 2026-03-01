@@ -2,23 +2,13 @@ import { TemplateVar } from '../helpers/template-var.js';
 import { requestApi, readToken, clearToken } from '../helpers/api.js';
 import { StatusAlert } from '../components/status-alert.js';
 import { setFormEnabled } from '../components/form-state.js';
+import { EventForm } from '../components/event-form.js';
 
 function getElements() {
 	return {
 		authState: document.querySelector('#auth-state'),
 		eventForm: document.querySelector('#event-form'),
 		successToast: document.querySelector('#event-success'),
-	};
-}
-
-function toEventPayload(form) {
-	const data = Object.fromEntries(new FormData(form).entries());
-	return {
-		title: data.title,
-		description: data.description,
-		category: data.category,
-		location: data.location,
-		date: data.date,
 	};
 }
 
@@ -46,6 +36,8 @@ export async function initPublishPage() {
 	}
 
 	const alert = new StatusAlert(elements.authState);
+	const eventForm = new EventForm(elements.eventForm);
+	eventForm.bind();
 	setFormEnabled(elements.eventForm, false);
 
 	const token = readToken();
@@ -73,10 +65,20 @@ export async function initPublishPage() {
 		event.preventDefault();
 		alert.hide();
 
+		if (!elements.eventForm.reportValidity()) {
+			return;
+		}
+
+		const parsed = eventForm.toPayload();
+		if (!parsed.ok) {
+			alert.show(parsed.message, { isError: true });
+			return;
+		}
+
 		const response = await requestApi('/events', {
 			method: 'POST',
 			token,
-			body: toEventPayload(elements.eventForm),
+			body: parsed.payload,
 		});
 
 		if (!response.ok) {
@@ -85,7 +87,7 @@ export async function initPublishPage() {
 		}
 
 		showSuccess(elements.successToast);
-		elements.eventForm.reset();
+		eventForm.reset();
 		alert.show('Evento publicado com sucesso.', { isError: false });
 	});
 }
