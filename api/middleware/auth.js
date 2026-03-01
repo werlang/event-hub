@@ -20,3 +20,18 @@ export function authMiddleware(req, res, next) {
         return next(new CustomError(401, 'Sessão inválida ou expirada.'));
     }
 }
+
+export function requireRole(...allowedRoles) {
+    const normalizedRoles = allowedRoles
+        .map(role => String(role || '').toLowerCase())
+        .filter(Boolean);
+
+    return (req, res, next) => {
+        const role = String(req.user?.role || '').toLowerCase();
+        if (!role || !normalizedRoles.includes(role)) {
+            return next(new CustomError(403, 'Você não tem permissão para executar esta ação.'));
+        }
+
+        return next();
+    };
+}

@@ -26,7 +26,11 @@ Abra `http://localhost:80` (Compose) ou `http://localhost:3000` (execução loca
 ## Fluxos principais
 
 - **Páginas web**: `/` lista e filtra eventos via query string; `/login` centraliza login/registro e persiste o token; `/publish` valida o token e abre o formulário de novo evento.
-- **Autenticação**: `/auth/register`, `/auth/login`, `/auth/me` retornam token JWT (12h) e dados do usuário.
+- **Autenticação**:
+  - `POST /auth/register` exige `inviteToken` válido e retorna token JWT (12h) + usuário.
+  - `POST /auth/login` retorna token JWT (12h) + usuário.
+  - `GET /auth/me` retorna sessão atual (incluindo `role`).
+  - `POST /auth/invites` (Bearer admin) gera convite one-time com expiração.
 - **Eventos (API)**:
   - `POST /events` (Bearer token) — cria evento com `title`, `description`, `date`, `category`, `location`.
   - `GET /events` — lista pública com filtros `search|q`, `category`, `from`, `to`.
@@ -39,11 +43,17 @@ Abra `http://localhost:80` (Compose) ou `http://localhost:3000` (execução loca
 
 ## Dados e seeds
 
-- O schema oficial do banco está em `api/data/schema.sql` (tabelas `users`, `events`).
+- O schema oficial do banco está em `api/data/schema.sql` (tabelas `users`, `events`, `invites`).
 - No bootstrap, a API executa esse schema e insere:
-  - Usuário administrador: `admin@universidade.test` / senha `changeme`.
+  - Usuário administrador: `admin@universidade.test` / senha `changeme` (role `admin`).
   - Dois eventos de exemplo para testes visuais.
   - Para desenvolvimento via Docker Compose, use `compose.dev.yaml`, que sobe `api`, `web` e `mysql`.
+
+## Convites e roles
+
+- Cadastro público está desabilitado sem convite: chamadas em `/auth/register` sem `inviteToken` falham.
+- Convites são de uso único e expiram; convites usados/expirados são rejeitados.
+- Usuários têm `role` persistido (`admin` ou `member`), incluído no payload do JWT e nas respostas de autenticação.
 
 ## Convenções de código
 

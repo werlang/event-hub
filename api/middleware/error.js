@@ -6,6 +6,7 @@ const ERROR_TYPES = {
     404: 'Not Found',
     408: 'Request Timeout',
     409: 'Conflict',
+    410: 'Gone',
     500: 'Internal Server Error',
     502: 'Bad Gateway',
     504: 'Gateway Timeout',

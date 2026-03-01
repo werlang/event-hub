@@ -5,17 +5,24 @@ import { Model } from './model.js';
 export class User extends Model {
 
     static table = 'users';
-    static view = ['id', 'name', 'email', 'password_hash', 'created_at'];
+    static view = ['id', 'name', 'email', 'role', 'password_hash', 'created_at'];
     static BCRYPT_ROUNDS = 12;
+    static ALLOWED_ROLES = ['admin', 'member'];
 
     #passwordHash;
 
-    constructor({ id, name, email, password, passwordHash } = {}) {
+    constructor({ id, name, email, role, password, passwordHash } = {}) {
         super();
         this.id = id || crypto.randomUUID();
         this.name = name || '';
         this.email = email?.toLowerCase() || '';
+        this.role = User.normalizeRole(role);
         this.#passwordHash = passwordHash || this.#hashPassword(password || '');
+    }
+
+    static normalizeRole(role) {
+        const normalizedRole = String(role || 'member').toLowerCase();
+        return User.ALLOWED_ROLES.includes(normalizedRole) ? normalizedRole : 'member';
     }
 
     #hashPassword(plain) {
@@ -39,6 +46,7 @@ export class User extends Model {
             id: this.id,
             name: this.name,
             email: this.email,
+            role: this.role,
             passwordHash: this.#passwordHash,
         };
     }
@@ -51,6 +59,7 @@ export class User extends Model {
             id: row.id,
             name: row.name,
             email: row.email,
+            role: User.normalizeRole(row.role),
             passwordHash: row.passwordHash || row.password_hash,
             createdAt: createdAtRaw ? new Date(createdAtRaw).toISOString() : undefined,
         };
@@ -69,6 +78,7 @@ export class User extends Model {
             id: json.id,
             name: json.name,
             email: json.email?.toLowerCase(),
+            role: User.normalizeRole(json.role),
             password_hash: json.passwordHash,
             created_at: this.driver.toDateTime(payload.createdAt || Date.now()),
         };
