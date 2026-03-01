@@ -39,7 +39,8 @@ Abra `http://localhost:80` (Compose) ou `http://localhost:3000` (execução loca
 
 ## Dados e seeds
 
-- A API inicializa tabelas MySQL (`users`, `events`, `event_audiences`) e insere:
+- O schema oficial do banco está em `api/data/schema.sql` (tabelas `users`, `events`, `event_audiences`).
+- No bootstrap, a API executa esse schema e insere:
   - Usuário administrador: `admin@universidade.test` / senha `changeme`.
   - Dois eventos de exemplo para testes visuais.
   - Para desenvolvimento via Docker Compose, use `compose.dev.yaml`, que sobe `api`, `web` e `mysql`.
@@ -47,5 +48,5 @@ Abra `http://localhost:80` (Compose) ou `http://localhost:3000` (execução loca
 ## Convenções de código
 
 - ES Modules, Express 5, classes para modelos (`api/model/`), rotas puras em `api/routes/`.
-- JWT via `helpers/token.js`; persistência MySQL com helper/driver em `api/helpers/mysql.js` e orquestração em `api/helpers/datastore.js`.
+- JWT via `helpers/token.js`; persistência MySQL com helper/driver em `api/helpers/mysql.js`.
 - UI SSR com Mustache + assets estáticos em `web/public/` (`css` e `js`).

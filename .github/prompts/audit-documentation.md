@@ -30,7 +30,6 @@ Remove references to non-existent features (Redis, timetable entities, proposal 
 - `api/routes/events.js`
 - `api/model/user.js`
 - `api/model/event.js`
-- `api/helpers/datastore.js`
 - `api/helpers/token.js`
 - `api/middleware/auth.js`
 - `web/app.js`

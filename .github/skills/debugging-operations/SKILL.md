@@ -89,7 +89,6 @@ curl "http://localhost:3000/events?search=workshop&category=Geral"
 - `api/routes/auth.js`
 - `api/routes/events.js`
 - `api/middleware/auth.js`
-- `api/helpers/datastore.js`
 - `web/app.js`
 - `web/src/js/index.js`
 - `compose.dev.yaml`

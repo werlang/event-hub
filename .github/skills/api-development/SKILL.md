@@ -37,13 +37,6 @@ Routes:
 - Defaults: `category = 'Geral'`, `location = 'A definir'`, `audience = []`
 - Sets `createdAt` automatically
 
-Persistence (`api/helpers/datastore.js`):
-
-- MySQL-backed persistence through `Mysql` driver + `Model` classes
-- Bootstraps tables (`users`, `events`, `event_audiences`) and seeds default admin plus sample events
-- Executes idempotent migration from legacy `events.audience` JSON into `event_audiences`
-- Filtering supported in `listEvents({ search, category, from, to, audience })`
-
 ## Authentication Pattern
 
 Token helpers (`api/helpers/token.js`):

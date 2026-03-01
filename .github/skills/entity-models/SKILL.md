@@ -24,24 +24,6 @@ description: Work with domain models for users and events, including password ha
 - `audience` default: `[]`
 - `createdAt` default: current ISO datetime
 
-## Persistence Layer
-
-`DataStore` in `api/helpers/datastore.js`:
-
-- Connects to MySQL via `Mysql`
-- Creates `users`, `events`, and `event_audiences` tables
-- Migrates legacy `events.audience` JSON data into `event_audiences` (idempotent)
-- Seeds default admin user and two initial events when users table is empty
-- Provides CRUD-ish methods used by routes:
-  - users: `findUserByEmail`, `findUserById`, `addUser`
-  - events: `listEvents`, `findEventById`, `addEvent`, `deleteEvent`
-
-`Event` audience persistence:
-
-- `event_audiences` is the source of truth
-- API output still exposes `audience: string[]`
-- Writes use relation replacement with deduplication semantics
-
 ## Filtering Rules (`listEvents`)
 
 - `category`: case-insensitive exact match
