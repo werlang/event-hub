@@ -26,3 +26,9 @@
 	- Convite expirado (expiração forçada no banco para teste): HTTP `410`.
 	- Geração de convite por admin: HTTP `201`.
 	- Tentativa de gerar convite com usuário `member`: HTTP `403`.
+
+## Inspector Re-review (2026-03-01)
+- **Status**: ✅ Complete (Task 01 approved).
+- **Preflight gate**: Aprovado em ambiente válido (Docker), com sucesso em `api production`, `web production` e `web dev:client`.
+- **Validação manual independente**: fluxo confirmado novamente com os códigos esperados — sem convite (`400`), convite inválido (`400`), convite válido (`201`), reuso (`409`), convite expirado (`410`), geração por admin (`201`) e bloqueio para não-admin (`403`).
+- **Conclusão de qualidade**: critérios de aceite da task 01 atendidos; pendências do feedback anterior (falha de preflight) resolvidas.
