@@ -6,11 +6,12 @@
 | 02 | Refatoração frontend para pages/components/helpers | ✅ Completed | Inspector | 2026-03-01 |
 | 03 | Home com modos por query + filtros/chips | ✅ Completed | Inspector | 2026-03-01 |
 | 04 | Login/register com registro por convite | ✅ Completed | Inspector | 2026-03-01 |
-| 05 | Publicação com data padrão e horário opcional | ✅ Completed | Coder | 2026-03-01 |
+| 05 | Publicação com data padrão e horário opcional | ✅ Completed | Inspector | 2026-03-01 |
 | 06 | Estilo mobile-first, cues de passado e ordenação | ⏳ Pending | - | 2026-03-01 |
 | 07 | Wrap-up docs + 04-commit-msg + 05-gitlab-mr | ⏳ Pending | - | 2026-03-01 |
 
 ## Last Inspector Feedback
+- 2026-03-01: Task 05 aprovada pelo inspector após preflight obrigatório (fallback Docker), revisão cética do commit `6f355bd` e validação independente dos cenários publish (data-only `201`, data+hora `201`, sem sessão `401`) com presença do toggle e campo de hora desabilitado por padrão.
 - 2026-03-01: Task 04 aprovada pelo inspector após preflight obrigatório (fallback Docker), revisão cética do commit `0acd5b2` e validação independente da tela `/login` (sem e com `inviteToken`) com HTTP `200` e marcadores de UX esperados.
 - 2026-03-01: Task 03 aprovada pelo inspector após preflight obrigatório (fallback Docker), revisão cética dos módulos de home/query/chips e smoke checks HTTP independentes via container (`home=200`, `home_query=200`, `events_query=200`).
 - 2026-03-01: Task 02 aprovada após revalidação completa do inspector (preflight obrigatório passing via Docker + revisão cética do commit `01edb19` + checagem manual de `/`, `/login` e `/publish` com HTTP `200`).
@@ -130,3 +131,17 @@
 	- Publicar com data+hora: HTTP `201`.
 	- Tentar publicar sem sessão válida: HTTP `401`.
 	- `GET /publish`: HTTP `200`, `has_toggle=true`, `time_disabled_default=true`.
+
+## Inspector Re-review Task 05 (2026-03-01)
+- **Status**: ✅ Complete (Task 05 approved).
+- **Preflight gate**: aprovado com fallback Docker:
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3100 api sh -lc 'npm run production & pid=$!; sleep 6; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3200 web sh -lc 'npm run production & pid=$!; sleep 6; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps web sh -lc 'npm run dev:client & pid=$!; sleep 14; kill $pid; wait $pid || true'` com `webpack ... compiled successfully`.
+- **Revisão de código (cética)**: commit `6f355bd` cobre os artefatos esperados da task (`publish.html`, `publish-page`, `event-form`, `date-serialize`) e mantém gate de sessão + feedbacks de publicação.
+- **Validação independente**:
+	- Publicação com data-only (`date=YYYY-MM-DD`) retornou status `201`.
+	- Publicação com data+hora (`date=YYYY-MM-DDTHH:mm`) retornou status `201`.
+	- Publicação sem sessão válida retornou HTTP `401`.
+	- `GET /publish` retornou HTTP `200` com marcadores esperados de UX (`has_toggle=true`, `time_disabled_default=true`).
+- **Conclusão de qualidade**: critérios de aceite da task 05 atendidos nesta rodada de inspeção.
