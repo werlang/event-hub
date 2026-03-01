@@ -8,7 +8,7 @@
 | 04 | Login/register com registro por convite | ✅ Completed | Inspector | 2026-03-01 |
 | 05 | Publicação com data padrão e horário opcional | ✅ Completed | Inspector | 2026-03-01 |
 | 06 | Estilo mobile-first, cues de passado e ordenação | ✅ Completed | Inspector | 2026-03-01 |
-| 07 | Wrap-up docs + 04-commit-msg + 05-gitlab-mr | ✅ Completed | Coder | 2026-03-01 |
+| 07 | Wrap-up docs + 04-commit-msg + 05-gitlab-mr | ✅ Completed | Inspector | 2026-03-01 |
 
 ## Task 07 Validation Evidence (2026-03-01)
 - Artefatos de documentação concluídos:
@@ -30,6 +30,7 @@
 	- `publish_has_time_toggle=true`
 
 ## Last Inspector Feedback
+- 2026-03-01: Task 07 aprovada pelo inspector após preflight obrigatório (fallback Docker), revisão cética do commit `f0b1003` e validação independente do checklist final (`home/query/login/publish` com HTTP `200` + marcadores de UX esperados).
 - 2026-03-01: Task 06 aprovada pelo inspector após preflight obrigatório (fallback Docker), revisão cética do commit `43e0afc` e validação independente da ordenação (`data-only` antes de `data+hora` no mesmo dia), cue visual de passado e smoke HTTP dos modos da home.
 - 2026-03-01: Task 05 aprovada pelo inspector após preflight obrigatório (fallback Docker), revisão cética do commit `6f355bd` e validação independente dos cenários publish (data-only `201`, data+hora `201`, sem sessão `401`) com presença do toggle e campo de hora desabilitado por padrão.
 - 2026-03-01: Task 04 aprovada pelo inspector após preflight obrigatório (fallback Docker), revisão cética do commit `0acd5b2` e validação independente da tela `/login` (sem e com `inviteToken`) com HTTP `200` e marcadores de UX esperados.
@@ -194,3 +195,16 @@
 	- `GET /` e `GET /?from=2026-03-01&to=2026-03-07` retornaram HTTP `200`.
 	- Execução independente do helper/card confirmou `ordered_same_day=Sem horário > Com horário > Dia seguinte`, `past_flag=true`, `has_past_class=true` e `has_past_label=true`.
 - **Conclusão de qualidade**: critérios de aceite da task 06 atendidos nesta rodada de inspeção.
+
+## Inspector Re-review Task 07 (2026-03-01)
+- **Status**: ✅ Complete (Task 07 approved).
+- **Preflight gate**: aprovado com fallback Docker:
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3100 api sh -lc 'npm run production & pid=$!; sleep 6; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3200 web sh -lc 'npm run production & pid=$!; sleep 6; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps web sh -lc 'npm run dev:client & pid=$!; sleep 14; kill $pid; wait $pid || true'` com `webpack ... compiled successfully`.
+- **Revisão de código (cética)**: commit `f0b1003` cobre exatamente os artefatos documentais esperados da task (`README.md`, `04-commit-msg.md`, `05-gitlab-mr.md`, `PROGRESS.md`) sem alterações fora de escopo.
+- **Validação independente**:
+	- Smoke final: `home_http=200`, `home_query_http=200`, `login_no_http=200`, `login_invite_http=200`, `publish_http=200`.
+	- Marcadores UX: `register_disabled_marker=true`, `invite_hidden_input=true`, `publish_has_time_toggle=true`.
+	- Wrapping: `04-commit-msg.md` e `05-gitlab-mr.md` respeitam limite de 100 colunas.
+- **Conclusão de qualidade**: critérios de aceite da task 07 atendidos nesta rodada de inspeção.
