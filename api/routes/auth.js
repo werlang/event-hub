@@ -1,9 +1,8 @@
 import express from 'express';
 import { User } from '../model/user.js';
-import { store } from '../helpers/store.js';
 import { signToken } from '../helpers/token.js';
 import { authMiddleware } from '../middleware/auth.js';
-import CustomError from '../helpers/error.js';
+import { CustomError } from '../helpers/error.js';
 import { sendCreated, sendSuccess } from '../helpers/response.js';
 
 export const router = express.Router();
@@ -23,23 +22,18 @@ router.post('/register', async (req, res, next) => {
             throw new CustomError(400, 'Nome, e-mail e senha são obrigatórios.');
         }
 
-        const existing = await store.findUserByEmail(email);
+        const existing = await User.findByEmail(email);
         if (existing) {
             throw new CustomError(409, 'Já existe uma conta com este e-mail.');
         }
 
-        const user = new User({ name, email, password });
-        await store.addUser(user.toJSON());
+        const user = await User.create({ name, email, password });
 
         const token = signToken({ id: user.id, name: user.name, email: user.email });
         return sendCreated(res, {
             data: { user: { id: user.id, name: user.name, email: user.email }, token },
         });
     } catch (err) {
-        if (err.code === 'ER_DUP_ENTRY') {
-            return next(new CustomError(409, 'Já existe uma conta com este e-mail.'));
-        }
-
         try {
             rethrowAsApiError(err, 'Não foi possível concluir o registro.');
         } catch (error) {
@@ -55,7 +49,7 @@ router.post('/login', async (req, res, next) => {
             throw new CustomError(400, 'Informe e-mail e senha.');
         }
 
-        const stored = await store.findUserByEmail(email);
+        const stored = await User.findByEmail(email);
         if (!stored) {
             throw new CustomError(401, 'Credenciais inválidas.');
         }
@@ -80,7 +74,7 @@ router.post('/login', async (req, res, next) => {
 
 router.get('/me', authMiddleware, async (req, res, next) => {
     try {
-        const stored = await store.findUserById(req.user.id);
+        const stored = await User.findById(req.user.id);
         if (!stored) {
             throw new CustomError(401, 'Sessão expirada.');
         }

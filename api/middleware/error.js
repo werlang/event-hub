@@ -11,7 +11,7 @@ const ERROR_TYPES = {
     504: 'Gateway Timeout',
 };
 
-export default function errorMiddleware(err, req, res, next) {
+export function errorMiddleware(err, req, res, next) {
     if (!err) {
         next();
         return;

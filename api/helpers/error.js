@@ -1,4 +1,4 @@
-export default class CustomError extends Error {
+export class CustomError extends Error {
 
     constructor(status = 500, message = 'Internal Server Error', data = null, cause = null) {
         super(message);

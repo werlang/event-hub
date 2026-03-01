@@ -1,4 +1,4 @@
-import CustomError from '../helpers/error.js';
+import { CustomError } from '../helpers/error.js';
 import { Mysql } from '../helpers/mysql.js';
 
 // Relation class to handle many-to-many relationships
@@ -12,7 +12,7 @@ import { Mysql } from '../helpers/mysql.js';
 // update(fieldValue, data): update an existing relation
 // get(): get all related field values
 
-export default class Relation {
+export class Relation {
     constructor(tableName, nativeObject, relatedField, driver = Mysql) {
         this.tableName = tableName;
         this.nativeObject = nativeObject;

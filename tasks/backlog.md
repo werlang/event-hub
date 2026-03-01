@@ -71,7 +71,7 @@ Introduce centralized API response/error primitives and align `api/app.js` boot 
 - Dependencies: TODO-EVHUB-STYLE-ALIGN-01
 
 ### Context
-Introduce a shared base model abstraction for UUID-based entities, move generic persistence operations to model primitives backed by `api/helpers/mysql.js`, and keep `api/helpers/datastore.js` focused on bootstrap/seed orchestration.
+Introduce a shared base model abstraction for UUID-based entities, move generic persistence operations to model primitives backed by `api/helpers/mysql.js`, and keep `api/helpers/bootstrap.js` focused on schema/seed orchestration.
 
 ### Acceptance Criteria
 - [x] Shared base model abstraction exists and is used by domain models
@@ -80,7 +80,7 @@ Introduce a shared base model abstraction for UUID-based entities, move generic 
 - [x] Existing core data flows still function
 - [x] Manual validation completed
 
-## [TODO-EVHUB-STYLE-ALIGN-03] Model event audience via relation + migrate legacy data
+## [TODO-EVHUB-STYLE-ALIGN-03] Model event audience via relation
 - Status: done
 - Priority: P1
 - Type: feature
@@ -93,7 +93,6 @@ Replace JSON-backed event audience persistence with relation-backed rows while p
 
 ### Acceptance Criteria
 - [x] Audience data is persisted via relation table semantics
-- [x] Legacy audience data migration is idempotent
 - [x] API consumers still receive audience arrays
 - [x] Duplicate relation insertion is prevented
 - [x] Manual validation completed

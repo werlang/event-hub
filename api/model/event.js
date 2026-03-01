@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { Model } from './model.js';
-import Relation from './relation.js';
+import { Relation } from './relation.js';
 
 export class Event extends Model {
 

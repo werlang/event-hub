@@ -1,5 +1,5 @@
 import { verifyToken } from '../helpers/token.js';
-import CustomError from '../helpers/error.js';
+import { CustomError } from '../helpers/error.js';
 
 export function authMiddleware(req, res, next) {
     const header = req.headers.authorization;

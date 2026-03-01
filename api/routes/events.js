@@ -1,8 +1,7 @@
 import express from 'express';
 import { Event } from '../model/event.js';
-import { store } from '../helpers/store.js';
 import { authMiddleware } from '../middleware/auth.js';
-import CustomError from '../helpers/error.js';
+import { CustomError } from '../helpers/error.js';
 import { sendCreated, sendSuccess } from '../helpers/response.js';
 
 export const router = express.Router();
@@ -37,7 +36,7 @@ router.get('/', async (req, res, next) => {
             audience: req.query.audience,
         };
 
-        const events = await store.listEvents(filters);
+        const events = await Event.list(filters);
         return sendSuccess(res, { data: { events } });
     } catch (err) {
         try {
@@ -50,7 +49,7 @@ router.get('/', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
     try {
-        const event = await store.findEventById(req.params.id);
+        const event = await Event.findById(req.params.id);
         if (!event) {
             throw new CustomError(404, 'Evento não encontrado.');
         }
@@ -87,7 +86,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
             organizerId: req.user.id,
         });
 
-        const createdEvent = await store.addEvent(event.toJSON());
+        const createdEvent = await Event.create(event.toJSON());
         return sendCreated(res, {
             data: { event: createdEvent },
         });

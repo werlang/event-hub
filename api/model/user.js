@@ -1,30 +1,37 @@
 import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 import { Model } from './model.js';
 
 export class User extends Model {
 
     static table = 'users';
-    static view = ['id', 'name', 'email', 'salt', 'password_hash', 'created_at'];
+    static view = ['id', 'name', 'email', 'password_hash', 'created_at'];
+    static BCRYPT_ROUNDS = 12;
 
     #passwordHash;
-    #salt;
 
-    constructor({ id, name, email, password, salt, passwordHash } = {}) {
+    constructor({ id, name, email, password, passwordHash } = {}) {
         super();
         this.id = id || crypto.randomUUID();
         this.name = name || '';
         this.email = email?.toLowerCase() || '';
-        this.#salt = salt || crypto.randomBytes(16).toString('hex');
         this.#passwordHash = passwordHash || this.#hashPassword(password || '');
     }
 
     #hashPassword(plain) {
-        return crypto.pbkdf2Sync(plain, this.#salt, 310000, 32, 'sha256').toString('hex');
+        return bcrypt.hashSync(plain, User.BCRYPT_ROUNDS);
     }
 
     validatePassword(plain) {
-        const hash = this.#hashPassword(plain || '');
-        return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(this.#passwordHash, 'hex'));
+        if (!this.#passwordHash) {
+            return false;
+        }
+
+        return bcrypt.compareSync(plain || '', this.#passwordHash);
+    }
+
+    get passwordHash() {
+        return this.#passwordHash;
     }
 
     toJSON() {
@@ -32,7 +39,6 @@ export class User extends Model {
             id: this.id,
             name: this.name,
             email: this.email,
-            salt: this.#salt,
             passwordHash: this.#passwordHash,
         };
     }
@@ -45,7 +51,6 @@ export class User extends Model {
             id: row.id,
             name: row.name,
             email: row.email,
-            salt: row.salt,
             passwordHash: row.passwordHash || row.password_hash,
             createdAt: createdAtRaw ? new Date(createdAtRaw).toISOString() : undefined,
         };
@@ -53,7 +58,7 @@ export class User extends Model {
 
     static serialize(payload = {}) {
         const isHydratedUser = payload instanceof User;
-        const hasHashedCredentials = payload.passwordHash && payload.salt;
+        const hasHashedCredentials = Boolean(payload.passwordHash);
         const user = isHydratedUser
             ? payload
             : (hasHashedCredentials ? payload : new User(payload));
@@ -64,7 +69,6 @@ export class User extends Model {
             id: json.id,
             name: json.name,
             email: json.email?.toLowerCase(),
-            salt: json.salt,
             password_hash: json.passwordHash,
             created_at: this.driver.toDateTime(payload.createdAt || Date.now()),
         };

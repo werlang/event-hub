@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-import CustomError from './error.js';
+import { CustomError } from './error.js';
 import mysqldump from 'mysqldump';
 
 export class Mysql {
@@ -65,20 +65,6 @@ export class Mysql {
             const values = Object.values(row);
             const fields = Object.keys(row).map(k => `\`${k}\``);
             let sql = `INSERT INTO \`${table}\` (${fields.join(',')}) VALUES (${values.map(() => '?').join(',')})`;
-            return Mysql.query(sql, values);
-        }));
-    }
-
-    static async insertIgnore(table, data) {
-        if (!data) {
-            throw new CustomError(400, 'Invalid data for insert operation.');
-        }
-        if (!Array.isArray(data)) data = [ data ];
-
-        return Promise.all(data.map(row => {
-            const values = Object.values(row);
-            const fields = Object.keys(row).map(k => `\`${k}\``);
-            const sql = `INSERT IGNORE INTO \`${table}\` (${fields.join(',')}) VALUES (${values.map(() => '?').join(',')})`;
             return Mysql.query(sql, values);
         }));
     }
