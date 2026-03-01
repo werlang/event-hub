@@ -7,10 +7,11 @@
 | 03 | Home com modos por query + filtros/chips | ✅ Completed | Inspector | 2026-03-01 |
 | 04 | Login/register com registro por convite | ✅ Completed | Inspector | 2026-03-01 |
 | 05 | Publicação com data padrão e horário opcional | ✅ Completed | Inspector | 2026-03-01 |
-| 06 | Estilo mobile-first, cues de passado e ordenação | ✅ Completed | Coder | 2026-03-01 |
+| 06 | Estilo mobile-first, cues de passado e ordenação | ✅ Completed | Inspector | 2026-03-01 |
 | 07 | Wrap-up docs + 04-commit-msg + 05-gitlab-mr | ⏳ Pending | - | 2026-03-01 |
 
 ## Last Inspector Feedback
+- 2026-03-01: Task 06 aprovada pelo inspector após preflight obrigatório (fallback Docker), revisão cética do commit `43e0afc` e validação independente da ordenação (`data-only` antes de `data+hora` no mesmo dia), cue visual de passado e smoke HTTP dos modos da home.
 - 2026-03-01: Task 05 aprovada pelo inspector após preflight obrigatório (fallback Docker), revisão cética do commit `6f355bd` e validação independente dos cenários publish (data-only `201`, data+hora `201`, sem sessão `401`) com presença do toggle e campo de hora desabilitado por padrão.
 - 2026-03-01: Task 04 aprovada pelo inspector após preflight obrigatório (fallback Docker), revisão cética do commit `0acd5b2` e validação independente da tela `/login` (sem e com `inviteToken`) com HTTP `200` e marcadores de UX esperados.
 - 2026-03-01: Task 03 aprovada pelo inspector após preflight obrigatório (fallback Docker), revisão cética dos módulos de home/query/chips e smoke checks HTTP independentes via container (`home=200`, `home_query=200`, `events_query=200`).
@@ -162,3 +163,15 @@
 		- ordenação no mesmo dia: `Sem horário > Com horário > Dia seguinte`;
 		- classificação de passado: `past_flag=true`;
 		- cue visual no card: `has_past_class=true` e `has_past_label=true`.
+
+## Inspector Re-review Task 06 (2026-03-01)
+- **Status**: ✅ Complete (Task 06 approved).
+- **Preflight gate**: aprovado com fallback Docker:
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3100 api sh -lc 'npm run production & pid=$!; sleep 6; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps -e PORT=3200 web sh -lc 'npm run production & pid=$!; sleep 6; kill $pid; wait $pid || true'`.
+	- `/usr/local/bin/docker compose -f compose.dev.yaml run --rm --no-deps web sh -lc 'npm run dev:client & pid=$!; sleep 14; kill $pid; wait $pid || true'` com `webpack ... compiled successfully`.
+- **Revisão de código (cética)**: commit `43e0afc` cobre os artefatos esperados (`event-sort`, `event-list`, `event-card`, `index.css`) e aplica regra de ordenação centralizada + cue visual de passado sem expandir escopo além da task.
+- **Validação independente**:
+	- `GET /` e `GET /?from=2026-03-01&to=2026-03-07` retornaram HTTP `200`.
+	- Execução independente do helper/card confirmou `ordered_same_day=Sem horário > Com horário > Dia seguinte`, `past_flag=true`, `has_past_class=true` e `has_past_label=true`.
+- **Conclusão de qualidade**: critérios de aceite da task 06 atendidos nesta rodada de inspeção.
