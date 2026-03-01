@@ -34,7 +34,7 @@ Routes:
 `Event` model (`api/model/event.js`):
 
 - Generates UUID when `id` is missing
-- Defaults: `category = 'Geral'`, `location = 'A definir'`, `audience = []`
+- Defaults: `category = 'Geral'`, `location = 'A definir'`
 - Sets `createdAt` automatically
 
 ## Authentication Pattern
@@ -84,7 +84,6 @@ Use `sendSuccess`/`sendCreated` (`api/helpers/response.js`) for success response
 `POST /events`:
 - requires `title`, `description`, `date`
 - validates parsable date
-- normalizes `audience` from array or comma-separated string
 
 ## References
 

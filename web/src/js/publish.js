@@ -50,7 +50,6 @@ function toEventPayload(form) {
 		description: data.description,
 		category: data.category,
 		location: data.location,
-		audience: data.audience,
 		date: data.date,
 	};
 }

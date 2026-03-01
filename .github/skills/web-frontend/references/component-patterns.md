@@ -26,7 +26,6 @@ function serializeFilters() {
         category: homeElements.filterCategory?.value,
         from: homeElements.filterFrom?.value,
         to: homeElements.filterTo?.value,
-        audience: homeElements.filterAudience?.value,
     };
 
     Object.entries(map).forEach(([key, value]) => {

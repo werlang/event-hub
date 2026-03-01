@@ -80,23 +80,6 @@ Introduce a shared base model abstraction for UUID-based entities, move generic 
 - [x] Existing core data flows still function
 - [x] Manual validation completed
 
-## [TODO-EVHUB-STYLE-ALIGN-03] Model event audience via relation
-- Status: done
-- Priority: P1
-- Type: feature
-- Scope: api
-- Source: .agents/changes/EVHUB-STYLE-ALIGN-api-sample-mirroring/03-tasks-03-audience-relation-migration.md
-- Dependencies: TODO-EVHUB-STYLE-ALIGN-02
-
-### Context
-Replace JSON-backed event audience persistence with relation-backed rows while preserving API response contract `audience: string[]`.
-
-### Acceptance Criteria
-- [x] Audience data is persisted via relation table semantics
-- [x] API consumers still receive audience arrays
-- [x] Duplicate relation insertion is prevented
-- [x] Manual validation completed
-
 ## [TODO-EVHUB-STYLE-ALIGN-04] Refactor route/auth envelope contract and harden JWT config
 - Status: done
 - Priority: P1

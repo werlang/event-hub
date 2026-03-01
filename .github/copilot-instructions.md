@@ -29,7 +29,7 @@
 - `GET /auth/me` → requires Bearer token via `authMiddleware`.
 
 ### Event routes (`api/routes/events.js`)
-- `GET /events` → public list with filters: `search|q`, `category`, `from`, `to`, `audience`.
+- `GET /events` → public list with filters: `search|q`, `category`, `from`, `to`.
 - `GET /events/:id` → public event detail.
 - `POST /events` → authenticated event creation.
 
@@ -46,8 +46,7 @@
   - email normalized to lowercase.
 - **Event** (`api/model/event.js`):
   - generated UUID when `id` is absent.
-  - defaults: `category = 'Geral'`, `location = 'A definir'`, `audience = []`.
-  - audience persistence is relation-backed via `event_audiences` (`audience: string[]` in API output).
+  - defaults: `category = 'Geral'`, `location = 'A definir'`.
   - `createdAt` set automatically when omitted.
 
 ## Build and Run

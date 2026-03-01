@@ -64,7 +64,6 @@ router.get('/', async (req, res, next) => {
             category: req.query.category,
             from: req.query.from,
             to: req.query.to,
-            audience: req.query.audience,
         };
 
         const events = await store.listEvents(filters);

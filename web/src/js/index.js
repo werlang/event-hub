@@ -13,7 +13,6 @@ const homeElements = {
 	filterCategory: document.querySelector('#filter-category'),
 	filterFrom: document.querySelector('#filter-from'),
 	filterTo: document.querySelector('#filter-to'),
-	filterAudience: document.querySelector('#filter-audience'),
 	applyFilters: document.querySelector('#apply-filters'),
 };
 
@@ -45,7 +44,6 @@ function serializeFilters() {
 		category: homeElements.filterCategory?.value,
 		from: homeElements.filterFrom?.value,
 		to: homeElements.filterTo?.value,
-		audience: homeElements.filterAudience?.value,
 	};
 
 	Object.entries(map).forEach(([key, value]) => {
@@ -72,9 +70,6 @@ function hydrateFiltersFromUrl() {
 	if (homeElements.filterTo) {
 		homeElements.filterTo.value = params.get('to') || '';
 	}
-	if (homeElements.filterAudience) {
-		homeElements.filterAudience.value = params.get('audience') || '';
-	}
 }
 
 function updateUrlWithFilters(params) {
@@ -96,10 +91,6 @@ function renderEvents(events) {
 
 	homeElements.emptyState.hidden = true;
 	homeElements.grid.innerHTML = events.map(event => {
-		const audience = Array.isArray(event.audience) && event.audience.length
-			? event.audience.map(item => `<span class="tag">${escapeHtml(item)}</span>`).join('')
-			: '<span class="tag">Geral</span>';
-
 		return `
 			<article class="card">
 				<div class="card__title">${escapeHtml(event.title || 'Sem título')}</div>
@@ -109,7 +100,6 @@ function renderEvents(events) {
 					<span>${escapeHtml(event.location || 'A definir')}</span>
 					<span>${escapeHtml(formatDate(event.date))}</span>
 				</div>
-				<div class="card__meta">${audience}</div>
 			</article>
 		`;
 	}).join('');

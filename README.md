@@ -28,8 +28,8 @@ Abra `http://localhost:80` (Compose) ou `http://localhost:3000` (execução loca
 - **Páginas web**: `/` lista e filtra eventos via query string; `/login` centraliza login/registro e persiste o token; `/publish` valida o token e abre o formulário de novo evento.
 - **Autenticação**: `/auth/register`, `/auth/login`, `/auth/me` retornam token JWT (12h) e dados do usuário.
 - **Eventos (API)**:
-  - `POST /events` (Bearer token) — cria evento com `title`, `description`, `date`, `category`, `location`, `audience[]`.
-  - `GET /events` — lista pública com filtros `search|q`, `category`, `from`, `to`, `audience`.
+  - `POST /events` (Bearer token) — cria evento com `title`, `description`, `date`, `category`, `location`.
+  - `GET /events` — lista pública com filtros `search|q`, `category`, `from`, `to`.
   - `GET /events/:id` — detalhe público.
 
 ## Contrato de resposta
@@ -39,7 +39,7 @@ Abra `http://localhost:80` (Compose) ou `http://localhost:3000` (execução loca
 
 ## Dados e seeds
 
-- O schema oficial do banco está em `api/data/schema.sql` (tabelas `users`, `events`, `event_audiences`).
+- O schema oficial do banco está em `api/data/schema.sql` (tabelas `users`, `events`).
 - No bootstrap, a API executa esse schema e insere:
   - Usuário administrador: `admin@universidade.test` / senha `changeme`.
   - Dois eventos de exemplo para testes visuais.

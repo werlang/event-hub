@@ -32,7 +32,7 @@ Always generate commit messages using **Semantic Commit** format and keep them s
 
 ### Good examples
 
-- `feat(api): add event audience filter`
+- `feat(api): add event date range filter`
 - `fix(auth): handle missing bearer token`
 - `docs(setup): update Docker Compose instructions`
 - `refactor(web): simplify event listing logic`

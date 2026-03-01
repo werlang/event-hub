@@ -1,6 +1,6 @@
 ---
 name: entity-models
-description: Work with domain models for users and events, including password hashing, defaults, serialization, and relation-backed audience persistence. Use when changing `User` or `Event` behavior, datastore seeding/migration logic, filtering semantics, or model fields that affect API contracts.
+description: Work with domain models for users and events, including password hashing, defaults, and serialization. Use when changing `User` or `Event` behavior, datastore seeding/migration logic, filtering semantics, or model fields that affect API contracts.
 ---
 
 # Entity Models and Domain Logic
@@ -17,18 +17,16 @@ description: Work with domain models for users and events, including password ha
 
 ### Event (`api/model/event.js`)
 
-- Fields: `id`, `title`, `description`, `date`, `category`, `location`, `audience`, `organizerId`, `createdAt`
+- Fields: `id`, `title`, `description`, `date`, `category`, `location`, `organizerId`, `createdAt`
 - `id` defaults to `crypto.randomUUID()`
 - `category` default: `'Geral'`
 - `location` default: `'A definir'`
-- `audience` default: `[]`
 - `createdAt` default: current ISO datetime
 
 ## Filtering Rules (`listEvents`)
 
 - `category`: case-insensitive exact match
 - `from` / `to`: date range checks using `new Date(event.date)`
-- `audience`: case-insensitive substring match in audience tags
 - `search`: checks combined `title + description + location + category`
 - final output sorted by `event.date` ascending
 

@@ -14,18 +14,6 @@ function rethrowAsApiError(error, fallbackMessage) {
     throw new CustomError(500, fallbackMessage);
 }
 
-function parseAudience(audience) {
-    if (Array.isArray(audience)) {
-        return audience.map(value => String(value).trim()).filter(Boolean);
-    }
-
-    if (typeof audience === 'string') {
-        return audience.split(',').map(value => value.trim()).filter(Boolean);
-    }
-
-    return [];
-}
-
 router.get('/', async (req, res, next) => {
     try {
         const filters = {
@@ -33,7 +21,6 @@ router.get('/', async (req, res, next) => {
             category: req.query.category,
             from: req.query.from,
             to: req.query.to,
-            audience: req.query.audience,
         };
 
         const events = await Event.list(filters);
@@ -66,7 +53,7 @@ router.get('/:id', async (req, res, next) => {
 
 router.post('/', authMiddleware, async (req, res, next) => {
     try {
-        const { title, description, date, category, location, audience } = req.body || {};
+        const { title, description, date, category, location } = req.body || {};
         if (!title || !description || !date) {
             throw new CustomError(400, 'Título, descrição e data são obrigatórios.');
         }
@@ -82,7 +69,6 @@ router.post('/', authMiddleware, async (req, res, next) => {
             date: parsedDate.toISOString(),
             category,
             location,
-            audience: parseAudience(audience),
             organizerId: req.user.id,
         });
 
