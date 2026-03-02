@@ -4,7 +4,6 @@ import { router as auth } from './routes/auth.js';
 import { router as events } from './routes/events.js';
 import { CustomError } from './helpers/error.js';
 import { sendSuccess } from './helpers/response.js';
-import { initializeDatabase } from './helpers/bootstrap.js';
 import { errorMiddleware } from './middleware/error.js';
 
 const app = express();
@@ -34,7 +33,6 @@ app.use(errorMiddleware);
 
 async function start() {
     try {
-        await initializeDatabase();
         if (process.env.NODE_ENV !== 'test') {
             app.listen(port, host, () => {
                 console.log(`Academic Events API running on http://${host}:${port}`);
