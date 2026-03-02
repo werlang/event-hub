@@ -1,0 +1,18 @@
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 4vw;
+
+    & .brand {
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        font-size: 18px;
+    }
+
+    & .topbar__actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+}

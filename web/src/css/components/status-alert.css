@@ -1,0 +1,17 @@
+.alert {
+    padding: 10px 12px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+
+    &.alert--error {
+        background: color-mix(in srgb, var(--color-warning), transparent 86%);
+        border: 1px solid color-mix(in srgb, var(--color-warning), transparent 50%);
+        color: color-mix(in srgb, var(--color-warning), #ffffff 25%);
+    }
+
+    &.alert--success {
+        background: color-mix(in srgb, var(--color-success), transparent 85%);
+        border: 1px solid color-mix(in srgb, var(--color-success), transparent 40%);
+        color: color-mix(in srgb, var(--color-success), #ffffff 25%);
+    }
+}

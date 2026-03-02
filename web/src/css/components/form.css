@@ -1,0 +1,39 @@
+.form {
+    display: grid;
+    gap: 10px;
+    margin-top: 10px;
+
+    &:not(.form--visible) {
+        display: none;
+    }
+
+    &.form--visible {
+        display: grid;
+    }
+
+    &.form--disabled {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    & label {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        color: var(--color-text-secondary);
+        font-size: 14px;
+    }
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.list {
+    color: var(--color-text-secondary);
+    padding-left: 18px;
+    display: grid;
+    gap: 8px;
+}

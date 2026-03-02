@@ -1,0 +1,29 @@
+@media (max-width: 720px) {
+    .button {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media (min-width: 721px) {
+    .topbar {
+        padding: 16px 7vw;
+    }
+
+    .hero {
+        padding: 64px 7vw;
+    }
+
+    .hero.hero--compact {
+        padding: 48px 7vw 24px;
+    }
+
+    main {
+        padding: 0 7vw 56px;
+        gap: 32px;
+    }
+
+    .panel {
+        padding: 24px;
+    }
+}
