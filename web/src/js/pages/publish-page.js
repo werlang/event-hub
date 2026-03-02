@@ -1,5 +1,5 @@
 import { TemplateVar } from '../helpers/template-var.js';
-import { requestApi, readToken, clearToken } from '../helpers/api.js';
+import { apiClient, authTokenStore } from '../helpers/api.js';
 import { StatusAlert } from '../components/status-alert.js';
 import { setFormEnabled } from '../components/form-state.js';
 import { EventForm } from '../components/event-form.js';
@@ -40,15 +40,15 @@ export async function initPublishPage() {
 	eventForm.bind();
 	setFormEnabled(elements.eventForm, false);
 
-	const token = readToken();
+	const token = authTokenStore.read();
 	if (!token) {
 		alert.show('Faça login para publicar um evento.', { isError: true });
 		return;
 	}
 
-	const me = await requestApi('/auth/me', { token });
+	const me = await apiClient.request('/auth/me', { token });
 	if (!me.ok) {
-		clearToken();
+		authTokenStore.clear();
 		setFormEnabled(elements.eventForm, false);
 		alert.show('Sessão inválida ou expirada. Entre novamente para publicar.', { isError: true });
 		window.setTimeout(() => {
@@ -75,7 +75,7 @@ export async function initPublishPage() {
 			return;
 		}
 
-		const response = await requestApi('/events', {
+		const response = await apiClient.request('/events', {
 			method: 'POST',
 			token,
 			body: parsed.payload,

@@ -1,4 +1,4 @@
-import { requestApi, clearToken, readToken, storeToken } from '../helpers/api.js';
+import { apiClient, authTokenStore } from '../helpers/api.js';
 import { TemplateVar } from '../helpers/template-var.js';
 import { StatusAlert } from '../components/status-alert.js';
 import { AuthTabs } from '../components/auth-tabs.js';
@@ -64,7 +64,7 @@ export function initLoginPage() {
 	};
 
 	const submitAuth = async (form, endpoint) => {
-		const response = await requestApi(endpoint, {
+		const response = await apiClient.request(endpoint, {
 			method: 'POST',
 			body: parseForm(form),
 		});
@@ -80,7 +80,7 @@ export function initLoginPage() {
 			return;
 		}
 
-		storeToken(token);
+		authTokenStore.store(token);
 		alert.show('Autenticação concluída com sucesso.', { isError: false });
 		window.setTimeout(redirectAfterAuth, 250);
 	};
@@ -97,7 +97,7 @@ export function initLoginPage() {
 			return;
 		}
 
-		const response = await requestApi('/auth/register', {
+		const response = await apiClient.request('/auth/register', {
 			method: 'POST',
 			body: parseForm(elements.registerForm),
 		});
@@ -123,7 +123,7 @@ export function initLoginPage() {
 			return;
 		}
 
-		storeToken(token);
+		authTokenStore.store(token);
 		alert.show('Autenticação concluída com sucesso.', { isError: false });
 		window.setTimeout(redirectAfterAuth, 250);
 	});
@@ -133,15 +133,15 @@ export function initLoginPage() {
 	tabs.setActive('login');
 	sessionBadge.setChecking();
 
-	const token = readToken();
+	const token = authTokenStore.read();
 	if (!token) {
 		sessionBadge.setAnonymous();
 		return;
 	}
 
-	requestApi('/auth/me', { token }).then(response => {
+	apiClient.request('/auth/me', { token }).then(response => {
 		if (!response.ok) {
-			clearToken();
+			authTokenStore.clear();
 			sessionBadge.setAnonymous();
 			return;
 		}

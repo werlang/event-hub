@@ -1,4 +1,4 @@
-import { requestApi } from '../helpers/api.js';
+import { apiClient } from '../helpers/api.js';
 import {
 	createHomeFilterParams,
 	hasSpecificHomeQuery,
@@ -98,7 +98,7 @@ export function initHomePage() {
 
 		const query = params.toString();
 		const endpoint = query ? `/events?${query}` : '/events';
-		const response = await requestApi(endpoint);
+		const response = await apiClient.request(endpoint);
 		if (!response.ok) {
 			eventList.render([], {
 				emptyMessage: 'Não foi possível carregar os eventos no momento.',

@@ -10,13 +10,8 @@ export class StatusAlert {
 
 		this.element.hidden = false;
 		this.element.textContent = message;
-		this.element.style.borderColor = isError
-			? 'rgba(250, 204, 21, 0.5)'
-			: 'rgba(34, 197, 94, 0.6)';
-		this.element.style.background = isError
-			? 'rgba(250, 204, 21, 0.14)'
-			: 'rgba(34, 197, 94, 0.15)';
-		this.element.style.color = isError ? '#fde68a' : '#bbf7d0';
+		this.element.classList.toggle('alert--error', isError);
+		this.element.classList.toggle('alert--success', !isError);
 	}
 
 	hide() {
@@ -26,5 +21,6 @@ export class StatusAlert {
 
 		this.element.hidden = true;
 		this.element.textContent = '';
+		this.element.classList.remove('alert--error', 'alert--success');
 	}
 }
