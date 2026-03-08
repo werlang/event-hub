@@ -1,17 +1,20 @@
 .alert {
-    padding: 10px 12px;
-    border-radius: 12px;
-    margin-bottom: 12px;
+    padding: 14px 16px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 14px;
+    line-height: 1.55;
+    border: 1px solid transparent;
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text), transparent 93%);
 
     &.alert--error {
-        background: color-mix(in srgb, var(--color-warning), transparent 86%);
-        border: 1px solid color-mix(in srgb, var(--color-warning), transparent 50%);
-        color: color-mix(in srgb, var(--color-warning), #ffffff 25%);
+        background: color-mix(in srgb, var(--color-error), transparent 90%);
+        border-color: color-mix(in srgb, var(--color-error), transparent 70%);
+        color: color-mix(in srgb, var(--color-error), var(--color-text) 40%);
     }
 
     &.alert--success {
-        background: color-mix(in srgb, var(--color-success), transparent 85%);
-        border: 1px solid color-mix(in srgb, var(--color-success), transparent 40%);
-        color: color-mix(in srgb, var(--color-success), #ffffff 25%);
+        background: color-mix(in srgb, var(--color-success), transparent 90%);
+        border-color: color-mix(in srgb, var(--color-success), transparent 68%);
+        color: color-mix(in srgb, var(--color-success), var(--color-text) 42%);
     }
 }

@@ -1,7 +1,7 @@
 .form {
     display: grid;
-    gap: 10px;
-    margin-top: 10px;
+    gap: 16px;
+    margin-top: 18px;
 
     &:not(.form--visible) {
         display: none;
@@ -12,28 +12,31 @@
     }
 
     &.form--disabled {
-        opacity: 0.6;
+        opacity: 0.72;
         pointer-events: none;
     }
 
-    & label {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        color: var(--color-text-secondary);
-        font-size: 14px;
+    & .button {
+        justify-self: start;
+        margin-top: 4px;
     }
 }
 
 .form-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
+    gap: 16px;
+    align-items: start;
 }
 
 .list {
     color: var(--color-text-secondary);
-    padding-left: 18px;
+    padding-left: 20px;
+    margin: 14px 0 0;
     display: grid;
-    gap: 8px;
+    gap: 10px;
+
+    & li::marker {
+        color: var(--color-main-alt);
+    }
 }

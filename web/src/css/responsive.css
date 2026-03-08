@@ -1,29 +1,51 @@
-@media (max-width: 720px) {
+@media (max-width: 780px) {
+    .topbar,
+    .hero,
+    main {
+        width: min(calc(100% - 20px), var(--max-width));
+    }
+
+    .topbar {
+        padding: 16px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .topbar .brand {
+        text-align: center;
+    }
+
+    .topbar .topbar__actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
     .button {
         width: 100%;
         text-align: center;
     }
-}
-
-@media (min-width: 721px) {
-    .topbar {
-        padding: 16px 7vw;
-    }
 
     .hero {
-        padding: 64px 7vw;
+        padding: 30px 18px;
+        border-radius: 22px;
     }
 
     .hero.hero--compact {
-        padding: 48px 7vw 24px;
+        padding: 28px 18px;
     }
 
     main {
-        padding: 0 7vw 56px;
-        gap: 32px;
+        gap: 20px;
+        margin-bottom: 40px;
     }
 
     .panel {
-        padding: 24px;
+        padding: 16px;
+    }
+}
+
+@media (min-width: 781px) {
+    main {
+        gap: 28px;
     }
 }

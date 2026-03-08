@@ -2,17 +2,64 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 4vw;
+    gap: 16px;
+    width: min(calc(100% - 32px), var(--max-width));
+    margin: 18px auto 0;
+    padding: 18px 22px;
+    border-radius: calc(var(--radius) + 4px);
+    background: linear-gradient(135deg, var(--color-main), color-mix(in srgb, var(--color-main), var(--color-main-alt) 35%));
+    color: var(--color-main-contrast);
+    box-shadow: var(--shadow-lifted);
+    border: 1px solid color-mix(in srgb, var(--color-main-contrast), transparent 72%);
 
     & .brand {
+        font-family: var(--font-display);
         font-weight: 700;
-        letter-spacing: -0.02em;
-        font-size: 18px;
+        letter-spacing: -0.01em;
+        font-size: clamp(20px, 2.4vw, 28px);
+        color: var(--color-main-contrast);
+
+        &:hover {
+            color: var(--color-main-contrast);
+            opacity: 0.92;
+        }
     }
 
     & .topbar__actions {
         display: flex;
-        gap: 8px;
+        gap: 10px;
         align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    & .button {
+        box-shadow: none;
+    }
+
+    & .button.button--ghost {
+        background: color-mix(in srgb, var(--color-surface-strong), transparent 74%);
+        border-color: color-mix(in srgb, var(--color-main-contrast), transparent 58%);
+        color: var(--color-main-contrast);
+    }
+
+    & .button.button--primary {
+        background: var(--color-main-alt);
+        color: var(--color-alt-contrast);
+    }
+
+    & .session-badge {
+        background: color-mix(in srgb, var(--color-surface-strong), transparent 76%);
+        border-color: color-mix(in srgb, var(--color-main-contrast), transparent 58%);
+        color: var(--color-main-contrast);
+    }
+
+    & .session-badge::before {
+        background: var(--color-main-contrast);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-main-contrast), transparent 88%);
+    }
+
+    & .session-badge.session-badge--active::before {
+        background: var(--color-success);
     }
 }

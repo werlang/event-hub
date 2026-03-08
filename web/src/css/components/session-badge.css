@@ -1,16 +1,33 @@
 .session-badge {
     display: inline-flex;
     align-items: center;
-    border: 1px solid var(--color-border);
-    border-radius: 999px;
-    background: var(--color-surface-strong);
+    gap: 8px;
+    border: 1px solid color-mix(in srgb, var(--color-main), transparent 72%);
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-surface-strong), var(--color-main) 10%);
     color: var(--color-text-secondary);
-    padding: 6px 10px;
-    font-size: 12px;
-    font-weight: 500;
+    padding: 10px 14px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+
+    &::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: color-mix(in srgb, var(--color-main), transparent 25%);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-main), transparent 88%);
+    }
 
     &.session-badge--active {
         color: var(--color-text);
-        border-color: color-mix(in srgb, var(--color-main), transparent 50%);
+        border-color: color-mix(in srgb, var(--color-main), var(--color-background) 36%);
+        background: color-mix(in srgb, var(--color-surface-strong), var(--color-main) 12%);
+    }
+
+    &.session-badge--active::before {
+        background: var(--color-success);
     }
 }

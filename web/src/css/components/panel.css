@@ -1,24 +1,44 @@
 .panel {
-    background: var(--color-surface);
+    position: relative;
+    background: color-mix(in srgb, var(--color-surface), #ffffff 24%);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    padding: 16px;
+    border-radius: calc(var(--radius) + 4px);
+    padding: clamp(18px, 3vw, 28px);
     box-shadow: var(--shadow-soft);
-    backdrop-filter: blur(6px);
+    overflow: hidden;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0 0 auto;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-main-alt), transparent 62%), transparent);
+    }
 
     & .panel__header {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        margin-bottom: 16px;
+        display: grid;
+        gap: 20px;
+        align-items: start;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid color-mix(in srgb, var(--color-border), transparent 22%);
+    }
+
+    & h2 {
+        color: var(--color-main);
+        margin-bottom: 10px;
+    }
+
+    & .pill + h2 + p,
+    & .hint {
+        color: var(--color-text-secondary);
     }
 
     & .panel__block {
-        background: var(--color-surface-strong);
+        background: color-mix(in srgb, var(--color-surface-strong), var(--color-background) 18%);
         border: 1px solid var(--color-border);
         border-radius: var(--radius);
-        padding: 20px;
+        padding: clamp(18px, 3vw, 26px);
+        box-shadow: var(--shadow-card);
     }
 }

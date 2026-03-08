@@ -1,56 +1,71 @@
 .hero {
     position: relative;
-    padding: 40px 4vw;
+    width: min(calc(100% - 32px), var(--max-width));
+    margin: 16px auto 0;
+    padding: 46px clamp(22px, 4vw, 42px);
     overflow: hidden;
+    border-radius: 28px;
+    border: 1px solid var(--color-border);
+    background:
+        linear-gradient(145deg, color-mix(in srgb, #ffffff, var(--color-background) 70%) 0%, color-mix(in srgb, var(--color-main-soft), var(--color-surface-strong) 86%) 100%);
+    box-shadow: var(--shadow-soft);
 
     &.hero--compact {
-        padding: 32px 4vw 18px;
+        padding: 34px clamp(20px, 4vw, 34px);
     }
 
     & .hero__content {
-        max-width: 800px;
+        max-width: 720px;
         position: relative;
         z-index: 1;
+        display: grid;
+        gap: 14px;
     }
 
     & .hero__glow {
         position: absolute;
         inset: 0;
         background:
-            radial-gradient(circle at 60% 40%, color-mix(in srgb, var(--color-main), transparent 75%), transparent 45%),
-            radial-gradient(circle at 20% 80%, color-mix(in srgb, var(--color-main-alt), transparent 80%), transparent 40%);
-        filter: blur(60px);
-        opacity: 0.9;
+            radial-gradient(circle at 82% 24%, color-mix(in srgb, var(--color-main-alt), transparent 76%), transparent 28%),
+            radial-gradient(circle at 74% 80%, color-mix(in srgb, var(--color-main), transparent 82%), transparent 34%),
+            linear-gradient(135deg, transparent 0 48%, color-mix(in srgb, var(--color-main), transparent 94%) 48% 52%, transparent 52% 100%);
+        filter: blur(26px);
+        opacity: 0.95;
     }
 }
 
 .subtitle {
     color: var(--color-text-secondary);
-    max-width: 640px;
-    margin-bottom: 18px;
+    max-width: 58ch;
+    font-size: clamp(16px, 2vw, 19px);
+    line-height: 1.7;
 }
 
 h1 + .subtitle {
-    margin-top: 6px;
+    margin-top: -2px;
 }
 
 .pill {
     display: inline-flex;
     align-items: center;
+    width: fit-content;
     gap: 8px;
-    padding: 8px 12px;
-    border-radius: 999px;
-    background: var(--color-surface-strong);
-    color: var(--color-text-secondary);
-    font-size: 13px;
+    padding: 8px 14px;
+    border-radius: var(--radius-pill);
+    border: 1px solid color-mix(in srgb, var(--color-main), transparent 72%);
+    background: color-mix(in srgb, var(--color-surface-strong), var(--color-main) 8%);
+    color: var(--color-main);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.12em;
 }
 
 .hero__actions {
     display: flex;
     gap: 12px;
-    margin-top: 12px;
+    margin-top: 4px;
 }
 
 @media (max-width: 720px) {

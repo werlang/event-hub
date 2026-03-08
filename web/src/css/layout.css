@@ -1,18 +1,25 @@
 main {
-    padding: 0 4vw 40px;
+    width: min(calc(100% - 32px), var(--max-width));
+    margin: 0 auto 56px;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 24px;
+}
+
+main > section {
+    width: 100%;
 }
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: var(--grid-gap);
 }
 
 .grid-2 {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
+    align-items: start;
 }
