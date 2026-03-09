@@ -1,0 +1,39 @@
+header {
+    display: flex;
+    justify-content: space-between;
+    background: linear-gradient(135deg, rgb(from var(--color-main) r g b / 1), color-mix(in srgb, var(--color-main), var(--color-main-alt) 50%));
+    color: rgb(from var(--color-background) r g b / 1);
+    padding: 25px 30px;
+    width: 100%;
+    box-shadow: 0 4px 10px rgb(from var(--color-text) r g b / 0.5);
+
+    .header-title {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+
+        i {
+            font-size: 2rem;
+            margin-right: 15px;
+        }
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .button {
+            background: var(--color-background);
+            color: rgb(from var(--color-main) r g b / 1);
+            border: 1px solid color-mix(in srgb, var(--color-main), transparent 72%);
+            box-shadow: none;
+
+            &:hover {
+                background: color-mix(in srgb, var(--color-main-alt), var(--color-background) 70%);
+                /* color: rgb(from var(--color-background) r g b / 1); */
+                /* transform: translateY(-1px); */
+            }
+        }
+    }
+}

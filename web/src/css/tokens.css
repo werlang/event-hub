@@ -1,9 +1,9 @@
 :root {
     --max-width: 1180px;
 
-    --font-body: 'Manrope', 'Segoe UI', sans-serif;
-    --font-display: 'Fraunces', Georgia, serif;
-    --font-mono: 'IBM Plex Mono', 'SFMono-Regular', monospace;
+    --font-body: 'Roboto', Helvetica, Arial, sans-serif;
+    --font-display: 'Raleway', Helvetica, Arial, sans-serif;
+    --font-mono: 'Source Code Pro', Consolas, 'Courier New', monospace;
 
     --color-background: #faf7f4;
     --color-background-inverse: #28322d;

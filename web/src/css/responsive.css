@@ -1,25 +1,4 @@
 @media (max-width: 780px) {
-    .topbar,
-    .hero,
-    main {
-        width: min(calc(100% - 20px), var(--max-width));
-    }
-
-    .topbar {
-        padding: 16px;
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .topbar .brand {
-        text-align: center;
-    }
-
-    .topbar .topbar__actions {
-        width: 100%;
-        justify-content: stretch;
-    }
-
     .button {
         width: 100%;
         text-align: center;

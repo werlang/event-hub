@@ -16,6 +16,7 @@ app.set('views', new URL('./src/html/', import.meta.url).pathname);
 // render middleware, setting some variables to be used in all views
 app.use(renderMiddleware({
     apiUrl: process.env.API_URL,
+    year: new Date().getFullYear(),
 }));
 
 app.get('/', (req, res) => {
