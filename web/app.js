@@ -32,7 +32,7 @@ app.get('/publish', (req, res) => {
 });
 
 // static assets
-app.use(express.static(new URL('../public/', import.meta.url).pathname));
+app.use(express.static(new URL('./public/', import.meta.url).pathname));
 
 // 404
 app.use((req, res) => {
