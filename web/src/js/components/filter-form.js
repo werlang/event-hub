@@ -33,8 +33,8 @@ export class FilterForm {
 
 		this.filterSearch.value = filters.search || '';
 		this.filterCategory.value = filters.category || '';
-		this.filterFrom.value = filters.from || '';
-		this.filterTo.value = filters.to || '';
+		this.filterFrom.value = filters.from || this.filterFrom.value || '';
+		this.filterTo.value = filters.to || this.filterTo.value || '';
 	}
 
 	bindApply(onApply) {

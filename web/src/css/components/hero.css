@@ -1,44 +1,77 @@
 .hero {
-    position: relative;
-    width: min(calc(100% - 32px), var(--max-width));
-    margin: 16px auto 0;
-    padding: 46px clamp(22px, 4vw, 42px);
+    width: 100%;
+    display: flex;
+    margin-bottom: 50px;
     overflow: hidden;
-    border-radius: 28px;
-    border: 1px solid var(--color-border);
-    background:
-        linear-gradient(145deg, color-mix(in srgb, #ffffff, var(--color-background) 70%) 0%, color-mix(in srgb, var(--color-main-soft), var(--color-surface-strong) 86%) 100%);
-    box-shadow: var(--shadow-soft);
-
-    &.hero--compact {
-        padding: 34px clamp(20px, 4vw, 34px);
+    align-items: center;
+    
+    @media (min-width: 600px) {
+        height: calc(100vh - 150px);
     }
 
-    & .hero__content {
-        max-width: 720px;
-        position: relative;
+    @media (min-width: 900px) {
+        margin: 0;
+    }
+
+    .hero__content {
+        flex-grow: 1;
         z-index: 1;
-        display: grid;
-        gap: 14px;
+        padding: 30px 10px 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        max-width: 720px;
+
+        @media (min-width: 600px) {
+            margin: 30px 10px;
+            padding: 30px 30px 60px;
+            border-radius: var(--radius);
+            background-color: color-mix(in srgb, var(--color-background), transparent 50%);
+            backdrop-filter: blur(8px);
+            border: 1px solid color-mix(in srgb, var(--color-main), transparent 20%);
+        }
+
+        @media (min-width: 900px) {
+            background-color: transparent;
+            background-image: linear-gradient(90deg, var(--color-background) 90%, transparent);
+            border: none;
+            backdrop-filter: none;
+            margin: 0;
+            border-radius: 0;
+            height: 100%;
+            padding: 0 0 0 20px;
+        }
     }
 
-    & .hero__glow {
+    .hero__image {
+        display: none;
         position: absolute;
-        inset: 0;
-        background:
-            radial-gradient(circle at 82% 24%, color-mix(in srgb, var(--color-main-alt), transparent 76%), transparent 28%),
-            radial-gradient(circle at 74% 80%, color-mix(in srgb, var(--color-main), transparent 82%), transparent 34%),
-            linear-gradient(135deg, transparent 0 48%, color-mix(in srgb, var(--color-main), transparent 94%) 48% 52%, transparent 52% 100%);
-        filter: blur(26px);
-        opacity: 0.95;
+        right: 0;
+        width: 100vw;
+        height: 100%;
+
+        video, img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        @media (min-width: 600px) {
+            display: block;
+        }
+
+        @media (min-width: 900px) {
+            max-width: calc(100vw - 650px);
+            /* filter: blur(4px); */
+        }
     }
 }
 
 .subtitle {
     color: var(--color-text-secondary);
-    max-width: 58ch;
-    font-size: clamp(16px, 2vw, 19px);
-    line-height: 1.7;
+    line-height: 2.4rem;
+    font-size: 1.4rem;
+    margin-bottom: 30px;
 }
 
 h1 + .subtitle {
@@ -66,11 +99,11 @@ h1 + .subtitle {
     display: flex;
     gap: 12px;
     margin-top: 4px;
-}
 
-@media (max-width: 720px) {
-    .hero__actions {
+    @media (max-width: 600px) {
         flex-direction: column;
         align-items: stretch;
     }
 }
+
+

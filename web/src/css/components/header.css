@@ -1,32 +1,46 @@
 header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     background: linear-gradient(135deg, rgb(from var(--color-main) r g b / 1), color-mix(in srgb, var(--color-main), var(--color-main-alt) 50%));
     color: rgb(from var(--color-background) r g b / 1);
     padding: 25px 30px;
     width: 100%;
     box-shadow: 0 4px 10px rgb(from var(--color-text) r g b / 0.5);
+    flex-wrap: wrap;
+    
+    @media (min-width: 720px) {
+        height: 150px;
+        justify-content: space-between;
+    }
 
     .header-title {
         display: flex;
         align-items: center;
-        margin-bottom: 10px;
 
         h1 {
-            font-size: 3rem;
+            font-size: 2.7rem;
+
+            @media (min-width: 600px) {
+                font-size: 3rem;
+            }
         }
     }
 
     .header-subtitle {
-        font-size: 1.3rem;
         color: rgb(from var(--color-background) r g b / 0.8);
         padding-left: 14px;
+        font-size: 1rem;
+        
+        @media (min-width: 600px) {
+            font-size: 1.3rem;
+        }
     }
 
     .header-actions {
         display: flex;
         align-items: center;
         gap: 12px;
+        margin: 15px 0;
 
         .button {
             background: var(--color-background);

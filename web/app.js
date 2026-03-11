@@ -20,7 +20,11 @@ app.use(renderMiddleware({
 }));
 
 app.get('/', (req, res) => {
-    res.templateRender('index', { page: 'home' });
+    res.templateRender('index', {
+        page: 'home',
+        weekStart: new Date(new Date().setDate(new Date().getDate() - new Date().getDay())).toISOString().split('T')[0],
+        weekEnd: new Date(new Date().setDate(new Date().getDate() + (6 - new Date().getDay()))).toISOString().split('T')[0],
+    });
 });
 
 app.get('/login', (req, res) => {
