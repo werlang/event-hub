@@ -7,17 +7,6 @@ CREATE TABLE IF NOT EXISTS users (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS invites (
-    id CHAR(36) PRIMARY KEY,
-    token VARCHAR(96) NOT NULL UNIQUE,
-    role VARCHAR(32) NOT NULL DEFAULT 'member',
-    expires_at DATETIME NOT NULL,
-    used_at DATETIME DEFAULT NULL,
-    created_by CHAR(36) NOT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
-) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
 CREATE TABLE IF NOT EXISTS events (
     id CHAR(36) PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -26,7 +15,7 @@ CREATE TABLE IF NOT EXISTS events (
     category VARCHAR(64) DEFAULT 'Geral',
     location VARCHAR(255) DEFAULT NULL,
     calendar_link VARCHAR(255) DEFAULT NULL,
-    organizer_id CHAR(36) NOT NULL,
+    organizer_id CHAR(36),
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (organizer_id) REFERENCES users(id) ON DELETE SET NULL
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

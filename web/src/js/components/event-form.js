@@ -36,10 +36,10 @@ export class EventForm extends Form {
 		return this;
 	}
 
-	setEnabled(enabled) {
-		super.setEnabled(enabled);
+	setEnabled(enabled, options) {
+		super.setEnabled(enabled, options);
 
-		if (enabled) {
+		if (!this.isDisabled()) {
 			this.syncTimeState();
 		}
 

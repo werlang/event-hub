@@ -1,12 +1,17 @@
 import { BaseComponent } from './base-component.js';
-import { createFormState } from './form-state.js';
+import { Form } from './form.js';
 
 const LOGIN_TAB = 'login';
 const REGISTER_TAB = 'register';
+const VISIBILITY_STATE_KEY = 'visibility';
+
+function normalizeForm(form) {
+	return form instanceof Form ? form : new Form(form);
+}
 
 export class AuthTabs extends BaseComponent {
 	#tabs;
-	#formStates;
+	#forms;
 	#registerEnabled = false;
 	#activeTab = LOGIN_TAB;
 	#onChange;
@@ -14,9 +19,9 @@ export class AuthTabs extends BaseComponent {
 	constructor({ tabs = [], loginForm = null, registerForm = null, onChange = null }) {
 		super(tabs[0]?.closest('[role="tablist"]') || tabs[0]?.parentElement || null);
 		this.#tabs = Array.isArray(tabs) ? tabs.filter(Boolean) : [];
-		this.#formStates = {
-			login: createFormState(loginForm),
-			register: createFormState(registerForm),
+		this.#forms = {
+			login: normalizeForm(loginForm),
+			register: normalizeForm(registerForm),
 		};
 		this.#onChange = typeof onChange === 'function' ? onChange : null;
 	}
@@ -28,8 +33,8 @@ export class AuthTabs extends BaseComponent {
 	isReady() {
 		return super.isReady()
 			&& this.#tabs.length > 0
-			&& this.#formStates.login.isReady()
-			&& this.#formStates.register.isReady();
+			&& this.#forms.login.isReady()
+			&& this.#forms.register.isReady();
 	}
 
 	setActive(tabName) {
@@ -169,20 +174,22 @@ export class AuthTabs extends BaseComponent {
 	}
 
 	#syncForms() {
-		const loginForm = this.#formStates.login.get();
-		const registerForm = this.#formStates.register.get();
+		const loginForm = this.#forms.login;
+		const registerForm = this.#forms.register;
+		const loginFormElement = loginForm.get();
+		const registerFormElement = registerForm.get();
 
 		const isLoginActive = this.#activeTab === LOGIN_TAB;
-		loginForm.classList.toggle('form--visible', isLoginActive);
-		loginForm.hidden = !isLoginActive;
-		loginForm.setAttribute('aria-hidden', isLoginActive ? 'false' : 'true');
-		this.#formStates.login.setEnabled(isLoginActive);
+		loginFormElement.classList.toggle('form--visible', isLoginActive);
+		loginFormElement.hidden = !isLoginActive;
+		loginFormElement.setAttribute('aria-hidden', isLoginActive ? 'false' : 'true');
+		loginForm.setEnabled(isLoginActive, { stateKey: VISIBILITY_STATE_KEY });
 
 		const isRegisterActive = this.#activeTab === REGISTER_TAB && this.#registerEnabled;
-		registerForm.classList.toggle('form--visible', isRegisterActive);
-		registerForm.hidden = !isRegisterActive;
-		registerForm.setAttribute('aria-hidden', isRegisterActive ? 'false' : 'true');
-		this.#formStates.register.setEnabled(isRegisterActive);
+		registerFormElement.classList.toggle('form--visible', isRegisterActive);
+		registerFormElement.hidden = !isRegisterActive;
+		registerFormElement.setAttribute('aria-hidden', isRegisterActive ? 'false' : 'true');
+		registerForm.setEnabled(isRegisterActive, { stateKey: VISIBILITY_STATE_KEY });
 
 		this.#getTab(this.#activeTab)?.focus({ preventScroll: true });
 	}

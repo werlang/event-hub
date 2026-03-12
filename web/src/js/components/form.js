@@ -1,7 +1,9 @@
 import { BaseComponent } from './base-component.js';
 import { Button } from './button.js';
 import { Input } from './input.js';
-import { createFormState } from './form-state.js';
+
+const FORM_FIELD_SELECTOR = 'input, select, textarea, button';
+const DEFAULT_DISABLED_STATE_KEY = 'default';
 
 function createBucketValue(currentValue, nextValue) {
 	if (currentValue === undefined) {
@@ -56,8 +58,17 @@ function writeStoredJson(key, value) {
 	localStorage.setItem(key, JSON.stringify(value));
 }
 
+function normalizeDisabledStateKey(stateKey) {
+	if (typeof stateKey !== 'string' || !stateKey.trim()) {
+		return DEFAULT_DISABLED_STATE_KEY;
+	}
+
+	return stateKey.trim();
+}
+
 export class Form extends BaseComponent {
-	#formState;
+	#disabledStates = new Set();
+	#fieldDisabledStates = new Map();
 	#buttons = new Map();
 	#inputs = new Map();
 	#selects = new Map();
@@ -66,7 +77,6 @@ export class Form extends BaseComponent {
 
 	constructor(element, { autoSave } = {}) {
 		super(element);
-		this.#formState = createFormState(element);
 		this.#autoSave = this.#normalizeAutoSave(autoSave);
 
 		if (!super.isReady()) {
@@ -76,6 +86,7 @@ export class Form extends BaseComponent {
 		this.#collectButtons();
 		this.#collectInputs();
 		this.#collectSelects();
+		this.#snapshotFieldStates();
 		this.#bindEnterKeyBehavior();
 		this.loadAutoSave();
 		this.#bindAutoSave();
@@ -91,6 +102,10 @@ export class Form extends BaseComponent {
 		}
 
 		return this.#buttons.get(id) || false;
+	}
+
+	getSubmitButton() {
+		return this.getButton().find(button => button.get().type === 'submit') || null;
 	}
 
 	getInput(id) {
@@ -121,9 +136,42 @@ export class Form extends BaseComponent {
 		return super.get()?.querySelector(selector) || null;
 	}
 
-	setEnabled(enabled) {
-		this.#formState.setEnabled(enabled);
+	isDisabled() {
+		return this.#disabledStates.size > 0;
+	}
+
+	setEnabled(enabled, { stateKey = DEFAULT_DISABLED_STATE_KEY } = {}) {
+		if (!this.isReady()) {
+			return this;
+		}
+
+		const normalizedStateKey = normalizeDisabledStateKey(stateKey);
+		const wasDisabled = this.isDisabled();
+
+		if (Boolean(enabled)) {
+			this.#disabledStates.delete(normalizedStateKey);
+		} else {
+			this.#disabledStates.add(normalizedStateKey);
+		}
+
+		const isDisabled = this.isDisabled();
+		if (!wasDisabled && isDisabled) {
+			this.#rememberAndDisableFields();
+		} else if (wasDisabled && !isDisabled) {
+			this.#restoreFields();
+		}
+
+		this.#syncDisabledState(isDisabled);
+		this.#refreshControls();
 		return this;
+	}
+
+	enable(options) {
+		return this.setEnabled(true, options);
+	}
+
+	disable(options) {
+		return this.setEnabled(false, options);
 	}
 
 	validate(validationArray = [], silent = false) {
@@ -195,7 +243,7 @@ export class Form extends BaseComponent {
 		this.#submitHandler = async (event) => {
 			event.preventDefault();
 
-			const submitButton = this.#findSubmitButton();
+			const submitButton = this.getSubmitButton();
 			try {
 				submitButton?.disable({ showBusy: true });
 				await callback(this.readData(), this, event);
@@ -207,6 +255,9 @@ export class Form extends BaseComponent {
 				this.clearAutoSave();
 			} finally {
 				submitButton?.enable();
+				if (this.isDisabled()) {
+					submitButton?.disable();
+				}
 			}
 		};
 
@@ -290,6 +341,14 @@ export class Form extends BaseComponent {
 		});
 	}
 
+	#fields() {
+		if (!this.isReady()) {
+			return [];
+		}
+
+		return Array.from(super.get().querySelectorAll(FORM_FIELD_SELECTOR));
+	}
+
 	#collectInputs() {
 		Array.from(super.get().querySelectorAll('input, textarea')).forEach((element, index) => {
 			const key = readControlKey(element, index, 'input');
@@ -358,6 +417,10 @@ export class Form extends BaseComponent {
 		return Array.isArray(control) ? control : [control];
 	}
 
+	#refreshControls() {
+		this.#forEachControl(control => control.refresh());
+	}
+
 	#forEachInput(callback) {
 		Array.from(this.#inputs.values()).forEach((control) => {
 			this.#normalizeControls(control).forEach(callback);
@@ -409,7 +472,30 @@ export class Form extends BaseComponent {
 		});
 	}
 
-	#findSubmitButton() {
-		return this.getButton().find(button => button.get().type === 'submit') || null;
+	#syncDisabledState(isDisabled) {
+		super.get().classList.toggle('form--disabled', isDisabled);
+		super.get().setAttribute('aria-disabled', isDisabled ? 'true' : 'false');
+	}
+
+	#snapshotFieldStates() {
+		this.#fieldDisabledStates = new Map();
+		this.#fields().forEach((field) => {
+			this.#fieldDisabledStates.set(field, field.disabled);
+		});
+	}
+
+	#rememberAndDisableFields() {
+		this.#snapshotFieldStates();
+		this.#fields().forEach((field) => {
+			field.disabled = true;
+		});
+	}
+
+	#restoreFields() {
+		this.#fields().forEach((field) => {
+			field.disabled = this.#fieldDisabledStates.get(field) ?? false;
+		});
+
+		this.#snapshotFieldStates();
 	}
 }

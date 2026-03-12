@@ -1,7 +1,7 @@
 import { TemplateVar } from './template-var.js';
 import { Request } from './request.js';
 
-export const TOKEN_STORAGE_KEY = 'ae_token';
+export const TOKEN_STORAGE_KEY = 'auth_token';
 
 class ApiEndpointResolver {
     #sanitizeBaseUrl(url) {

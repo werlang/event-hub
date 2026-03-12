@@ -1,16 +1,11 @@
 import express from 'express';
 import { User } from '../model/user.js';
-import { Invite } from '../model/invite.js';
 import { signToken } from '../helpers/token.js';
-import { authMiddleware, requireRole } from '../middleware/auth.js';
+import { authMiddleware } from '../middleware/auth.js';
 import { CustomError } from '../helpers/error.js';
 import { sendCreated, sendSuccess } from '../helpers/response.js';
 
 export const router = express.Router();
-
-const DEFAULT_INVITE_EXPIRATION_HOURS = 72;
-const MIN_INVITE_EXPIRATION_HOURS = 1;
-const MAX_INVITE_EXPIRATION_HOURS = 24 * 30;
 
 function rethrowAsApiError(error, fallbackMessage) {
     if (error instanceof CustomError || Number.isInteger(error?.status)) {
@@ -115,43 +110,6 @@ router.get('/me', authMiddleware, async (req, res, next) => {
     } catch (err) {
         try {
             rethrowAsApiError(err, 'Não foi possível validar a sessão.');
-        } catch (error) {
-            return next(error);
-        }
-    }
-});
-
-router.post('/invites', authMiddleware, requireRole('admin'), async (req, res, next) => {
-    try {
-        const requestedRole = User.normalizeRole(req.body?.role || 'member');
-        const rawHours = Number(req.body?.expiresInHours || DEFAULT_INVITE_EXPIRATION_HOURS);
-        const expiresInHours = Number.isFinite(rawHours)
-            ? Math.min(MAX_INVITE_EXPIRATION_HOURS, Math.max(MIN_INVITE_EXPIRATION_HOURS, rawHours))
-            : DEFAULT_INVITE_EXPIRATION_HOURS;
-
-        const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000).toISOString();
-        const invite = await Invite.create({
-            role: requestedRole,
-            createdBy: req.user.id,
-            expiresAt,
-        });
-
-        return sendCreated(res, {
-            data: {
-                invite: {
-                    id: invite.id,
-                    token: invite.token,
-                    role: invite.role,
-                    expiresAt: invite.expiresAt,
-                    usedAt: invite.usedAt,
-                    createdBy: invite.createdBy,
-                },
-            },
-            message: 'Convite gerado com sucesso.',
-        });
-    } catch (err) {
-        try {
-            rethrowAsApiError(err, 'Não foi possível gerar o convite.');
         } catch (error) {
             return next(error);
         }
