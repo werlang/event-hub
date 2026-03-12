@@ -1,7 +1,6 @@
 footer {
     background: rgb(from var(--color-text) r g b / 0.05);
     padding: 20px 30px;
-    margin-top: 40px;
     border-top: 1px solid rgb(from var(--color-text) r g b / 0.1);
 
     .footer-content {

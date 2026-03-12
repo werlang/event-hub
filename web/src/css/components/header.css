@@ -44,15 +44,17 @@ header {
         margin: 15px 0;
 
         .button {
-            background: var(--color-background);
-            color: rgb(from var(--color-main) r g b / 1);
-            border: 1px solid color-mix(in srgb, var(--color-main), transparent 72%);
-            box-shadow: none;
+            background: transparent;
+            color: rgb(from var(--color-main-contrast) r g b / 0.8);
+            border: none;
+            font-size: 1.2rem;
+            transition: 0.3s all;
+            padding: 5px 20px;
 
             &:hover {
-                background: color-mix(in srgb, var(--color-main-alt), var(--color-background) 70%);
-                /* color: rgb(from var(--color-background) r g b / 1); */
-                /* transform: translateY(-1px); */
+                background-color: rgb(from var(--color-main-alt) r g b / 0.2);
+                color: rgb(from var(--color-main-contrast) r g b / 1);
+                filter: brightness(1.2);
             }
         }
     }
