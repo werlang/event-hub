@@ -3,28 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entrar · Agenda Acadêmica</title>
-    <link rel="stylesheet" href="/css/index.min.css">
-    <script type="module" src="/js/index.min.js"></script>
+    <title>🗓️ · Login</title>
+    <link rel="stylesheet" href="/css/login.min.css">
+    <script type="module" src="/js/login.min.js"></script>
 </head>
 <body>
-    <header class="topbar">
-        <a class="brand" href="/">Agenda Acadêmica</a>
-        <nav class="topbar__actions">
-            <span id="session-badge" class="session-badge" aria-live="polite">Verificando sessão...</span>
-            <a class="button button--ghost" href="/">Eventos</a>
-            <a class="button button--primary" href="/publish">Criar evento</a>
-        </nav>
-    </header>
-
-    <section class="hero hero--compact">
-        <div class="hero__content">
-            <p class="pill">Acesso</p>
-            <h1>Entre ou crie sua conta.</h1>
-            <p class="subtitle">Ao autenticar, você poderá publicar eventos rapidamente.</p>
-        </div>
-        <div class="hero__glow"></div>
-    </section>
+    {{> header}}
 
     <main>
         <section class="panel grid-2">
@@ -57,5 +41,7 @@
             </div>
         </section>
     </main>
+
+    {{> footer}}
 </body>
 </html>

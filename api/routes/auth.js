@@ -40,31 +40,12 @@ function createSessionToken(user) {
     });
 }
 
-function resolveInviteToken(body = {}) {
-    return body.inviteToken || body.invite || body.token || null;
-}
-
-function validateInviteForRegistration(invite) {
-    if (!invite) {
-        throw new CustomError(400, 'Convite inválido.');
-    }
-
-    if (Invite.isUsed(invite)) {
-        throw new CustomError(409, 'Este convite já foi utilizado.');
-    }
-
-    if (Invite.isExpired(invite)) {
-        throw new CustomError(410, 'Este convite expirou.');
-    }
-}
-
 router.post('/register', async (req, res, next) => {
     try {
         const { name, email, password } = req.body || {};
-        const inviteToken = resolveInviteToken(req.body);
 
-        if (!name || !email || !password || !inviteToken) {
-            throw new CustomError(400, 'Nome, e-mail, senha e token de convite são obrigatórios.');
+        if (!name || !email || !password) {
+            throw new CustomError(400, 'Nome, e-mail e senha são obrigatórios.');
         }
 
         const existing = await User.findByEmail(email);
@@ -72,17 +53,11 @@ router.post('/register', async (req, res, next) => {
             throw new CustomError(409, 'Já existe uma conta com este e-mail.');
         }
 
-        const invite = await Invite.findByToken(inviteToken);
-        validateInviteForRegistration(invite);
-
         const user = await User.create({
             name,
             email,
             password,
-            role: invite.role,
         });
-
-        await Invite.markAsUsed(invite.id);
 
         const token = createSessionToken(user);
         return sendCreated(res, {

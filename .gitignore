@@ -1,3 +1,11 @@
+# Ignore Mac system files
 .DS_Store
+
+# Environment variables and dependencies
 .env
 node_modules
+
+# webpack build outputs
+web/public/js
+web/public/css
+web/public/**/generated

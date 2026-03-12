@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS events (
     date DATETIME NOT NULL,
     category VARCHAR(64) DEFAULT 'Geral',
     location VARCHAR(255) DEFAULT NULL,
+    calendar_link VARCHAR(255) DEFAULT NULL,
     organizer_id CHAR(36) NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (organizer_id) REFERENCES users(id) ON DELETE SET NULL
