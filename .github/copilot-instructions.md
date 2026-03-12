@@ -11,7 +11,7 @@
 - **API service** (`api/`): REST endpoints for auth and events.
 - **Web service** (`web/`): SSR shell with Mustache and client behavior bundled with Webpack.
 - **No shared package**: `api/` and `web/` are independent Node projects.
-- **Persistence**: MySQL datastore managed by `DataStore` + model/driver classes (`api/helpers/mysql.js`, `api/model/*.js`).
+- **Persistence**: MySQL access flows through the base `Model` class and the `Mysql` driver (`api/model/model.js`, `api/helpers/mysql.js`).
 
 ## API Overview
 - Base middleware in `api/app.js`: `cors()`, JSON/urlencoded parsing, readiness route (`GET /ready`), explicit 404 forwarding, and terminal error middleware.
@@ -24,7 +24,7 @@
 - Error envelope: `{ error: true, status, type, message, data? }`
 
 ### Auth routes (`api/routes/auth.js`)
-- `POST /auth/register` → create user and return JWT.
+- `POST /auth/register` → create user and return JWT; no invite token is required.
 - `POST /auth/login` → validate credentials and return JWT.
 - `GET /auth/me` → requires Bearer token via `authMiddleware`.
 
@@ -36,14 +36,14 @@
 ## Auth and Security
 - JWT helpers are in `api/helpers/token.js`.
 - Default JWT expiry is `12h`.
-- `JWT_SECRET` comes from env, with a local fallback for development.
-- In production, `JWT_SECRET` is mandatory and must be at least 32 chars (weak/common secrets are rejected).
+- `JWT_SECRET` must be present in the environment before the API starts.
 - API auth is Bearer-token based (`Authorization: Bearer <token>`).
 
 ## Data Model Conventions
 - **User** (`api/model/user.js`):
   - password hashing via bcrypt (`12` rounds).
   - email normalized to lowercase.
+  - roles normalized to `admin` or `member`.
 - **Event** (`api/model/event.js`):
   - generated UUID when `id` is absent.
   - defaults: `category = 'Geral'`, `location = 'A definir'`.
@@ -65,15 +65,22 @@
   - `api` (port `3000`, inspector `9229`)
   - `web` (Webpack dev server on port `80`)
   - `mysql` (port `3306`)
-- There is no production `compose.yaml` in this repository at the moment.
+- The compose file mounts source code into the containers and runs each service in development mode.
 
 ## Frontend Notes
-- Web entry route: `GET /` renders `web/src/html/index.html`.
+- Web routes:
+  - `GET /` renders `web/src/html/index.html`
+  - `GET /login` renders `web/src/html/login.html`
+  - `GET /publish` renders `web/src/html/publish.html`
 - Static assets are served from `web/public/`.
-- Client entry is `web/src/js/index.js` and dispatches by page:
-  - `web/src/js/login.js` handles login/register flows,
-  - `web/src/js/publish.js` handles authenticated event publishing,
-  - `web/src/js/index.js` handles public event filtering/list rendering.
+- Webpack entries are:
+  - `web/src/js/index.js` → public home page bundle plus shared `index.css`
+  - `web/src/js/login.js` → login/register tab UI plus `login.css`
+- The current home page flow is componentized around `EventList`, `FilterForm`, and `QuickChips`.
+- `web/src/js/helpers/template-var.js` reads server-injected template variables from `web/middleware/render.js`.
+- `web/src/js/helpers/api.js` resolves API URLs from template vars, then a meta tag, then relative paths.
+- `web/src/html/publish.html` currently renders the publish form shell, but there is no dedicated `web/src/js/publish.js` entry at the moment.
+- The `.github/references/` folder is a style inspiration source for class-based DOM helpers and component ergonomics; use it as reference material, not as a copy target.
 
 ## Environment Variables
 - Root `.env` currently contains:

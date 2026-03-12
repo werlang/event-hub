@@ -11,8 +11,8 @@ Applies to the web client styles under `web/src/css/` and class names used in `w
 
 ## Visual Direction
 
-- The UI theme is warm, paper-like, and editorial, not dark, neon, or glass-heavy.
-- Base colors should stay anchored to the current palette: soft paper background, sage primary, earthy brown secondary, muted text, and restrained blue links.
+- The UI theme is warm and print-like, not dark, neon, or glass-heavy.
+- Base colors should stay anchored to the current palette: soft paper background, green primary, plum accent, muted text, and restrained blue links.
 - Surfaces should feel calm and tactile: soft white cards and panels, warm borders, modest gradients, and controlled shadows.
 - Background atmosphere belongs in `base.css` and should stay subtle: layered gradients, low-contrast texture, and no loud decorative effects.
 - Avoid reintroducing purple/cyan tech aesthetics unless the user explicitly asks for a different direction.
@@ -22,11 +22,12 @@ Applies to the web client styles under `web/src/css/` and class names used in `w
 - Use `--font-body` for normal UI copy and form controls.
 - Use `--font-display` for hero headings, section headings, and brand-forward moments.
 - Use `--font-mono` sparingly for pills, badges, or compact metadata that benefits from a coded label feel.
-- Do not add new font families in component files. If typography needs to change globally, update `index.css` and `tokens.css` together.
+- The current stack is `Roboto`, `Raleway`, and `Source Code Pro`, defined across `base.css` and `tokens.css`.
+- Do not add new font families in component files. If typography needs to change globally, update `base.css` and `tokens.css` together.
 
 ## Core Rules
 
-1. Keep CSS bundled through `web/src/css/index.css`, but modularized with `@import` per component file.
+1. Keep CSS bundled through `web/src/css/index.css` or `web/src/css/login.css`, but modularized with `@import` per component file.
 2. Each UI component must own its style file in `web/src/css/components/`.
 3. Keep project-wide tokens in `web/src/css/tokens.css` under `:root`.
 4. Never hardcode palette colors, fonts, radii, or shadows in component files when an existing token already covers the need.
@@ -48,21 +49,20 @@ Use shared token names from `tokens.css`:
 
 ## Component Language
 
-- `topbar.css` and `hero.css` define the public-facing visual identity. Keep them elegant and warm, with restrained gradients and clear framing.
+- `header.css` and `hero.css` define the public-facing visual identity. Keep them elegant and warm, with restrained gradients and clear framing.
 - `panel.css` and `event-card.css` should read as paper surfaces: bright cards, soft borders, rounded edges, and careful shadows.
 - `button.css` uses an earthy, uppercase call-to-action language. Primary buttons lean brown, ghost buttons stay surface-based.
-- `filter-form.css` and `form.css` favor generous spacing, rounded inputs, warm borders, and accessible focus rings.
+- Filter styles currently live in `index.css`, while form primitives live in `form.css`; preserve that split unless there is a clear reason to extract a new component file.
 - Compact metadata elements such as pills, chips, and session badges should feel crisp and intentional, not flashy.
 - If a special form control needs structural styling, prefer a small semantic class in HTML such as `.checkbox-field` rather than inline styles.
 
 ## Organization Pattern
 
-- `index.css`: imports only (fonts + tokens/base/layout + components)
+- `index.css`: imports tokens/base/component files plus home-page filter and empty-state rules
+- `login.css`: imports shared tokens/base/components plus auth-page layout and tabs rules
 - `tokens.css`: color and spacing primitives
 - `base.css`: reset, atmospheric background, global typography primitives
-- `layout.css`: width, spacing, and page layout utilities
 - `components/*.css`: component-specific nested rules
-- `responsive.css`: cross-component responsive overrides only
 
 ## Interaction with JS Components
 
@@ -79,7 +79,8 @@ Example pattern:
 - Keep gradients within the project palette and use them mainly for large branded surfaces.
 - Use `--font-display` only where hierarchy or brand presence matters; do not turn body copy into display text.
 - Preserve roomy spacing in forms and cards. The current UI should feel calmer and more breathable than the previous version.
-- When in doubt, match the tone of `base.css`, `topbar.css`, `hero.css`, and `event-card.css` before inventing a new pattern.
+- When in doubt, match the tone of `base.css`, `header.css`, `hero.css`, and `event-card.css` before inventing a new pattern.
+- The `.github/references/` folder can be used as style inspiration for component ergonomics, but visual decisions must follow the live tokens and component files in `web/src/css/`.
 
 ## Review Checklist
 

@@ -8,7 +8,7 @@ Patterns aligned with this repository (`auth` + `events`).
 import express from 'express';
 import { authMiddleware } from '../middleware/auth.js';
 import { sendSuccess } from '../helpers/response.js';
-import CustomError from '../helpers/error.js';
+import { CustomError } from '../helpers/error.js';
 
 export const router = express.Router();
 
@@ -20,6 +20,32 @@ router.get('/me', authMiddleware, async (req, res, next) => {
 
         return sendSuccess(res, {
             data: { user: { id: req.user.id, name: req.user.name, email: req.user.email } },
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+```
+
+## Authenticated Create Route
+
+```javascript
+import express from 'express';
+import { authMiddleware } from '../middleware/auth.js';
+import { Event } from '../model/event.js';
+import { sendCreated } from '../helpers/response.js';
+
+export const router = express.Router();
+
+router.post('/events', authMiddleware, async (req, res, next) => {
+    try {
+        const event = await Event.create({
+            ...req.body,
+            organizerId: req.user.id,
+        });
+
+        return sendCreated(res, {
+            data: { event },
         });
     } catch (error) {
         return next(error);
@@ -48,7 +74,7 @@ router.post('/register', async (req, res, next) => {
 ## Conflict Response + 409
 
 ```javascript
-const existing = await store.findUserByEmail(email);
+const existing = await User.findByEmail(email);
 if (existing) {
     throw new CustomError(409, 'Já existe uma conta com este e-mail.');
 }
@@ -66,7 +92,7 @@ router.get('/', async (req, res, next) => {
             to: req.query.to,
         };
 
-        const events = await store.listEvents(filters);
+        const events = await Event.list(filters);
         return sendSuccess(res, { data: { events } });
     } catch (error) {
         return next(error);
@@ -79,7 +105,7 @@ router.get('/', async (req, res, next) => {
 ```javascript
 router.get('/:id', async (req, res, next) => {
     try {
-        const event = await store.findEventById(req.params.id);
+        const event = await Event.findById(req.params.id);
         if (!event) {
             throw new CustomError(404, 'Evento não encontrado.');
         }

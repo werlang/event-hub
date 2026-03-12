@@ -1,40 +1,38 @@
 # Frontend Patterns
 
-Patterns aligned with `web/src/js/{index,login,publish}.js` and `web/src/js/helpers/api.js`.
+Patterns aligned with the current home/login bundles and the shared helper/component layer.
 
-## Page Dispatch
+## Home Boot Pattern
 
 ```javascript
-const page = TemplateVar.get('page');
-
-if (page === 'login') {
-    initLoginPage();
-} else if (page === 'publish') {
-    initPublishPage();
-} else {
-    initHomePage();
+export function initHomePage() {
+    const elements = createElements();
+    const eventList = new EventList({
+        grid: elements.grid,
+        emptyState: elements.emptyState,
+    });
+    const filterForm = new FilterForm({
+        form: elements.filterForm,
+        filterSearch: elements.filterSearch,
+        filterCategory: elements.filterCategory,
+        filterFrom: elements.filterFrom,
+        filterTo: elements.filterTo,
+    });
+    const quickChips = new QuickChips({ container: elements.quickChips });
 }
 ```
 
 ## Query String Helper
 
 ```javascript
-function serializeFilters() {
-    const params = new URLSearchParams();
-    const map = {
-        search: homeElements.filterSearch?.value,
-        category: homeElements.filterCategory?.value,
-        from: homeElements.filterFrom?.value,
-        to: homeElements.filterTo?.value,
-    };
+const params = createHomeFilterParams({
+    search: filters.search,
+    category: filters.category,
+    from: filters.from,
+    to: filters.to,
+});
 
-    Object.entries(map).forEach(([key, value]) => {
-        const trimmed = typeof value === 'string' ? value.trim() : '';
-        if (trimmed) params.set(key, trimmed);
-    });
-
-    return params;
-}
+syncUrlWithParams(params);
 ```
 
 ## Envelope-Aware Request Pattern
@@ -48,41 +46,43 @@ if (!response.ok) {
 }
 
 const events = response.data?.events || [];
-renderEvents(events);
+eventList.render(events);
 ```
 
-## Form Submit Handler Pattern
+## Filter Form Binding
 
 ```javascript
-async function handlePublishSubmit(event) {
-    event.preventDefault();
-    const payload = toEventPayload(elements.eventForm);
+filterForm.bindApply((filters) => {
+    loadEvents(filters);
+});
 
-    const response = await requestApi('/events', {
-        method: 'POST',
-        token,
-        body: payload,
-    });
+quickChips.bindSelect((chipFilters) => {
+    const mergedFilters = {
+        ...filterForm.readFilters(),
+        ...chipFilters,
+    };
 
-    if (!response.ok) {
-        showAuthState(response.message || 'Não foi possível publicar o evento.');
-        return;
-    }
-}
+    filterForm.hydrate(mergedFilters);
+    loadEvents(mergedFilters);
+});
 ```
 
-## Init Pattern
+## Login Tabs Pattern
 
 ```javascript
-function bindEvents() {
-    homeElements.applyFilters.addEventListener('click', () => {
-        loadEvents();
-    });
-}
+const authTabs = new AuthTabs({
+    tabs,
+    loginForm,
+    registerForm,
+    onChange: syncAuthHash,
+});
 
-function initHomePage() {
-    bindEvents();
-    hydrateFiltersFromUrl();
-    loadEvents();
-}
+authTabs.setRegisterEnabled(true);
+authTabs.wire();
+authTabs.setActive(readInitialAuthTab());
 ```
+
+## Notes
+
+- The current repository does not have an active `publish.js` entry.
+- Use the root `.github/references/` folder as style inspiration for class-based DOM APIs, but keep implementation details anchored in the live `web/src/js/` files.

@@ -1,6 +1,6 @@
 ---
 name: api-development
-description: Build and maintain REST API endpoints for authentication and academic events in `api/`. Use when adding or modifying routes, request validation, auth flows, response contracts, model behavior, or datastore interactions.
+description: Build and maintain REST API endpoints for authentication and academic events in `api/`. Use when adding or modifying routes, request validation, auth flows, response contracts, model behavior, or MySQL-backed persistence.
 ---
 
 # API Development
@@ -30,6 +30,7 @@ Routes:
 - Uses bcrypt password hashing (`12` rounds)
 - Stores password hash only (`password_hash`)
 - Normalizes email to lowercase
+- Normalizes roles to `admin` or `member`
 
 `Event` model (`api/model/event.js`):
 
@@ -58,11 +59,14 @@ Auth middleware (`api/middleware/auth.js`):
 
 Use `sendSuccess`/`sendCreated` (`api/helpers/response.js`) for success responses and `next(error)` with `CustomError` for failures.
 
+Error middleware (`api/middleware/error.js`) derives `type` from HTTP status names and exposes extra `data.detail` for `500` responses outside production.
+
 ## Implementation Guidance
 
 - Keep route handlers in `api/routes/*.js`.
 - Keep route handlers in `api/routes/*.js` with `try/catch` + `next(error)` orchestration.
-- Keep business/data operations in models/helpers and avoid writing SQL in route/model orchestration layers.
+- Keep business/data operations in models/helpers and avoid writing SQL directly in route handlers.
+- Use the shared base `Model` class with the `Mysql` driver instead of introducing a datastore/service wrapper layer.
 - Preserve the global envelope format for both success and errors.
 - Reuse established HTTP status codes:
    - `201` for created resources
@@ -88,6 +92,7 @@ Use `sendSuccess`/`sendCreated` (`api/helpers/response.js`) for success response
 ## References
 
 - Read [references/route-examples.md](references/route-examples.md) when implementing or refactoring route handlers, status codes, or validation patterns.
+- Use `.github/references/` as optional coding-style inspiration for helper/class ergonomics, but keep repository facts anchored in `api/` files.
 
 ## Out of Scope for This Repository
 

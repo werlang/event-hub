@@ -35,12 +35,16 @@ Remove references to non-existent features (Redis, timetable entities, proposal 
 - `web/app.js`
 - `web/src/js/index.js`
 - `web/src/js/login.js`
-- `web/src/js/publish.js`
+- `web/src/js/components/*.js`
 - `web/src/js/helpers/api.js`
+- `web/src/js/helpers/query-state.js`
 - `web/src/html/index.html`
+- `web/src/html/login.html`
+- `web/src/html/publish.html`
 - `web/webpack.config.js`
 - `compose.dev.yaml`
 - `api/package.json`, `web/package.json`
+- `.github/references/`
 
 ## Method
 
@@ -59,6 +63,7 @@ Update docs to match real behavior:
 - Domain model rules and defaults
 - Docker compose reality (dev file only)
 - Web architecture and current client flow
+- Notes about `.github/references/` as coding-style inspiration only
 
 ### Phase 3 — Validation
 
@@ -74,6 +79,9 @@ Update docs to match real behavior:
 - Production `compose.yaml` assumptions (if absent)
 - i18n namespace lists not present in code
 - CI/testing requirements that do not exist
+- References to deleted frontend entries such as `web/src/js/publish.js`
+- Claims about auth or publish flows that are not implemented in the current web bundle
+- Claims that registration still depends on a special access token
 
 ## Output Template
 

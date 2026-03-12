@@ -77,6 +77,7 @@ Extract from implementation:
 - Domain models and default values
 - Environment variables and config files
 - Build/dev scripts and execution modes
+- Which files in `.github/references/` are only style inspiration versus repository facts
 
 ### 3) Inventory `.github` content to migrate
 
@@ -116,6 +117,7 @@ Update files in this order:
 - Replace infra references (e.g., Redis, queues, external APIs) unless confirmed in target.
 - Replace script/compose commands with commands that exist in target.
 - Keep examples minimal and executable in target context.
+- If the repository has a `.github/references/` folder, document it explicitly as inspiration/reference material instead of treating it as runtime source of truth.
 
 ### Skills Alignment Rules
 
@@ -164,6 +166,8 @@ Validate docs agree on:
 
 For every major claim in `.github`, ensure a corresponding implementation exists.
 
+Also ensure docs do not describe attached reference material as if it were active application code.
+
 ---
 
 ## Common Migration Pitfalls (Must Check)
@@ -173,6 +177,7 @@ For every major claim in `.github`, ensure a corresponding implementation exists
 - Instructions mention production compose file when only dev compose exists.
 - API docs still describe old endpoints, query params, or status codes.
 - Frontend docs mention component system that target app does not use.
+- Frontend docs mention deleted bundle entries or flows that are only partially implemented.
 - Security/testing claims are aspirational and not enforced by tooling.
 
 ---

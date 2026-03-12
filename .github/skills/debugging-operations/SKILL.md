@@ -10,6 +10,7 @@ description: Diagnose runtime and integration issues across API and Web services
 - API: Express service in `api/` (default internal port `3000`)
 - Web: Express + Webpack dev server in `web/`
 - Dev compose file: `compose.dev.yaml`
+- Persistence: MySQL accessed through `api/helpers/mysql.js` and model classes under `api/model/`
 
 ## Fast Health Checks
 
@@ -72,10 +73,11 @@ curl "http://localhost:3000/events?search=workshop&category=Geral"
 ## Common Failure Points
 
 - Calling protected endpoints without bearer token returns `401` with envelope error payload.
-- Missing/invalid `JWT_SECRET` causes token mismatch between services/restarts.
+- Missing `JWT_SECRET` prevents the API from starting at import time.
 - Missing `Authorization: Bearer` prefix returns `401`.
 - Invalid `date` payload in `POST /events` returns `400`.
 - Frontend API base URL may be empty if template `apiUrl` or `<meta name="api-url">` is not set.
+- Open registration uses the same `/auth/register` endpoint as the login page bundle, so failures there are usually validation, duplicate-email, or connectivity problems.
 
 ## Envelope Checks
 
@@ -91,4 +93,5 @@ curl "http://localhost:3000/events?search=workshop&category=Geral"
 - `api/middleware/auth.js`
 - `web/app.js`
 - `web/src/js/index.js`
+- `web/src/js/login.js`
 - `compose.dev.yaml`
