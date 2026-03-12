@@ -16,6 +16,88 @@
         pointer-events: none;
     }
 
+    & label {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        color: var(--color-text-secondary);
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    & input:not([type='hidden']):not([type='checkbox']):not([type='radio']),
+    & select,
+    & textarea {
+        width: 100%;
+        padding: 16px 18px;
+        border-radius: var(--radius-sm);
+        border: 2px solid color-mix(in srgb, var(--color-main), transparent 78%);
+        background: var(--color-background);
+        color: var(--color-text);
+        font-size: 1rem;
+        line-height: 1.4;
+        box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text), transparent 92%);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, transform 0.2s ease;
+
+        &:hover {
+            border-color: color-mix(in srgb, var(--color-main), transparent 58%);
+            box-shadow: 0 6px 14px color-mix(in srgb, var(--color-text), transparent 92%);
+        }
+
+        &:focus {
+            outline: none;
+            border-color: var(--color-main);
+            background: var(--color-background);
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-main), transparent 88%), 0 10px 20px color-mix(in srgb, var(--color-text), transparent 92%);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            background: color-mix(in srgb, var(--color-background), var(--color-text) 6%);
+            color: color-mix(in srgb, var(--color-text-secondary), #ffffff 12%);
+            box-shadow: none;
+        }
+    }
+
+    & input:not([type='hidden']):not([type='checkbox']):not([type='radio'])::placeholder,
+    & textarea::placeholder {
+        color: color-mix(in srgb, var(--color-text-secondary), #ffffff 12%);
+    }
+
+    & select {
+        padding-right: 48px;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23474c54' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+        background-size: 16px;
+    }
+
+    & textarea {
+        min-height: 140px;
+        resize: vertical;
+    }
+
+    & label.checkbox-field {
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+        min-height: 56px;
+        padding: 0 6px 0 0;
+        color: var(--color-text);
+    }
+
+    & label.checkbox-field input[type='checkbox'] {
+        width: 20px;
+        height: 20px;
+        margin: 0;
+        padding: 0;
+        accent-color: var(--color-main);
+        border: none;
+        box-shadow: none;
+    }
+
     & .button {
         justify-self: start;
         margin-top: 4px;
@@ -39,4 +121,11 @@
     & li::marker {
         color: var(--color-main-alt);
     }
+}
+
+.hint {
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+    margin-top: 12px;
+    line-height: 1.6;
 }

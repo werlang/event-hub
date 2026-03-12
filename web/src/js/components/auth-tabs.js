@@ -1,9 +1,13 @@
+import { setFormEnabled } from './form-state.js';
+
 export class AuthTabs {
-	constructor({ tabs = [], loginForm = null, registerForm = null }) {
+	constructor({ tabs = [], loginForm = null, registerForm = null, onChange = null }) {
 		this.tabs = tabs;
 		this.loginForm = loginForm;
 		this.registerForm = registerForm;
 		this.registerEnabled = false;
+		this.activeTab = 'login';
+		this.onChange = typeof onChange === 'function' ? onChange : null;
 	}
 
 	setActive(tabName) {
@@ -11,16 +15,30 @@ export class AuthTabs {
 			tabName = 'login';
 		}
 
+		this.activeTab = tabName === 'register' ? 'register' : 'login';
+
 		this.tabs.forEach(button => {
-			button.classList.toggle('tab--active', button.dataset.tab === tabName);
+			const isActive = button.dataset.tab === this.activeTab;
+			button.classList.toggle('tab--active', isActive);
+			button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+			button.setAttribute('tabindex', isActive ? '0' : '-1');
 		});
 
 		if (this.loginForm) {
-			this.loginForm.classList.toggle('form--visible', tabName === 'login');
+			const isLoginActive = this.activeTab === 'login';
+			this.loginForm.classList.toggle('form--visible', isLoginActive);
+			this.loginForm.setAttribute('aria-hidden', isLoginActive ? 'false' : 'true');
+			setFormEnabled(this.loginForm, isLoginActive);
 		}
+
 		if (this.registerForm) {
-			this.registerForm.classList.toggle('form--visible', tabName === 'register');
+			const isRegisterActive = this.activeTab === 'register';
+			this.registerForm.classList.toggle('form--visible', isRegisterActive);
+			this.registerForm.setAttribute('aria-hidden', isRegisterActive ? 'false' : 'true');
+			setFormEnabled(this.registerForm, isRegisterActive && this.registerEnabled);
 		}
+
+		this.onChange?.(this.activeTab);
 	}
 
 	setRegisterEnabled(isEnabled) {
@@ -32,6 +50,7 @@ export class AuthTabs {
 			}
 
 			button.classList.toggle('tab--disabled', !this.registerEnabled);
+			button.disabled = !this.registerEnabled;
 			button.setAttribute('aria-disabled', this.registerEnabled ? 'false' : 'true');
 		});
 
@@ -39,8 +58,14 @@ export class AuthTabs {
 			return;
 		}
 
-		this.registerForm.classList.toggle('form--disabled', !this.registerEnabled);
 		this.registerForm.setAttribute('aria-disabled', this.registerEnabled ? 'false' : 'true');
+
+		if (!this.registerEnabled && this.activeTab === 'register') {
+			this.setActive('login');
+			return;
+		}
+
+		setFormEnabled(this.registerForm, this.registerEnabled && this.activeTab === 'register');
 	}
 
 	wire() {

@@ -1,9 +1,0 @@
-.empty-state {
-    text-align: center;
-    color: var(--color-text-secondary);
-    margin-top: 12px;
-    padding: 28px 20px;
-    border-radius: var(--radius);
-    border: 1px dashed color-mix(in srgb, var(--color-main), transparent 68%);
-    background: var(--color-background);
-}

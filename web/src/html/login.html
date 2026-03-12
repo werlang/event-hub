@@ -11,34 +11,26 @@
     {{> header}}
 
     <main>
-        <section class="panel grid-2">
-            <div class="panel__block">
-                <div class="tabs">
-                    <button class="tab tab--active" data-tab="login">Entrar</button>
-                    <button class="tab tab--disabled" data-tab="register" aria-disabled="true">Registrar</button>
-                </div>
-                <div id="auth-message" class="alert" hidden></div>
-                <form id="login-form" class="form form--visible">
-                    <label>E-mail<input type="email" name="email" required></label>
-                    <label>Senha<input type="password" name="password" required></label>
-                    <button class="button button--primary" type="submit">Entrar</button>
-                </form>
-                <form id="register-form" class="form form--disabled" aria-disabled="true">
-                    <label>Nome completo<input type="text" name="name" required></label>
-                    <label>E-mail institucional<input type="email" name="email" required></label>
-                    <label>Senha<input type="password" name="password" required></label>
-                    <input type="hidden" name="inviteToken" value="">
-                    <button class="button button--primary" type="submit">Criar conta</button>
-                </form>
-                <p id="invite-hint" class="hint">Registro disponível apenas com link de convite válido.</p>
+        <section class="panel">
+            <div class="tabs" role="tablist" aria-label="Alternar entre entrar e registrar">
+                <button class="tab tab--active" type="button" role="tab" data-tab="login" aria-controls="login-form" aria-selected="true">Entrar</button>
+                <button class="tab" type="button" role="tab" data-tab="register" aria-controls="register-form" aria-selected="false">Registrar</button>
             </div>
-            <div class="panel__block">
-                <h2>Dicas rápidas</h2>
-                <ul class="list">
-                    <li>O token fica salvo localmente para reutilizar em outras páginas.</li>
-                    <li>Use a URL de retorno para voltar à tela desejada após autenticar.</li>
-                </ul>
-            </div>
+            <div id="auth-message" class="alert" hidden></div>
+            <form id="login-form" class="form form--visible" aria-hidden="false">
+                <h2>Bem-vindo de volta!</h2>
+                <label>E-mail<input type="email" name="email" required></label>
+                <label>Senha<input type="password" name="password" required></label>
+                <button class="button button--primary" type="submit">Entrar</button>
+            </form>
+            <form id="register-form" class="form" aria-hidden="true">
+                <h2>Crie sua conta</h2>
+                <label>Nome completo<input type="text" name="name" required></label>
+                <label>E-mail institucional<input type="email" name="email" required></label>
+                <label>Senha<input type="password" name="password" required></label>
+                <label>Confirmar senha<input type="password" name="confirmPassword" required></label>
+                <button class="button button--primary" type="submit">Criar conta</button>
+            </form>
         </section>
     </main>
 

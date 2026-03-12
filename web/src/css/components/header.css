@@ -17,6 +17,8 @@ header {
     .header-title {
         display: flex;
         align-items: center;
+        color: rgb(from var(--color-background) r g b / 1);
+        text-decoration: none;
 
         h1 {
             font-size: 2.7rem;
@@ -24,6 +26,10 @@ header {
             @media (min-width: 600px) {
                 font-size: 3rem;
             }
+        }
+
+        &:hover {
+            filter: brightness(0.9);
         }
     }
 
