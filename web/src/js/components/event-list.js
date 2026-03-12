@@ -1,32 +1,46 @@
-import { renderEventCard } from './event-card.js';
+import { BaseComponent } from './base-component.js';
+import { EventCard } from './event-card.js';
 import { sortEventsByDate } from '../helpers/event-sort.js';
 
-export class EventList {
+export class EventList extends BaseComponent {
+	#emptyState;
+	#defaultEmptyMessage;
+
 	constructor({ grid, emptyState }) {
-		this.grid = grid;
-		this.emptyState = emptyState;
-		this.defaultEmptyMessage = this.emptyState?.textContent || 'Nenhum evento encontrado.';
+		super(grid);
+		this.#emptyState = emptyState ?? null;
+		this.#defaultEmptyMessage = emptyState?.textContent || 'Nenhum evento encontrado.';
 	}
 
 	isReady() {
-		return Boolean(this.grid && this.emptyState);
+		return super.isReady() && Boolean(this.#emptyState);
 	}
 
 	render(events, { emptyMessage } = {}) {
 		if (!this.isReady()) {
-			return;
+			return this;
 		}
 
-		this.emptyState.textContent = emptyMessage || this.defaultEmptyMessage;
+		this.#emptyState.textContent = emptyMessage || this.#defaultEmptyMessage;
 
-		if (!Array.isArray(events) || events.length === 0) {
-			this.grid.innerHTML = '';
-			this.emptyState.hidden = false;
-			return;
+		const sortedEvents = Array.isArray(events) ? sortEventsByDate(events) : [];
+		if (sortedEvents.length === 0) {
+			this.get().replaceChildren();
+			this.#emptyState.hidden = false;
+			return this;
 		}
 
-		this.emptyState.hidden = true;
-		const sortedEvents = sortEventsByDate(events);
-		this.grid.innerHTML = sortedEvents.map(renderEventCard).join('');
+		const fragment = document.createDocumentFragment();
+		sortedEvents.forEach((event) => {
+			fragment.appendChild(new EventCard(event).get());
+		});
+
+		this.get().replaceChildren(fragment);
+		this.#emptyState.hidden = true;
+		return this;
+	}
+
+	clear({ emptyMessage } = {}) {
+		return this.render([], { emptyMessage });
 	}
 }

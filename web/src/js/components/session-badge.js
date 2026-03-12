@@ -1,27 +1,30 @@
-export class SessionBadge {
+import { BaseComponent } from './base-component.js';
+
+export class SessionBadge extends BaseComponent {
 	constructor(element) {
-		this.element = element;
+		super(element);
 	}
 
 	setChecking() {
-		this.#setState('Verificando sessão...', { isActive: false });
+		return this.#setState('Verificando sessão...', { isActive: false });
 	}
 
 	setAnonymous() {
-		this.#setState('Sessão não iniciada', { isActive: false });
+		return this.#setState('Sessão não iniciada', { isActive: false });
 	}
 
 	setActive(name) {
 		const label = name ? `Sessão ativa: ${name}` : 'Sessão ativa';
-		this.#setState(label, { isActive: true });
+		return this.#setState(label, { isActive: true });
 	}
 
 	#setState(text, { isActive }) {
-		if (!this.element) {
-			return;
+		if (!this.isReady()) {
+			return this;
 		}
 
-		this.element.textContent = text;
-		this.element.classList.toggle('session-badge--active', Boolean(isActive));
+		this.setText(text);
+		this.toggleClass('session-badge--active', Boolean(isActive));
+		return this;
 	}
 }

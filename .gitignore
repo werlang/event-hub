@@ -9,3 +9,5 @@ node_modules
 web/public/js
 web/public/css
 web/public/**/generated
+
+.github/references

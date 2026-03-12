@@ -1,52 +1,64 @@
-function escapeHtml(value) {
-	return String(value)
-		.replaceAll('&', '&amp;')
-		.replaceAll('<', '&lt;')
-		.replaceAll('>', '&gt;')
-		.replaceAll('"', '&quot;')
-		.replaceAll("'", '&#039;');
-}
+import { BaseComponent } from './base-component.js';
 
-export class QuickChips {
+export class QuickChips extends BaseComponent {
+	#chips = [];
+
 	constructor({ container }) {
-		this.container = container;
-		this.chips = [];
-	}
-
-	isReady() {
-		return Boolean(this.container);
+		super(container);
 	}
 
 	render(chips = []) {
 		if (!this.isReady()) {
-			return;
+			return this;
 		}
 
-		this.chips = Array.isArray(chips) ? chips : [];
-		this.container.innerHTML = this.chips
-			.map((chip) => `
-				<button class="chip" type="button" data-chip-id="${escapeHtml(chip.id)}">${escapeHtml(chip.label)}</button>
-			`)
-			.join('');
+		this.#chips = Array.isArray(chips)
+			? chips.filter(chip => chip && typeof chip.id !== 'undefined' && typeof chip.label === 'string')
+			: [];
+
+		const fragment = document.createDocumentFragment();
+		this.#chips.forEach((chip) => {
+			const button = document.createElement('button');
+			button.className = 'chip';
+			button.type = 'button';
+			button.dataset.chipId = String(chip.id);
+			button.textContent = chip.label;
+			fragment.appendChild(button);
+		});
+
+		this.get().replaceChildren(fragment);
+		return this;
 	}
 
 	bindSelect(onSelect) {
 		if (!this.isReady() || typeof onSelect !== 'function') {
-			return;
+			return this;
 		}
 
-		this.container.addEventListener('click', (event) => {
+		this.destroy();
+		this.on(this.get(), 'click', (event) => {
 			const button = event.target.closest('[data-chip-id]');
-			if (!button) {
+			if (!button || !this.get().contains(button)) {
 				return;
 			}
 
-			const chip = this.chips.find((item) => item.id === button.dataset.chipId);
+			const chip = this.#chips.find(item => String(item.id) === button.dataset.chipId);
 			if (!chip || typeof chip.buildFilters !== 'function') {
 				return;
 			}
 
-			onSelect(chip.buildFilters());
+			const filters = chip.buildFilters();
+			if (!filters || typeof filters !== 'object') {
+				return;
+			}
+
+			onSelect(filters, chip, this);
 		});
+
+		return this;
+	}
+
+	getChips() {
+		return [...this.#chips];
 	}
 }

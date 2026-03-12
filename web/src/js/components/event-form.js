@@ -1,4 +1,5 @@
 import { serializeEventDate } from '../helpers/date-serialize.js';
+import { Form } from './form.js';
 
 function toTrimmedString(value) {
 	if (typeof value !== 'string') {
@@ -8,46 +9,92 @@ function toTrimmedString(value) {
 	return value.trim();
 }
 
-export class EventForm {
+export class EventForm extends Form {
+	#timeToggle;
+	#timeInput;
+	#isBound = false;
+
 	constructor(form) {
-		this.form = form;
-		this.timeToggle = this.form?.querySelector('#event-has-time');
-		this.timeInput = this.form?.querySelector('#event-time');
+		super(form);
+		this.#timeToggle = this.getField('event-has-time') || null;
+		this.#timeInput = this.getField('event-time') || null;
 	}
 
 	bind() {
-		if (!this.timeToggle || !this.timeInput) {
-			return;
+		if (!this.#timeToggle || !this.#timeInput) {
+			return this;
 		}
 
-		this.timeToggle.addEventListener('change', () => {
-			this.syncTimeState();
-		});
+		if (!this.#isBound) {
+			this.#timeToggle.change(() => {
+				this.syncTimeState();
+			});
+			this.#isBound = true;
+		}
 
 		this.syncTimeState();
+		return this;
+	}
+
+	setEnabled(enabled) {
+		super.setEnabled(enabled);
+
+		if (enabled) {
+			this.syncTimeState();
+		}
+
+		return this;
 	}
 
 	syncTimeState() {
-		if (!this.timeToggle || !this.timeInput) {
-			return;
+		if (!this.#timeToggle || !this.#timeInput) {
+			return this;
 		}
 
-		const isEnabled = this.timeToggle.checked;
-		this.timeInput.disabled = !isEnabled;
+		const isEnabled = this.#timeToggle.get().checked;
 
 		if (!isEnabled) {
-			this.timeInput.value = '';
+			this.#timeInput.disable().clear();
+			return this;
 		}
+
+		this.#timeInput.enable();
+
+		return this;
 	}
 
 	toPayload() {
-		const data = Object.fromEntries(new FormData(this.form).entries());
-		const includeTime = this.timeToggle?.checked === true;
+		if (!this.isReady()) {
+			return {
+				ok: false,
+				message: 'Formulário indisponível no momento.',
+			};
+		}
+
+		const data = this.readData();
+		const title = toTrimmedString(data.title);
+		const description = toTrimmedString(data.description);
+		const location = toTrimmedString(data.location);
+		const includeTime = this.#timeToggle?.get().checked === true;
 		const date = serializeEventDate({
 			date: data.date,
 			time: data.time,
 			includeTime,
 		});
+
+		if (!title) {
+			return {
+				ok: false,
+				message: 'Informe um título para publicar.',
+			};
+		}
+
+		if (!description) {
+			return {
+				ok: false,
+				message: 'Informe uma descrição para publicar.',
+			};
+		}
 
 		if (!date) {
 			return {
@@ -61,21 +108,18 @@ export class EventForm {
 		return {
 			ok: true,
 			payload: {
-				title: toTrimmedString(data.title),
-				description: toTrimmedString(data.description),
-				category: data.category,
-				location: toTrimmedString(data.location),
+				title,
+				description,
+				category: typeof data.category === 'string' && data.category ? data.category : 'Geral',
+				location,
 				date,
 			},
 		};
 	}
 
 	reset() {
-		if (!this.form) {
-			return;
-		}
-
-		this.form.reset();
+		super.reset();
 		this.syncTimeState();
+		return this;
 	}
 }

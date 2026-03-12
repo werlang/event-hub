@@ -1,26 +1,30 @@
-export class StatusAlert {
+import { BaseComponent } from './base-component.js';
+
+export class StatusAlert extends BaseComponent {
 	constructor(element) {
-		this.element = element;
+		super(element);
 	}
 
 	show(message, { isError = true } = {}) {
-		if (!this.element) {
-			return;
+		if (!this.isReady()) {
+			return this;
 		}
 
-		this.element.hidden = false;
-		this.element.textContent = message;
-		this.element.classList.toggle('alert--error', isError);
-		this.element.classList.toggle('alert--success', !isError);
+		this.setHidden(false);
+		this.setText(message || '');
+		this.toggleClass('alert--error', Boolean(isError));
+		this.toggleClass('alert--success', !isError);
+		return this;
 	}
 
 	hide() {
-		if (!this.element) {
-			return;
+		if (!this.isReady()) {
+			return this;
 		}
 
-		this.element.hidden = true;
-		this.element.textContent = '';
-		this.element.classList.remove('alert--error', 'alert--success');
+		this.setHidden(true);
+		this.setText('');
+		this.get().classList.remove('alert--error', 'alert--success');
+		return this;
 	}
 }
