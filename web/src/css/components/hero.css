@@ -1,9 +1,9 @@
 .hero {
     width: 100%;
     display: flex;
-    margin-bottom: 50px;
     overflow: hidden;
     align-items: center;
+    justify-content: center;
     
     @media (min-width: 600px) {
         height: calc(100vh - 150px);
@@ -11,16 +11,17 @@
 
     @media (min-width: 900px) {
         margin: 0;
+        justify-content: flex-start;
     }
 
     .hero__content {
-        flex-grow: 1;
         z-index: 1;
         padding: 30px 10px 60px;
         display: flex;
         flex-direction: column;
         justify-content: center;
         max-width: 720px;
+        box-sizing: border-box;
 
         @media (min-width: 600px) {
             margin: 30px 10px;
@@ -32,37 +33,38 @@
         }
 
         @media (min-width: 900px) {
-            background-color: transparent;
-            background-image: linear-gradient(90deg, var(--color-background) 90%, transparent);
+            background-color: var(--color-background);
             border: none;
             backdrop-filter: none;
             margin: 0;
             border-radius: 0;
             height: 100%;
-            padding: 0 0 0 20px;
+            padding: 0 40px;
+            width: clamp(450px, 50%, 650px);
         }
     }
 
     .hero__image {
-        display: none;
+        background-attachment: fixed;
+        background-size: cover;
+        background-image: url('~/public/assets/ifsul-900.webp');
+
         position: absolute;
         right: 0;
-        width: 100vw;
+        display: none;
         height: 100%;
-
-        video, img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        flex-grow: 1;
+        width: 100vw;
 
         @media (min-width: 600px) {
             display: block;
         }
 
         @media (min-width: 900px) {
-            max-width: calc(100vw - 650px);
-            /* filter: blur(4px); */
+            position: relative;
+            width: auto;
+            background-position: 250px center;
+            background-image: url('~/public/assets/ifsul-1800.webp');
         }
     }
 }
@@ -72,6 +74,11 @@
     line-height: 2.4rem;
     font-size: 1.4rem;
     margin-bottom: 30px;
+    text-align: center;
+
+    @media (min-width: 900px) {
+        text-align: left;
+    }
 }
 
 h1 + .subtitle {
@@ -97,12 +104,17 @@ h1 + .subtitle {
 
 .hero__actions {
     display: flex;
+    justify-content: center;
     gap: 12px;
     margin-top: 4px;
+    flex-direction: column;
 
-    @media (max-width: 600px) {
-        flex-direction: column;
-        align-items: stretch;
+    @media (min-width: 600px) {
+        flex-direction: row;
+    }
+
+    @media (min-width: 900px) {
+        justify-content: flex-start;
     }
 }
 

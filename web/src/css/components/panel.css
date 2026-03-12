@@ -1,19 +1,13 @@
 .panel {
     position: relative;
-    background: color-mix(in srgb, var(--color-surface), #ffffff 24%);
+    background-color: var(--color-background);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
-    padding: clamp(18px, 3vw, 28px);
+    padding: 30px 30px;
     box-shadow: var(--shadow-soft);
     overflow: hidden;
-
-    &::before {
-        content: '';
-        position: absolute;
-        inset: 0 0 auto;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-main-alt), transparent 62%), transparent);
-    }
+    max-width: 1200px;
+    width: 100%;
 
     & .panel__header {
         display: grid;
