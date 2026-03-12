@@ -1,6 +1,9 @@
 import { serializeEventDate } from '../helpers/date-serialize.js';
 import { Form } from './form.js';
 
+/**
+ * Normalizes optional form text values to trimmed strings.
+ */
 function toTrimmedString(value) {
 	if (typeof value !== 'string') {
 		return '';
@@ -14,12 +17,18 @@ export class EventForm extends Form {
 	#timeInput;
 	#isBound = false;
 
+	/**
+	 * Creates a publish-form wrapper with date and time controls.
+	 */
 	constructor(form) {
 		super(form);
 		this.#timeToggle = this.getField('event-has-time') || null;
 		this.#timeInput = this.getField('event-time') || null;
 	}
 
+	/**
+	 * Binds the time toggle behavior for the publish form.
+	 */
 	bind() {
 		if (!this.#timeToggle || !this.#timeInput) {
 			return this;
@@ -36,6 +45,9 @@ export class EventForm extends Form {
 		return this;
 	}
 
+	/**
+	 * Updates the form enabled state and syncs the time controls.
+	 */
 	setEnabled(enabled, options) {
 		super.setEnabled(enabled, options);
 
@@ -46,6 +58,9 @@ export class EventForm extends Form {
 		return this;
 	}
 
+	/**
+	 * Synchronizes the time input with the state of the time toggle.
+	 */
 	syncTimeState() {
 		if (!this.#timeToggle || !this.#timeInput) {
 			return this;
@@ -63,6 +78,9 @@ export class EventForm extends Form {
 		return this;
 	}
 
+	/**
+	 * Converts the current form state into an event API payload.
+	 */
 	toPayload() {
 		if (!this.isReady()) {
 			return {
@@ -117,6 +135,9 @@ export class EventForm extends Form {
 		};
 	}
 
+	/**
+	 * Resets the form and reapplies the time toggle state.
+	 */
 	reset() {
 		super.reset();
 		this.syncTimeState();

@@ -7,6 +7,9 @@ import { sendCreated, sendSuccess } from '../helpers/response.js';
 
 export const router = express.Router();
 
+/**
+ * Re-throws unknown failures as normalized API errors.
+ */
 function rethrowAsApiError(error, fallbackMessage) {
     if (error instanceof CustomError || Number.isInteger(error?.status)) {
         throw error;
@@ -17,6 +20,9 @@ function rethrowAsApiError(error, fallbackMessage) {
     }, error);
 }
 
+/**
+ * Returns the public user shape exposed by auth responses.
+ */
 function publicUser(user) {
     return {
         id: user.id,
@@ -26,6 +32,9 @@ function publicUser(user) {
     };
 }
 
+/**
+ * Creates a JWT payload for an authenticated user.
+ */
 function createSessionToken(user) {
     return signToken({
         id: user.id,
@@ -35,6 +44,9 @@ function createSessionToken(user) {
     });
 }
 
+/**
+ * Handles account creation and returns the initial session token.
+ */
 router.post('/register', async (req, res, next) => {
     try {
         const { name, email, password } = req.body || {};
@@ -67,6 +79,9 @@ router.post('/register', async (req, res, next) => {
     }
 });
 
+/**
+ * Authenticates an existing account and returns the session token.
+ */
 router.post('/login', async (req, res, next) => {
     try {
         const { email, password } = req.body || {};
@@ -97,6 +112,9 @@ router.post('/login', async (req, res, next) => {
     }
 });
 
+/**
+ * Returns the authenticated user's current session payload.
+ */
 router.get('/me', authMiddleware, async (req, res, next) => {
     try {
         const stored = await User.findById(req.user.id);

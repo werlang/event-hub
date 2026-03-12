@@ -1,10 +1,16 @@
 import { BaseComponent } from './base-component.js';
 
 export class StatusAlert extends BaseComponent {
+	/**
+	 * Creates a wrapper around a status-alert element.
+	 */
 	constructor(element) {
 		super(element);
 	}
 
+	/**
+	 * Shows the alert with either success or error styling.
+	 */
 	show(message, { isError = true } = {}) {
 		if (!this.isReady()) {
 			return this;
@@ -17,6 +23,9 @@ export class StatusAlert extends BaseComponent {
 		return this;
 	}
 
+	/**
+	 * Hides the alert and clears any previous message styling.
+	 */
 	hide() {
 		if (!this.isReady()) {
 			return this;

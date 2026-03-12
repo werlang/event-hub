@@ -14,7 +14,9 @@ export class Mysql {
         port: 3306,
     }
 
-    // this is the connection pool
+    /**
+     * Opens the shared MySQL connection pool when needed.
+     */
     static async connect(config = {}) {
         if (Mysql.connected) return this;
 
@@ -28,14 +30,18 @@ export class Mysql {
         return this;
     }
 
+    /**
+     * Closes the shared MySQL connection pool.
+     */
     static async close() {
         if (!Mysql.connected) return this;
         Mysql.connection.end();
         Mysql.connected = false;
     }
 
-    // this is a wrapper for mysql2's query function
-    // should not be used directly
+    /**
+     * Executes a formatted SQL statement through mysql2.
+     */
     static async query(sql, data) {
         // console.log(sql, data);
         await Mysql.connect();
@@ -53,8 +59,9 @@ export class Mysql {
         }
     }
 
-    // db.insert('users', { name: 'John', age: 25 });
-    // db.insert('users', [{ name: 'John', age: 25 }, { name: 'Jane', age: 22 }]);
+    /**
+     * Inserts one or many rows into the provided table.
+     */
     static async insert(table, data) {
         if (!data) {
             throw new CustomError(400, 'Invalid data for insert operation.');
@@ -69,7 +76,9 @@ export class Mysql {
         }));
     }
 
-    // db.update('users', { name: 'John', age: 11 }, id);
+    /**
+     * Updates rows in the provided table using an id or filter clause.
+     */
     static async update(table, data, id) {
         if (!id) {
             throw new CustomError(400, 'No identifier provided for update.');
@@ -115,6 +124,9 @@ export class Mysql {
         return Mysql.query(sql, values);
     }
 
+    /**
+     * Deletes rows in the provided table using an id or filter clause.
+     */
     static async delete(table, clause, opt={}) {
         if (!clause) {
             throw new CustomError(400, 'Invalid clause for delete operation.');
@@ -139,6 +151,9 @@ export class Mysql {
         return Mysql.query(sql, data);
     }
 
+    /**
+     * Builds a SQL WHERE clause and placeholder values from a filter object.
+     */
     static getWhereStatements(filter) {
         let values = [];
 
@@ -200,7 +215,9 @@ export class Mysql {
         return { statement, values };
     }
 
-    // db.find('users', { filter: { name: 'John' }, view: ['name', 'age'], opt: { limit: 1, sort: { age: -1 }, skip: 1 } });
+    /**
+     * Finds rows in the provided table using filter, projection, and paging options.
+     */
     static async find(table, { filter={}, view=[], opt={}} = {}) {
         view = Array.isArray(view) ? view : [ view ];
         view = view.length > 0 ? view.map(v => `\`${v}\``).join(',') : '*';
@@ -235,11 +252,16 @@ export class Mysql {
         return Mysql.query(sql, values);
     }
 
-    // db.delete('users', id);
+    /**
+     * Wraps a raw SQL fragment so mysql2 preserves it during formatting.
+     */
     static raw(str) {
         return { toSqlString: () => str };
     }
 
+    /**
+     * Expands raw SQL fragments before mysql2 executes the statement.
+     */
     static formatRaw(sql, data) {
         const pieces = sql.split('?');
 
@@ -268,6 +290,9 @@ export class Mysql {
         return { sql, data };
     }
 
+    /**
+     * Delegates SQL formatting to the active mysql2 connection.
+     */
     static format(sql, data) {
         if (!Mysql.connection) {
             throw new CustomError(500, 'Database not connected.');
@@ -275,34 +300,58 @@ export class Mysql {
         return Mysql.connection.format(sql, data);
     }
 
+    /**
+     * Converts a timestamp-like value into MySQL DATETIME format.
+     */
     static toDateTime(timestamp) {
         return new Date(timestamp).toISOString().replace('T', ' ').replace('Z', '');
     }
 
+    /**
+     * Builds a LIKE filter helper.
+     */
     static like(str) {
         return { like: str };
     }
 
+    /**
+     * Builds a BETWEEN filter helper.
+     */
     static between(a, b) {
         return { between: [ a, b ] };
     }
 
+    /**
+     * Builds a less-than filter helper.
+     */
     static lt(value) {
         return { '<': value };
     }
 
+    /**
+     * Builds a greater-than filter helper.
+     */
     static gt(value) {
         return { '>': value };
     }
 
+    /**
+     * Builds a less-than-or-equal filter helper.
+     */
     static lte(value) {
         return { '<=': value };
     }
 
+    /**
+     * Builds a greater-than-or-equal filter helper.
+     */
     static gte(value) {
         return { '>=': value };
     }
 
+    /**
+     * Dumps the configured database to a file.
+     */
     static async dump(path, options={}) {
         return mysqldump({
             connection: Mysql.config,

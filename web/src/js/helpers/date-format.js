@@ -1,3 +1,6 @@
+/**
+ * Formats a date-time value using the pt-BR locale.
+ */
 export function formatDateTimePtBr(value) {
 	const date = new Date(value);
 	if (Number.isNaN(date.getTime())) {

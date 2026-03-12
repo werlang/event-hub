@@ -9,6 +9,9 @@ const LOGIN_TAB = 'login';
 const REGISTER_TAB = 'register';
 const SUBMIT_STATE_KEY = 'submitting';
 
+/**
+ * Collects the login page elements used by the auth flow.
+ */
 function createElements() {
 	return {
 		tabs: Array.from(document.querySelectorAll('.tabs .tab[data-tab]')),
@@ -18,10 +21,16 @@ function createElements() {
 	};
 }
 
+/**
+ * Reads the initial tab state from the current URL hash.
+ */
 function readInitialAuthTab() {
 	return window.location.hash === '#register' ? REGISTER_TAB : LOGIN_TAB;
 }
 
+/**
+ * Keeps the URL hash aligned with the active auth tab.
+ */
 function syncAuthHash(activeTab) {
 	const nextHash = activeTab === REGISTER_TAB ? '#register' : '';
 	const nextUrl = `${window.location.pathname}${window.location.search}${nextHash}`;
@@ -34,6 +43,9 @@ function syncAuthHash(activeTab) {
 	window.history.replaceState(null, '', nextUrl);
 }
 
+/**
+ * Reads and sanitizes the post-authentication redirect target.
+ */
 function readRedirectTarget() {
 	const templateRedirect = TemplateVar.get('redirect');
 	const queryRedirect = new URLSearchParams(window.location.search).get('redirect');
@@ -52,6 +64,9 @@ function readRedirectTarget() {
 	return rawTarget;
 }
 
+/**
+ * Renders the auth feedback message using the requested tone.
+ */
 function showMessage(messageElement, text, tone = 'error') {
 	if (!messageElement) {
 		return;
@@ -74,10 +89,16 @@ function showMessage(messageElement, text, tone = 'error') {
 	messageElement.classList.add('alert--error');
 }
 
+/**
+ * Sets the loading label shown by a form submit button.
+ */
 function configureSubmitButton(form, label) {
 	form.getSubmitButton()?.setLoadingLabel(label);
 }
 
+/**
+ * Submits login credentials and redirects after a successful response.
+ */
 async function submitLogin({ form, values, messageElement }) {
 	const email = String(values.email || '').trim();
 	const password = String(values.password || '');
@@ -111,6 +132,9 @@ async function submitLogin({ form, values, messageElement }) {
 	}
 }
 
+/**
+ * Submits the register form and starts the new session when successful.
+ */
 async function submitRegister({ form, values, messageElement }) {
 	const name = String(values.name || '').trim();
 	const email = String(values.email || '').trim();
@@ -162,6 +186,9 @@ async function submitRegister({ form, values, messageElement }) {
 	}
 }
 
+/**
+ * Validates the current stored session to inform the login screen.
+ */
 async function checkCurrentSession(messageElement) {
 	const token = readToken();
 	if (!token) {
@@ -181,6 +208,9 @@ async function checkCurrentSession(messageElement) {
 	}
 }
 
+/**
+ * Boots the login page tabs and submit handlers.
+ */
 function initAuthTabs() {
 	const elements = createElements();
 	const loginForm = new Form(elements.loginForm);

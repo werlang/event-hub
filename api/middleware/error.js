@@ -12,6 +12,9 @@ const ERROR_TYPES = {
     504: 'Gateway Timeout',
 };
 
+/**
+ * Converts thrown errors into the API error envelope.
+ */
 export function errorMiddleware(err, req, res, next) {
     if (!err) {
         next();

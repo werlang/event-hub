@@ -6,6 +6,9 @@ import { sendCreated, sendSuccess } from '../helpers/response.js';
 
 export const router = express.Router();
 
+/**
+ * Re-throws unexpected route failures as API-friendly errors.
+ */
 function rethrowAsApiError(error, fallbackMessage) {
     if (error instanceof CustomError) {
         throw error;
@@ -14,6 +17,9 @@ function rethrowAsApiError(error, fallbackMessage) {
     throw new CustomError(500, fallbackMessage);
 }
 
+/**
+ * Lists public events using the supported query-string filters.
+ */
 router.get('/', async (req, res, next) => {
     try {
         const filters = {
@@ -34,6 +40,9 @@ router.get('/', async (req, res, next) => {
     }
 });
 
+/**
+ * Returns the public details for a single event.
+ */
 router.get('/:id', async (req, res, next) => {
     try {
         const event = await Event.findById(req.params.id);
@@ -51,6 +60,9 @@ router.get('/:id', async (req, res, next) => {
     }
 });
 
+/**
+ * Creates a new event for the authenticated user.
+ */
 router.post('/', authMiddleware, async (req, res, next) => {
     try {
         const { title, description, date, category, location } = req.body || {};

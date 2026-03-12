@@ -70,6 +70,7 @@ Para desenvolvimento com containers, use `docker compose -f compose.dev.yaml up 
 
 - ES Modules, Express 5, classes para modelos (`api/model/`), rotas puras em `api/routes/`.
 - JWT via `helpers/token.js`; persistência MySQL com helper/driver em `api/helpers/mysql.js` e base `Model` em `api/model/model.js`.
+- Documentação em código: toda função nomeada, método, getter/setter e helper reutilizável deve receber bloco JSDoc. Callbacks anônimos curtos podem permanecer sem bloco quando forem apenas detalhe local de implementação, mas handlers inline de rota/middleware devem ser documentados imediatamente acima do registro.
 - UI SSR com Mustache + assets estáticos em `web/public/` (`css` e `js`).
 - A pasta `.github/references/` existe como fonte de inspiração para estilo de código em helpers e componentes DOM; use-a como referência de ergonomia, não como documentação do runtime atual.
 

@@ -19,6 +19,9 @@ app.use(renderMiddleware({
     year: new Date().getFullYear(),
 }));
 
+/**
+ * Renders the public home page shell.
+ */
 app.get('/', (req, res) => {
     res.templateRender('index', {
         page: 'home',
@@ -27,10 +30,16 @@ app.get('/', (req, res) => {
     });
 });
 
+/**
+ * Renders the login page while preserving any redirect target.
+ */
 app.get('/login', (req, res) => {
     res.templateRender('login', { page: 'login', redirect: req.query.redirect || '' });
 });
 
+/**
+ * Renders the publish page shell and forwards redirect state.
+ */
 app.get('/publish', (req, res) => {
     res.templateRender('publish', { page: 'publish', redirect: req.query.redirect || '' });
 });
@@ -38,7 +47,9 @@ app.get('/publish', (req, res) => {
 // static assets
 app.use(express.static(new URL('./public/', import.meta.url).pathname));
 
-// 404
+/**
+ * Returns a plain-text 404 for unmatched web routes.
+ */
 app.use((req, res) => {
     res.status(404).send('404 Not Found');
 });

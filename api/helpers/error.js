@@ -1,5 +1,8 @@
 export class CustomError extends Error {
 
+    /**
+     * Creates a normalized application error with HTTP metadata.
+     */
     constructor(status = 500, message = 'Internal Server Error', data = null, cause = null) {
         super(message);
         this.name = 'CustomError';

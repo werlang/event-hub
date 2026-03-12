@@ -17,6 +17,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/auth', auth);
 app.use('/events', events);
 
+/**
+ * Serves the readiness probe used by local and container health checks.
+ */
 app.get('/ready', (req, res) => {
     sendSuccess(res, {
         status: 200,
@@ -25,12 +28,18 @@ app.get('/ready', (req, res) => {
     });
 });
 
+/**
+ * Forwards unmatched API requests to the terminal error middleware.
+ */
 app.use((req, res, next) => {
     next(new CustomError(404, 'I am sorry, but I think you are lost.'));
 });
 
 app.use(errorMiddleware);
 
+/**
+ * Starts the API server outside of test environments.
+ */
 async function start() {
     try {
         if (process.env.NODE_ENV !== 'test') {

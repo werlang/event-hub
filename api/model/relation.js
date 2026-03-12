@@ -13,6 +13,9 @@ import { Mysql } from '../helpers/mysql.js';
 // get(): get all related field values
 
 export class Relation {
+    /**
+     * Creates a helper for managing many-to-many relation rows.
+     */
     constructor(tableName, nativeObject, relatedField, driver = Mysql) {
         this.tableName = tableName;
         this.nativeObject = nativeObject;
@@ -20,11 +23,17 @@ export class Relation {
         this.driver = driver;
     }
 
+    /**
+     * Checks whether a related value is already linked.
+     */
     async check(fieldValue) {
         const relation = (await this.get()).find(r => String(r[this.relatedField]) === String(fieldValue));
         return relation ? true : false;
     }
 
+    /**
+     * Inserts a single relation row.
+     */
     async insert(fieldValue, { ignoreDuplicates = false } = {}) {
         if (await this.check(fieldValue)) {
             if (ignoreDuplicates) return null;
@@ -37,6 +46,9 @@ export class Relation {
         });
     }
 
+    /**
+     * Inserts a normalized set of relation values.
+     */
     async insertMany(fieldValues = [], { ignoreDuplicates = false } = {}) {
         const normalizedValues = [
             ...new Set(
@@ -57,6 +69,9 @@ export class Relation {
         return inserted;
     }
 
+    /**
+     * Replaces the full relation set for the current native object.
+     */
     async replace(fieldValues = [], { ignoreDuplicates = true } = {}) {
         await this.driver.delete(this.tableName, {
             ...this.nativeObject,
@@ -65,6 +80,9 @@ export class Relation {
         return this.insertMany(fieldValues, { ignoreDuplicates });
     }
 
+    /**
+     * Deletes a single related value from the relation table.
+     */
     async delete(fieldValue) {
         if (!await this.check(fieldValue)) throw new CustomError(404, 'Relation does not exist.');
         return this.driver.delete(this.tableName, {
@@ -73,6 +91,9 @@ export class Relation {
         });
     }
 
+    /**
+     * Updates extra columns for an existing relation row.
+     */
     async update(fieldValue, data) {
         if (!await this.check(fieldValue)) throw new CustomError(404, 'Relation does not exist.');
         const toChange = {};
@@ -87,6 +108,9 @@ export class Relation {
         });
     }
 
+    /**
+     * Returns every relation row for the current native object.
+     */
     async get() {
         return await this.driver.find(this.tableName, { filter: {
             ...this.nativeObject,

@@ -1,6 +1,9 @@
 import { verifyToken } from '../helpers/token.js';
 import { CustomError } from '../helpers/error.js';
 
+/**
+ * Validates the bearer token and exposes the decoded user on the request.
+ */
 export function authMiddleware(req, res, next) {
     const header = req.headers.authorization;
     if (!header || typeof header !== 'string') {

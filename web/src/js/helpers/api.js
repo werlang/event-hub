@@ -4,6 +4,9 @@ import { Request } from './request.js';
 export const TOKEN_STORAGE_KEY = 'auth_token';
 
 class ApiEndpointResolver {
+    /**
+     * Removes a trailing slash from an API base URL.
+     */
     #sanitizeBaseUrl(url) {
         if (!url || typeof url !== 'string') {
             return '';
@@ -12,6 +15,9 @@ class ApiEndpointResolver {
         return url.replace(/\/$/, '');
     }
 
+    /**
+     * Resolves the API base URL from template vars, meta tags, or fallback state.
+     */
     #resolveApiUrl() {
         const fromTemplate = TemplateVar.get('apiUrl');
         if (fromTemplate) {
@@ -26,6 +32,9 @@ class ApiEndpointResolver {
         return '';
     }
 
+    /**
+     * Normalizes a request path into an absolute API path.
+     */
     #toAbsolutePath(path) {
         if (typeof path !== 'string' || !path) {
             return '/';
@@ -34,11 +43,17 @@ class ApiEndpointResolver {
         return path.startsWith('/') ? path : `/${path}`;
     }
 
+    /**
+     * Combines the resolved API base URL and the requested path.
+     */
     resolve(path) {
         return `${this.#resolveApiUrl()}${this.#toAbsolutePath(path)}`;
     }
 }
 
+/**
+ * Normalizes API responses into the frontend envelope expected by the UI.
+ */
 function normalizeEnvelope(response, payload) {
     if (payload && typeof payload === 'object' && typeof payload.error === 'boolean') {
         return {
@@ -64,10 +79,16 @@ function normalizeEnvelope(response, payload) {
 class AuthTokenStore {
     #storageKey = TOKEN_STORAGE_KEY;
 
+    /**
+     * Reads the stored authentication token from localStorage.
+     */
     read() {
         return localStorage.getItem(this.#storageKey);
     }
 
+    /**
+     * Persists an authentication token in localStorage.
+     */
     store(token) {
         if (typeof token !== 'string' || !token.trim()) {
             return;
@@ -76,6 +97,9 @@ class AuthTokenStore {
         localStorage.setItem(this.#storageKey, token.trim());
     }
 
+    /**
+     * Clears the stored authentication token.
+     */
     clear() {
         localStorage.removeItem(this.#storageKey);
     }
@@ -85,11 +109,17 @@ export class ApiClient {
     #request;
     #endpointResolver;
 
+    /**
+     * Creates an API client with pluggable transport and endpoint resolution.
+     */
     constructor({ request, endpointResolver } = {}) {
         this.#request = request || new Request();
         this.#endpointResolver = endpointResolver || new ApiEndpointResolver();
     }
 
+    /**
+     * Executes an API request and returns a normalized frontend response object.
+     */
     async request(path, { method = 'GET', body, token, headers = {} } = {}) {
         const endpoint = this.#endpointResolver.resolve(path);
         const normalizedMethod = typeof method === 'string' ? method.toUpperCase() : 'GET';
@@ -134,6 +164,9 @@ export class ApiClient {
         }
     }
 
+    /**
+     * Dispatches a normalized request through the Request helper.
+     */
     async #dispatch(method, endpoint, body, requestOptions) {
         switch (method) {
         case 'GET':
@@ -153,18 +186,30 @@ export class ApiClient {
 export const apiClient = new ApiClient();
 export const authTokenStore = new AuthTokenStore();
 
+/**
+ * Reads the stored auth token through the shared token store.
+ */
 export function readToken() {
     return authTokenStore.read();
 }
 
+/**
+ * Persists an auth token through the shared token store.
+ */
 export function storeToken(token) {
     authTokenStore.store(token);
 }
 
+/**
+ * Clears the stored auth token through the shared token store.
+ */
 export function clearToken() {
     authTokenStore.clear();
 }
 
+/**
+ * Executes an API request through the shared API client instance.
+ */
 export async function requestApi(path, options = {}) {
     return apiClient.request(path, options);
 }

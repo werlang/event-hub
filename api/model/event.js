@@ -15,6 +15,9 @@ export class Event extends Model {
         'created_at',
     ];
 
+    /**
+     * Creates an event entity with the project's default values.
+     */
     constructor({
         id,
         title,
@@ -36,6 +39,9 @@ export class Event extends Model {
         this.createdAt = createdAt || new Date().toISOString();
     }
 
+    /**
+     * Returns the serializable entity snapshot for the event.
+     */
     toJSON() {
         return {
             id: this.id,
@@ -49,6 +55,9 @@ export class Event extends Model {
         };
     }
 
+    /**
+     * Normalizes a raw database row into the public event shape.
+     */
     static normalize(row) {
         if (!row) return null;
 
@@ -66,6 +75,9 @@ export class Event extends Model {
         };
     }
 
+    /**
+     * Serializes an event payload into the database column format.
+     */
     static serialize(payload = {}) {
         const event = payload instanceof Event ? payload.toJSON() : new Event(payload).toJSON();
         return {
@@ -80,21 +92,33 @@ export class Event extends Model {
         };
     }
 
+    /**
+     * Retrieves a single event using the base model lookup.
+     */
     static async get(clause, { view = this.view } = {}) {
         return super.get(clause, { view });
     }
 
+    /**
+     * Retrieves an event by id.
+     */
     static async findById(id) {
         if (!id) return null;
         return this.get(id);
     }
 
+    /**
+     * Creates and returns a new persisted event.
+     */
     static async create(payload) {
         const event = payload instanceof Event ? payload.toJSON() : new Event(payload).toJSON();
         const serialized = await this.insert(event);
         return this.get(serialized.id);
     }
 
+    /**
+     * Lists events filtered by period, category, and free-text search.
+     */
     static async list(filters = {}) {
         const { search, category, from, to } = filters;
         const queryFilter = {};

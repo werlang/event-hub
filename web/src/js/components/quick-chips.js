@@ -3,10 +3,16 @@ import { BaseComponent } from './base-component.js';
 export class QuickChips extends BaseComponent {
 	#chips = [];
 
+	/**
+	 * Creates a wrapper around the quick-filter chip container.
+	 */
 	constructor({ container }) {
 		super(container);
 	}
 
+	/**
+	 * Renders the current quick-chip definitions into buttons.
+	 */
 	render(chips = []) {
 		if (!this.isReady()) {
 			return this;
@@ -30,6 +36,9 @@ export class QuickChips extends BaseComponent {
 		return this;
 	}
 
+	/**
+	 * Binds the selection handler used when a chip is clicked.
+	 */
 	bindSelect(onSelect) {
 		if (!this.isReady() || typeof onSelect !== 'function') {
 			return this;
@@ -58,6 +67,9 @@ export class QuickChips extends BaseComponent {
 		return this;
 	}
 
+	/**
+	 * Returns the currently rendered chip definitions.
+	 */
 	getChips() {
 		return [...this.#chips];
 	}

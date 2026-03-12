@@ -2,6 +2,9 @@ import { BaseComponent } from './base-component.js';
 import { formatDateTimePtBr } from '../helpers/date-format.js';
 import { isPastEvent } from '../helpers/event-sort.js';
 
+/**
+ * Normalizes card text content while preserving a fallback label.
+ */
 function readText(value, fallback) {
 	if (typeof value !== 'string') {
 		return fallback;
@@ -14,25 +17,40 @@ function readText(value, fallback) {
 export class EventCard extends BaseComponent {
 	#event = {};
 
+	/**
+	 * Creates an event card wrapper for the provided event data.
+	 */
 	constructor(event = {}) {
 		super(document.createElement('article'));
 		this.setEvent(event);
 	}
 
+	/**
+	 * Returns a copy of the event currently rendered by the card.
+	 */
 	getEvent() {
 		return { ...this.#event };
 	}
 
+	/**
+	 * Stores the event data and re-renders the card.
+	 */
 	setEvent(event = {}) {
 		this.#event = event && typeof event === 'object' ? event : {};
 		this.#render();
 		return this;
 	}
 
+	/**
+	 * Returns the rendered event card markup.
+	 */
 	toMarkup() {
 		return this.get()?.outerHTML || '';
 	}
 
+	/**
+	 * Renders the event card DOM structure.
+	 */
 	#render() {
 		const element = this.get();
 		const pastEvent = isPastEvent(this.#event);
@@ -74,6 +92,9 @@ export class EventCard extends BaseComponent {
 	}
 }
 
+/**
+ * Renders an event card directly to an HTML string.
+ */
 export function renderEventCard(event) {
 	return new EventCard(event).toMarkup();
 }

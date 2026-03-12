@@ -5,6 +5,9 @@ const LOGIN_TAB = 'login';
 const REGISTER_TAB = 'register';
 const VISIBILITY_STATE_KEY = 'visibility';
 
+/**
+ * Normalizes a form input into a Form instance.
+ */
 function normalizeForm(form) {
 	return form instanceof Form ? form : new Form(form);
 }
@@ -16,6 +19,9 @@ export class AuthTabs extends BaseComponent {
 	#activeTab = LOGIN_TAB;
 	#onChange;
 
+	/**
+	 * Creates the auth tab controller for the login and register forms.
+	 */
 	constructor({ tabs = [], loginForm = null, registerForm = null, onChange = null }) {
 		super(tabs[0]?.closest('[role="tablist"]') || tabs[0]?.parentElement || null);
 		this.#tabs = Array.isArray(tabs) ? tabs.filter(Boolean) : [];
@@ -26,10 +32,16 @@ export class AuthTabs extends BaseComponent {
 		this.#onChange = typeof onChange === 'function' ? onChange : null;
 	}
 
+	/**
+	 * Returns the currently active auth tab name.
+	 */
 	get activeTab() {
 		return this.#activeTab;
 	}
 
+	/**
+	 * Reports whether the tab list and both forms are available.
+	 */
 	isReady() {
 		return super.isReady()
 			&& this.#tabs.length > 0
@@ -37,6 +49,9 @@ export class AuthTabs extends BaseComponent {
 			&& this.#forms.register.isReady();
 	}
 
+	/**
+	 * Activates one of the auth tabs and syncs the UI state.
+	 */
 	setActive(tabName) {
 		if (!this.isReady()) {
 			return this;
@@ -57,6 +72,9 @@ export class AuthTabs extends BaseComponent {
 		return this;
 	}
 
+	/**
+	 * Enables or disables access to the register tab.
+	 */
 	setRegisterEnabled(isEnabled) {
 		const previousActiveTab = this.#activeTab;
 		this.#registerEnabled = Boolean(isEnabled);
@@ -75,6 +93,9 @@ export class AuthTabs extends BaseComponent {
 		return this;
 	}
 
+	/**
+	 * Binds click and keyboard behavior for the auth tab list.
+	 */
 	wire() {
 		if (!this.isReady()) {
 			return this;
@@ -126,18 +147,30 @@ export class AuthTabs extends BaseComponent {
 		return this;
 	}
 
+	/**
+	 * Normalizes an arbitrary tab name into a supported auth tab.
+	 */
 	#normalizeTab(tabName) {
 		return tabName === REGISTER_TAB ? REGISTER_TAB : LOGIN_TAB;
 	}
 
+	/**
+	 * Returns the tabs that are currently interactive.
+	 */
 	#getEnabledTabs() {
 		return this.#tabs.filter(button => !button.disabled);
 	}
 
+	/**
+	 * Returns the tab button matching a normalized tab name.
+	 */
 	#getTab(tabName) {
 		return this.#tabs.find(button => this.#normalizeTab(button.dataset.tab) === tabName) || null;
 	}
 
+	/**
+	 * Moves focus to the next enabled tab relative to the current one.
+	 */
 	#focusRelativeTab(currentButton, direction) {
 		const enabledTabs = this.#getEnabledTabs();
 		if (!enabledTabs.length) {
@@ -149,15 +182,24 @@ export class AuthTabs extends BaseComponent {
 		enabledTabs[nextIndex].focus();
 	}
 
+	/**
+	 * Moves focus to the first enabled auth tab.
+	 */
 	#focusFirstTab() {
 		this.#getEnabledTabs()[0]?.focus();
 	}
 
+	/**
+	 * Moves focus to the last enabled auth tab.
+	 */
 	#focusLastTab() {
 		const enabledTabs = this.#getEnabledTabs();
 		enabledTabs.at(-1)?.focus();
 	}
 
+	/**
+	 * Synchronizes the selected and disabled states for every tab button.
+	 */
 	#syncTabs() {
 		this.#tabs.forEach((button) => {
 			const tabName = this.#normalizeTab(button.dataset.tab);
@@ -173,6 +215,9 @@ export class AuthTabs extends BaseComponent {
 		});
 	}
 
+	/**
+	 * Synchronizes form visibility and accessibility with the active tab.
+	 */
 	#syncForms() {
 		const loginForm = this.#forms.login;
 		const registerForm = this.#forms.register;

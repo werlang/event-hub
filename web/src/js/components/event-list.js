@@ -6,16 +6,25 @@ export class EventList extends BaseComponent {
 	#emptyState;
 	#defaultEmptyMessage;
 
+	/**
+	 * Creates a list wrapper around the event grid and empty-state element.
+	 */
 	constructor({ grid, emptyState }) {
 		super(grid);
 		this.#emptyState = emptyState ?? null;
 		this.#defaultEmptyMessage = emptyState?.textContent || 'Nenhum evento encontrado.';
 	}
 
+	/**
+	 * Reports whether both the grid and empty state are available.
+	 */
 	isReady() {
 		return super.isReady() && Boolean(this.#emptyState);
 	}
 
+	/**
+	 * Renders the provided events or the empty-state message when none exist.
+	 */
 	render(events, { emptyMessage } = {}) {
 		if (!this.isReady()) {
 			return this;
@@ -40,6 +49,9 @@ export class EventList extends BaseComponent {
 		return this;
 	}
 
+	/**
+	 * Clears the event grid while preserving the empty-state message flow.
+	 */
 	clear({ emptyMessage } = {}) {
 		return this.render([], { emptyMessage });
 	}

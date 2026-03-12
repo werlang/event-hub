@@ -1,9 +1,15 @@
+/**
+ * Normalizes a possible query-string value into trimmed text.
+ */
 function cleanText(value) {
 	return typeof value === 'string' ? value.trim() : '';
 }
 
 const HOME_QUERY_KEYS = ['search', 'q', 'category', 'from', 'to'];
 
+/**
+ * Builds URLSearchParams from the supported home page filters.
+ */
 function normalizeFilters(source = {}) {
 	const params = new URLSearchParams();
 	const map = {
@@ -23,16 +29,25 @@ function normalizeFilters(source = {}) {
 	return params;
 }
 
+/**
+ * Checks whether a query parameter contains a truthy value.
+ */
 function hasTruthyQueryValue(params, key) {
 	const value = cleanText(params.get(key));
 	return Boolean(value);
 }
 
+/**
+ * Reports whether the current URL contains home filter state.
+ */
 export function hasSpecificHomeQuery(search = window.location.search) {
 	const params = new URLSearchParams(search);
 	return HOME_QUERY_KEYS.some((key) => hasTruthyQueryValue(params, key));
 }
 
+/**
+ * Reads supported home filters from a URL query string.
+ */
 export function readHomeFiltersFromUrl(search = window.location.search) {
 	const params = new URLSearchParams(search);
 	return {
@@ -43,6 +58,9 @@ export function readHomeFiltersFromUrl(search = window.location.search) {
 	};
 }
 
+/**
+ * Hydrates plain DOM filter inputs from the current home URL state.
+ */
 export function hydrateHomeFilters(elements) {
 	if (!elements) {
 		return;
@@ -63,10 +81,16 @@ export function hydrateHomeFilters(elements) {
 	}
 }
 
+/**
+ * Creates URLSearchParams for the supported home filters.
+ */
 export function createHomeFilterParams(filters = {}) {
 	return normalizeFilters(filters);
 }
 
+/**
+ * Serializes DOM filter inputs into URLSearchParams.
+ */
 export function serializeHomeFilters(elements) {
 	if (!elements) {
 		return new URLSearchParams();
@@ -80,6 +104,9 @@ export function serializeHomeFilters(elements) {
 	});
 }
 
+/**
+ * Replaces the current URL with the provided filter params.
+ */
 export function syncUrlWithParams(params, pathname = window.location.pathname) {
 	const query = params instanceof URLSearchParams ? params.toString() : '';
 	const target = query ? `${pathname}?${query}` : pathname;

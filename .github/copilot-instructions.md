@@ -5,6 +5,7 @@
 - **Express 5**: API and Web both run on Express `^5.2.1`.
 - **Model classes**: domain logic is implemented in classes under `api/model/`.
 - **Routes as functions**: route handlers live in `api/routes/*.js`.
+- **In-code documentation**: every named function, method, getter/setter, and reusable local helper must have a JSDoc block. Short anonymous callbacks may stay undocumented when they are clearly local implementation details, but inline route or middleware handlers must be documented directly above the registration call.
 - **Private class fields**: prefer `#field` / `#method` where state should be encapsulated.
 
 ## Architecture

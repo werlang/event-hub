@@ -1,5 +1,8 @@
 import { BaseComponent } from './base-component.js';
 
+/**
+ * Normalizes a class list input into an array of class names.
+ */
 function normalizeClassList(customClass) {
 	if (!customClass) {
 		return [];
@@ -8,6 +11,9 @@ function normalizeClassList(customClass) {
 	return Array.isArray(customClass) ? customClass.filter(Boolean) : [customClass];
 }
 
+/**
+ * Expands an icon descriptor into the classes needed for rendering.
+ */
 function normalizeIconClasses(icon) {
 	if (typeof icon !== 'string' || !icon.trim()) {
 		return [];
@@ -25,6 +31,9 @@ export class Button extends BaseComponent {
 	#busy = false;
 	#loadingLabel = 'Carregando...';
 
+	/**
+	 * Creates a button wrapper and applies its initial presentation.
+	 */
 	constructor({ element, text, callback, customClass, icon, title, loadingLabel } = {}) {
 		super(element || document.createElement('button'));
 
@@ -51,20 +60,32 @@ export class Button extends BaseComponent {
 		}
 	}
 
+	/**
+	 * Reports whether the button is currently showing a busy state.
+	 */
 	get isBusy() {
 		return this.#busy;
 	}
 
+	/**
+	 * Replaces the button label text.
+	 */
 	setText(text) {
 		return this.setContent({ text });
 	}
 
+	/**
+	 * Replaces the button HTML and stores it as the idle markup.
+	 */
 	setHtml(html) {
 		this.get().innerHTML = typeof html === 'string' ? html : '';
 		this.#snapshotIdleMarkup();
 		return this;
 	}
 
+	/**
+	 * Rebuilds the button content using text and optional icon metadata.
+	 */
 	setContent({ text = '', icon = null } = {}) {
 		const element = this.get();
 		element.replaceChildren();
@@ -91,6 +112,9 @@ export class Button extends BaseComponent {
 		return this;
 	}
 
+	/**
+	 * Sets the label used while the button is busy.
+	 */
 	setLoadingLabel(label) {
 		if (typeof label === 'string' && label.trim()) {
 			this.#loadingLabel = label.trim();
@@ -99,6 +123,9 @@ export class Button extends BaseComponent {
 		return this;
 	}
 
+	/**
+	 * Adds one or more classes to the button element.
+	 */
 	addClass(classList) {
 		normalizeClassList(classList).forEach(className => {
 			this.get().classList.add(className);
@@ -107,6 +134,9 @@ export class Button extends BaseComponent {
 		return this;
 	}
 
+	/**
+	 * Removes one or more classes from the button element.
+	 */
 	removeClass(classList) {
 		normalizeClassList(classList).forEach(className => {
 			this.get().classList.remove(className);
@@ -115,11 +145,17 @@ export class Button extends BaseComponent {
 		return this;
 	}
 
+	/**
+	 * Toggles the native disabled state for the button.
+	 */
 	setDisabled(disabled) {
 		this.get().disabled = Boolean(disabled);
 		return this;
 	}
 
+	/**
+	 * Disables the button and optionally switches it into busy mode.
+	 */
 	disable({ showBusy = false } = {}) {
 		this.setDisabled(true);
 
@@ -133,6 +169,9 @@ export class Button extends BaseComponent {
 		return this;
 	}
 
+	/**
+	 * Restores the button from busy mode and enables it again.
+	 */
 	enable() {
 		if (this.#busy) {
 			this.get().innerHTML = this.#idleMarkup;
@@ -144,6 +183,9 @@ export class Button extends BaseComponent {
 		return this;
 	}
 
+	/**
+	 * Binds a click handler and optionally manages the busy state automatically.
+	 */
 	click(callback, { manageBusy = true } = {}) {
 		if (typeof callback !== 'function') {
 			this.get().click();
@@ -167,6 +209,9 @@ export class Button extends BaseComponent {
 		return this;
 	}
 
+	/**
+	 * Stores the current button markup for later busy-state restoration.
+	 */
 	#snapshotIdleMarkup() {
 		if (!this.#busy) {
 			this.#idleMarkup = this.get().innerHTML;

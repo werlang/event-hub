@@ -4,6 +4,9 @@ export class FilterForm extends Form {
 	#fields;
 	#applyHandler = null;
 
+	/**
+	 * Creates a wrapper around the home page filter controls.
+	 */
 	constructor({ form, filterSearch, filterCategory, filterFrom, filterTo }) {
 		super(form);
 		this.#fields = {
@@ -14,10 +17,16 @@ export class FilterForm extends Form {
 		};
 	}
 
+	/**
+	 * Reports whether the full set of filter fields is available.
+	 */
 	isReady() {
 		return super.isReady() && Object.values(this.#fields).every(Boolean);
 	}
 
+	/**
+	 * Reads the current filter values from the form controls.
+	 */
 	readFilters() {
 		return {
 			search: this.#readField('search').trim(),
@@ -27,6 +36,9 @@ export class FilterForm extends Form {
 		};
 	}
 
+	/**
+	 * Hydrates the filter controls from a partial filters object.
+	 */
 	hydrate(filters = {}) {
 		if (!this.isReady()) {
 			return this;
@@ -40,6 +52,9 @@ export class FilterForm extends Form {
 		return this;
 	}
 
+	/**
+	 * Binds the submit flow that applies the current filter values.
+	 */
 	bindApply(onApply) {
 		if (!super.isReady() || typeof onApply !== 'function') {
 			return this;
@@ -59,14 +74,23 @@ export class FilterForm extends Form {
 		return this;
 	}
 
+	/**
+	 * Returns a filter control by its logical field name.
+	 */
 	#getField(name) {
 		return this.#fields[name] || null;
 	}
 
+	/**
+	 * Reads the current value for a named filter field.
+	 */
 	#readField(name) {
 		return this.#getField(name)?.getValue() || '';
 	}
 
+	/**
+	 * Writes a value into one of the named filter controls.
+	 */
 	#setFieldValue(name, value) {
 		const field = this.#getField(name);
 		if (!field) {

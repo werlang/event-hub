@@ -1,7 +1,13 @@
+/**
+ * Reports whether a value is a YYYY-MM-DD date-only string.
+ */
 function isDateOnlyValue(value) {
 	return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
+/**
+ * Converts a date-only string into a local timestamp.
+ */
 function toLocalDateOnlyTimestamp(value) {
 	const [yearText, monthText, dayText] = String(value).split('-');
 	const year = Number(yearText);
@@ -15,6 +21,9 @@ function toLocalDateOnlyTimestamp(value) {
 	return new Date(year, month - 1, day, 0, 0, 0, 0).getTime();
 }
 
+/**
+ * Converts a date-like value into a comparable timestamp.
+ */
 function toTimestamp(value) {
 	if (isDateOnlyValue(value)) {
 		return toLocalDateOnlyTimestamp(value);
@@ -24,6 +33,9 @@ function toTimestamp(value) {
 	return Number.isNaN(date.getTime()) ? Number.POSITIVE_INFINITY : date.getTime();
 }
 
+/**
+ * Converts an event date into a day-level sort key.
+ */
 function toDayKey(value) {
 	if (isDateOnlyValue(value)) {
 		return value;
@@ -40,10 +52,16 @@ function toDayKey(value) {
 	return `${year}-${month}-${day}`;
 }
 
+/**
+ * Reports whether an event stores only a calendar day without time.
+ */
 export function isDateOnlyEvent(event) {
 	return isDateOnlyValue(event?.date);
 }
 
+/**
+ * Reports whether an event date is already in the past.
+ */
 export function isPastEvent(event, referenceDate = new Date()) {
 	const value = event?.date;
 	if (!value) {
@@ -63,6 +81,9 @@ export function isPastEvent(event, referenceDate = new Date()) {
 	return Number.isFinite(timestamp) && timestamp < referenceDate.getTime();
 }
 
+/**
+ * Returns a new event array sorted chronologically.
+ */
 export function sortEventsByDate(events) {
 	if (!Array.isArray(events)) {
 		return [];

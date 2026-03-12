@@ -13,6 +13,9 @@ import { FilterForm } from './components/filter-form.js';
 import { QuickChips } from './components/quick-chips.js';
 import { getCurrentWeekRangeLocal, getNextDaysRangeLocal } from './helpers/week-range.js';
 
+/**
+ * Collects the home-page elements used by the client entry.
+ */
 function createElements() {
     return {
         entrySurface: document.querySelector('#home-entry-surface'),
@@ -29,6 +32,9 @@ function createElements() {
     };
 }
 
+/**
+ * Returns the quick-filter chips displayed on the home page.
+ */
 function createQuickChips() {
     return [
         {
@@ -59,6 +65,9 @@ function createQuickChips() {
     ];
 }
 
+/**
+ * Shows or hides the entry surfaces when agenda-only mode is active.
+ */
 function setEntrySurfacesVisibility(elements, hidden) {
     if (elements.entrySurface) {
         elements.entrySurface.hidden = hidden;
@@ -73,6 +82,9 @@ function setEntrySurfacesVisibility(elements, hidden) {
     }
 }
 
+/**
+ * Boots the public home page filters, chips, and event listing.
+ */
 export function initHomePage() {
     const elements = createElements();
     const eventList = new EventList({
@@ -94,6 +106,9 @@ export function initHomePage() {
         return;
     }
 
+    /**
+     * Loads events for the provided filters and syncs the current URL state.
+     */
     const loadEvents = async (filters) => {
         const params = createHomeFilterParams(filters);
         syncUrlWithParams(params);

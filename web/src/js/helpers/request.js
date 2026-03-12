@@ -14,6 +14,9 @@ export class Request {
     };
     #timeout = 30000; // 30 seconds default timeout
 
+    /**
+     * Creates a fetch wrapper with optional base URL, headers, and timeout.
+     */
     constructor({ baseURL, headers, timeout } = {}) {
         if (baseURL !== undefined) this.#baseURL = baseURL;
         if (headers !== undefined) this.#defaultHeaders = { ...this.#defaultHeaders, ...headers };

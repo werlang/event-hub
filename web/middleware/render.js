@@ -1,4 +1,10 @@
+/**
+ * Creates middleware that injects shared template variables and a render helper.
+ */
 export const renderMiddleware = fixedVars => (req, res, next) => {
+    /**
+     * Renders a view with the merged fixed and request-scoped template variables.
+     */
     res.templateRender = async (view, templateVars = {}) => {
         // set fixed variables
         templateVars = {
