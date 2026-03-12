@@ -7,7 +7,7 @@
 
 .chip {
     border: 1px solid color-mix(in srgb, var(--color-main), transparent 74%);
-    background: color-mix(in srgb, var(--color-surface-strong), var(--color-main) 7%);
+    background: color-mix(in srgb, var(--color-background), var(--color-main) 7%);
     color: var(--color-text);
     padding: 7px 14px;
     border-radius: var(--radius-pill);

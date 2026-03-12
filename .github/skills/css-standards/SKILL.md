@@ -38,14 +38,13 @@ Applies to the web client styles under `web/src/css/` and class names used in `w
 
 Use shared token names from `tokens.css`:
 
-- Layout: `--max-width`, `--grid-gap`
 - Typography: `--font-body`, `--font-display`, `--font-mono`
-- Background/surfaces: `--color-background`, `--color-surface`, `--color-surface-strong`, `--color-surface-muted`
-- Brand/accent: `--color-main`, `--color-main-alt`, `--color-main-soft`, `--color-main-alt-soft`
+- Background/surfaces: `--color-background`
+- Brand/accent: `--color-main`, `--color-main-alt`
 - Contrast on colored surfaces: `--color-main-contrast`, `--color-alt-contrast`
 - Text and links: `--color-text`, `--color-text-secondary`, `--color-link`
 - Feedback: `--color-info`, `--color-success`, `--color-warning`, `--color-error`
-- Structure: `--color-border`, `--color-border-strong`, `--radius`, `--radius-sm`, `--radius-pill`, `--shadow-soft`, `--shadow-card`, `--shadow-lifted`
+- Structure: `--color-border`, `--color-shadow`, `--radius`, `--radius-sm`, `--radius-pill`
 
 ## Component Language
 

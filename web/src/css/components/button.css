@@ -43,7 +43,7 @@
     }
 
     &.button--ghost {
-        background: color-mix(in srgb, var(--color-surface-strong), var(--color-main-alt) 8%);
+        background: color-mix(in srgb, var(--color-background), var(--color-main-alt) 8%);
         border-color: color-mix(in srgb, var(--color-main-alt), var(--color-background) 42%);
         color: var(--color-text);
     }

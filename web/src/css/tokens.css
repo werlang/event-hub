@@ -1,6 +1,4 @@
 :root {
-    --max-width: 1180px;
-
     --font-body: 'Roboto', Helvetica, Arial, sans-serif;
     --font-display: 'Raleway', Helvetica, Arial, sans-serif;
     --font-mono: 'Source Code Pro', Consolas, 'Courier New', monospace;
@@ -12,7 +10,6 @@
     --color-main-contrast: #f8f4ee;
     --color-alt-contrast: #fbf8f4;
     --color-border: color-mix(in srgb, var(--color-main), #ffffff 78%);
-    --color-border-strong: color-mix(in srgb, var(--color-main), var(--color-background) 58%);
     --color-text: #474c54;
     --color-text-secondary: #6c7068;
     --color-link: #3f7da4;
@@ -20,20 +17,9 @@
     --color-success: #7ca67f;
     --color-warning: #cba75a;
     --color-error: #cd7c72;
-
-    --color-surface: color-mix(in srgb, var(--color-background), #ffffff 52%);
-    --color-surface-strong: #ffffff;
-    --color-surface-muted: color-mix(in srgb, var(--color-main), var(--color-background) 92%);
-    --color-main-soft: color-mix(in srgb, var(--color-main), transparent 88%);
-    --color-main-alt-soft: color-mix(in srgb, var(--color-main-alt), transparent 86%);
-
     --color-shadow: color-mix(in srgb, var(--color-text), transparent 84%);
-    --shadow-soft: 0 18px 48px var(--color-shadow);
-    --shadow-card: 0 10px 24px color-mix(in srgb, var(--color-text), transparent 88%);
-    --shadow-lifted: 0 18px 38px color-mix(in srgb, var(--color-text), transparent 82%);
 
     --radius: 12px;
     --radius-sm: 4px;
     --radius-pill: 999px;
-    --grid-gap: 20px;
 }

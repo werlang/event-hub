@@ -30,7 +30,7 @@
     padding: 16px 18px;
     border-radius: var(--radius-sm);
     border: 2px solid color-mix(in srgb, var(--color-main), transparent 78%);
-    background: color-mix(in srgb, var(--color-surface-strong), var(--color-background) 18%);
+    background: var(--color-background);
     color: var(--color-text);
     font-size: 1rem;
     line-height: 1.4;
@@ -45,7 +45,7 @@
     &:focus {
         outline: none;
         border-color: var(--color-main);
-        background: var(--color-surface-strong);
+        background: var(--color-background);
         box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-main), transparent 88%), 0 10px 20px color-mix(in srgb, var(--color-text), transparent 92%);
     }
 

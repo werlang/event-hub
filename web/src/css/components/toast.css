@@ -5,7 +5,7 @@
     border: 1px solid color-mix(in srgb, var(--color-success), transparent 68%);
     color: color-mix(in srgb, var(--color-success), var(--color-text) 42%);
     border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-card);
+    box-shadow: 0 10px 24px var(--color-shadow);
     animation: toast-in 0.24s ease;
 }
 

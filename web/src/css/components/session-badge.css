@@ -4,7 +4,7 @@
     gap: 8px;
     border: 1px solid color-mix(in srgb, var(--color-main), transparent 72%);
     border-radius: var(--radius-pill);
-    background: color-mix(in srgb, var(--color-surface-strong), var(--color-main) 10%);
+    background: color-mix(in srgb, var(--color-background), var(--color-main) 10%);
     color: var(--color-text-secondary);
     padding: 10px 14px;
     font-size: 0.76rem;
@@ -24,7 +24,7 @@
     &.session-badge--active {
         color: var(--color-text);
         border-color: color-mix(in srgb, var(--color-main), var(--color-background) 36%);
-        background: color-mix(in srgb, var(--color-surface-strong), var(--color-main) 12%);
+        background: color-mix(in srgb, var(--color-background), var(--color-main) 12%);
     }
 
     &.session-badge--active::before {

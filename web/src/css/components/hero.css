@@ -33,7 +33,7 @@
         }
 
         @media (min-width: 900px) {
-            background-color: var(--color-background);
+            background-color: transparent;
             border: none;
             backdrop-filter: none;
             margin: 0;
@@ -93,7 +93,7 @@ h1 + .subtitle {
     padding: 8px 14px;
     border-radius: var(--radius-pill);
     border: 1px solid color-mix(in srgb, var(--color-main), transparent 72%);
-    background: color-mix(in srgb, var(--color-surface-strong), var(--color-main) 8%);
+    background: color-mix(in srgb, var(--color-background), var(--color-main) 8%);
     color: var(--color-main);
     font-family: var(--font-mono);
     font-size: 12px;

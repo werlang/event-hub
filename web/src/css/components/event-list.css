@@ -5,5 +5,5 @@
     padding: 28px 20px;
     border-radius: var(--radius);
     border: 1px dashed color-mix(in srgb, var(--color-main), transparent 68%);
-    background: color-mix(in srgb, var(--color-surface-strong), var(--color-background) 36%);
+    background: var(--color-background);
 }
