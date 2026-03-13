@@ -46,21 +46,44 @@ header {
     .header-actions {
         display: flex;
         align-items: center;
+        justify-content: flex-start;
         gap: 12px;
         margin: 15px 0;
+        flex-wrap: wrap;
+        width: 100%;
+
+        @media (min-width: 720px) {
+            justify-content: flex-end;
+            width: auto;
+        }
 
         .button {
-            background: transparent;
-            color: rgb(from var(--color-main-contrast) r g b / 0.8);
+            min-height: auto;
+            padding: 6px 18px;
             border: none;
-            font-size: 1.2rem;
-            transition: 0.3s all;
-            padding: 5px 20px;
+            background: transparent;
+            color: rgb(from var(--color-main-contrast) r g b / 0.82);
+            box-shadow: none;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-transform: none;
+            transition: background-color 0.3s ease, color 0.3s ease, filter 0.3s ease;
 
             &:hover {
+                transform: none;
                 background-color: rgb(from var(--color-main-alt) r g b / 0.2);
                 color: rgb(from var(--color-main-contrast) r g b / 1);
-                filter: brightness(1.2);
+                filter: brightness(1.08);
+            }
+
+            &:active {
+                transform: none;
+            }
+
+            &[aria-current='page'] {
+                background-color: rgb(from var(--color-main-alt) r g b / 0.28);
+                color: rgb(from var(--color-main-contrast) r g b / 1);
             }
         }
     }

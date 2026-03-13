@@ -76,6 +76,33 @@ function normalizeEnvelope(response, payload) {
     };
 }
 
+/**
+ * Returns the browser storage object when it is available and readable.
+ */
+function getStorage() {
+    try {
+        return globalThis.localStorage || null;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Runs one storage operation without breaking pages where storage is unavailable.
+ */
+function runStorageOperation(callback, fallbackValue = null) {
+    const storage = getStorage();
+    if (!storage || typeof callback !== 'function') {
+        return fallbackValue;
+    }
+
+    try {
+        return callback(storage);
+    } catch {
+        return fallbackValue;
+    }
+}
+
 class AuthTokenStore {
     #storageKey = TOKEN_STORAGE_KEY;
 
@@ -83,7 +110,7 @@ class AuthTokenStore {
      * Reads the stored authentication token from localStorage.
      */
     read() {
-        return localStorage.getItem(this.#storageKey);
+        return runStorageOperation(storage => storage.getItem(this.#storageKey), null);
     }
 
     /**
@@ -94,14 +121,20 @@ class AuthTokenStore {
             return;
         }
 
-        localStorage.setItem(this.#storageKey, token.trim());
+        runStorageOperation((storage) => {
+            storage.setItem(this.#storageKey, token.trim());
+            return true;
+        }, false);
     }
 
     /**
      * Clears the stored authentication token.
      */
     clear() {
-        localStorage.removeItem(this.#storageKey);
+        runStorageOperation((storage) => {
+            storage.removeItem(this.#storageKey);
+            return true;
+        }, false);
     }
 }
 
@@ -173,6 +206,8 @@ export class ApiClient {
             return this.#request.get(endpoint, requestOptions);
         case 'POST':
             return this.#request.post(endpoint, body, requestOptions);
+        case 'PATCH':
+            return this.#request.patch(endpoint, body, requestOptions);
         case 'PUT':
             return this.#request.put(endpoint, body, requestOptions);
         case 'DELETE':

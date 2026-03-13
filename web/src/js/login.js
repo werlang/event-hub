@@ -2,7 +2,8 @@ import '../css/login.css';
 
 import { AuthTabs } from './components/auth-tabs.js';
 import { Form } from './components/form.js';
-import { requestApi, clearToken, readToken, storeToken } from './helpers/api.js';
+import { requestApi, storeToken } from './helpers/api.js';
+import { getCurrentSession, syncHeaderSessionNavigation } from './helpers/session.js';
 import { TemplateVar } from './helpers/template-var.js';
 
 const LOGIN_TAB = 'login';
@@ -190,18 +191,12 @@ async function submitRegister({ form, values, messageElement }) {
  * Validates the current stored session to inform the login screen.
  */
 async function checkCurrentSession(messageElement) {
-	const token = readToken();
-	if (!token) {
+	const session = await getCurrentSession();
+	if (!session.isAuthenticated) {
 		return;
 	}
 
-	const response = await requestApi('/auth/me', { token });
-	if (!response.ok) {
-		clearToken();
-		return;
-	}
-
-	const userName = response.data?.user?.name;
+	const userName = session.user?.name;
 	const hasVisibleMessage = Boolean(messageElement?.textContent?.trim());
 	if (userName && !hasVisibleMessage) {
 		showMessage(messageElement, `Sessão ativa como ${userName}. Você pode entrar novamente para trocar de conta.`, 'success');
@@ -222,6 +217,8 @@ function initAuthTabs() {
 
 	configureSubmitButton(loginForm, 'Entrando...');
 	configureSubmitButton(registerForm, 'Criando conta...');
+
+	void syncHeaderSessionNavigation();
 
 	const authTabs = new AuthTabs({
 		tabs: elements.tabs,

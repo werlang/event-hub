@@ -12,6 +12,7 @@ import { EventList } from './components/event-list.js';
 import { FilterForm } from './components/filter-form.js';
 import { QuickChips } from './components/quick-chips.js';
 import { getCurrentWeekRangeLocal, getNextDaysRangeLocal } from './helpers/week-range.js';
+import { syncHeaderSessionNavigation } from './helpers/session.js';
 
 /**
  * Collects the home-page elements used by the client entry.
@@ -19,7 +20,6 @@ import { getCurrentWeekRangeLocal, getNextDaysRangeLocal } from './helpers/week-
 function createElements() {
     return {
         entrySurface: document.querySelector('#home-entry-surface'),
-        authSurface: document.querySelector('#home-auth-surface'),
         filterSurface: document.querySelector('#home-filter-surface'),
         filterForm: document.querySelector('#filter-form'),
         quickChips: document.querySelector('#quick-chips'),
@@ -71,10 +71,6 @@ function createQuickChips() {
 function setEntrySurfacesVisibility(elements, hidden) {
     if (elements.entrySurface) {
         elements.entrySurface.hidden = hidden;
-    }
-
-    if (elements.authSurface) {
-        elements.authSurface.hidden = hidden;
     }
 
     if (elements.filterSurface) {
@@ -157,5 +153,7 @@ export function initHomePage() {
 
     loadEvents(initialFilters);
 }
+
+void syncHeaderSessionNavigation();
 
 initHomePage();

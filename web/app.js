@@ -44,6 +44,13 @@ app.get('/publish', (req, res) => {
     res.templateRender('publish', { page: 'publish', redirect: req.query.redirect || '' });
 });
 
+/**
+ * Renders the dashboard shell used for authenticated tooling.
+ */
+app.get('/dashboard', (req, res) => {
+    res.templateRender('dashboard', { page: 'dashboard' });
+});
+
 // static assets
 app.use(express.static(new URL('./public/', import.meta.url).pathname));
 

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard · Agenda Acadêmica</title>
+    <link rel="stylesheet" href="/css/dashboard.min.css">
+    <script type="module" src="/js/dashboard.min.js"></script>
+</head>
+<body>
+    {{> header}}
+
+    <section class="hero hero--dashboard">
+        <div class="hero__content">
+            <p class="pill">Área autenticada</p>
+            <h1 id="dashboard-title">Verificando sua sessão...</h1>
+            <p class="subtitle" id="dashboard-subtitle">Assim que a autenticação for confirmada, seu espaço de gerenciamento estará pronto para uso.</p>
+            <div class="hero__actions dashboard-summary">
+                <a class="button button--ghost" href="/publish">Novo evento</a>
+            </div>
+        </div>
+        <div class="hero__image"></div>
+    </section>
+
+    <main class="dashboard-shell">
+        <section class="panel">
+            <div class="panel__header">
+                <div>
+                    <p class="pill">Minha área</p>
+                    <h2>Gerencie seus eventos e sua conta</h2>
+                    <p class="hint" id="dashboard-shell-hint">Assim que a autenticação for confirmada, seus eventos e o fluxo de senha serão carregados aqui.</p>
+                </div>
+                <div id="dashboard-auth-alert" class="alert" aria-live="polite" hidden></div>
+            </div>
+
+            <div class="dashboard-grid">
+                <article class="panel__block dashboard-card dashboard-card--events" id="dashboard-events-surface">
+                    <div class="dashboard-section-heading">
+                        <div>
+                            <p class="pill">Eventos</p>
+                            <h3>Seus envios</h3>
+                            <p class="hint" id="dashboard-events-summary">Carregando seus eventos...</p>
+                        </div>
+                        <a class="button button--ghost" href="/publish">Novo evento</a>
+                    </div>
+
+                    <div id="dashboard-events-alert" class="alert" aria-live="polite" hidden></div>
+                    <div id="dashboard-events-loading" class="dashboard-loading" aria-live="polite">Carregando seus eventos...</div>
+                    <p id="dashboard-events-empty" class="dashboard-empty" hidden>Você ainda não publicou eventos. Use o botão acima para criar o primeiro.</p>
+                    <div id="dashboard-events-list" class="dashboard-event-list" hidden></div>
+                </article>
+
+                <article class="panel__block dashboard-card" id="dashboard-account-surface">
+                    <div class="dashboard-section-heading">
+                        <div>
+                            <p class="pill">Conta</p>
+                            <h3>Sessão e senha</h3>
+                            <p class="hint">Consulte os dados da sua conta e atualize sua senha sem sair do dashboard.</p>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-account-summary">
+                        <div class="dashboard-summary-item">
+                            <span class="dashboard-label">Nome</span>
+                            <strong id="dashboard-account-name">-</strong>
+                        </div>
+                        <div class="dashboard-summary-item">
+                            <span class="dashboard-label">E-mail</span>
+                            <strong id="dashboard-account-email">-</strong>
+                        </div>
+                        <div class="dashboard-summary-item">
+                            <span class="dashboard-label">Perfil</span>
+                            <strong id="dashboard-account-role">-</strong>
+                        </div>
+                        <div class="dashboard-summary-item">
+                            <span class="dashboard-label">Eventos</span>
+                            <strong id="dashboard-account-events-total">0 cadastrados</strong>
+                        </div>
+                    </div>
+
+                    <div id="dashboard-password-alert" class="alert" aria-live="polite" hidden></div>
+                    <form id="dashboard-password-form" class="form form--visible form--disabled">
+                        <label>Senha atual<input type="password" name="currentPassword" autocomplete="current-password" required></label>
+                        <div class="form-row">
+                            <label>Nova senha<input type="password" name="newPassword" autocomplete="new-password" required></label>
+                            <label>Confirmar nova senha<input type="password" name="confirmPassword" autocomplete="new-password" required></label>
+                        </div>
+                        <button class="button button--primary" type="submit">Atualizar senha</button>
+                    </form>
+                    <div id="dashboard-password-success" class="toast" aria-live="polite" hidden>Sua senha foi atualizada.</div>
+                </article>
+
+                <article class="panel__block dashboard-card" id="dashboard-editor-surface">
+                    <div class="dashboard-section-heading">
+                        <div>
+                            <p class="pill">Edição</p>
+                            <h3>Atualize um evento não publicado</h3>
+                            <p class="dashboard-editor-selection" id="dashboard-edit-selection">Selecione um evento pendente ou rejeitado para liberar a edição.</p>
+                            <p class="hint" id="dashboard-edit-hint">Ao salvar, o evento volta para a fila de moderação com o status pendente.</p>
+                        </div>
+                    </div>
+
+                    <div id="dashboard-edit-alert" class="alert" aria-live="polite" hidden></div>
+                    <form id="dashboard-edit-form" class="form form--visible form--disabled">
+                        <div class="form-row">
+                            <label>Titulo<input type="text" name="title" placeholder="Workshop de IA aplicada" required></label>
+                            <label>Data<input type="date" name="date" required></label>
+                        </div>
+                        <div class="form-row">
+                            <label class="checkbox-field">
+                                <input type="checkbox" name="hasTime" id="event-has-time">
+                                Informar horário
+                            </label>
+                            <label>Horário<input type="time" name="time" id="event-time" disabled></label>
+                        </div>
+                        <div class="form-row">
+                            <label>Categoria
+                                <select name="category">
+                                    <option value="Geral">Geral</option>
+                                    <option value="Comunidade">Comunidade</option>
+                                    <option value="Pesquisa">Pesquisa</option>
+                                    <option value="Extensão">Extensão</option>
+                                    <option value="Esportes">Esportes</option>
+                                </select>
+                            </label>
+                            <label>Local<input type="text" name="location" placeholder="Auditório Central"></label>
+                        </div>
+                        <label>Descrição<textarea name="description" rows="4" placeholder="Resumo, palestrantes e links úteis." required></textarea></label>
+                        <div class="dashboard-inline-actions">
+                            <button class="button button--primary" type="submit">Salvar alterações</button>
+                            <button class="button button--ghost" id="dashboard-edit-cancel" type="button">Cancelar</button>
+                        </div>
+                    </form>
+                </article>
+
+                <article class="panel__block dashboard-card dashboard-card--admin" id="dashboard-admin-surface" hidden>
+                    <div class="dashboard-section-heading">
+                        <div>
+                            <p class="pill">Administração</p>
+                            <h3>Ferramentas administrativas</h3>
+                            <p class="hint">Promova membros e avalie os envios pendentes de outros usuários sem sair desta mesma página.</p>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-admin-grid">
+                        <section class="dashboard-admin-panel" aria-labelledby="dashboard-admin-users-title">
+                            <div class="dashboard-section-heading">
+                                <div>
+                                    <p class="pill">Usuários</p>
+                                    <h4 id="dashboard-admin-users-title">Promoções</h4>
+                                    <p class="hint" id="dashboard-admin-users-summary">Carregando usuários...</p>
+                                </div>
+                            </div>
+
+                            <div id="dashboard-admin-users-alert" class="alert" aria-live="polite" hidden></div>
+                            <div id="dashboard-admin-users-loading" class="dashboard-loading" aria-live="polite">Carregando outros usuários...</div>
+                            <p id="dashboard-admin-users-empty" class="dashboard-empty" hidden>Nenhum membro disponível para promoção no momento.</p>
+                            <div id="dashboard-admin-users-list" class="dashboard-admin-list" hidden></div>
+                        </section>
+
+                        <section class="dashboard-admin-panel" aria-labelledby="dashboard-admin-events-title">
+                            <div class="dashboard-section-heading">
+                                <div>
+                                    <p class="pill">Moderação</p>
+                                    <h4 id="dashboard-admin-events-title">Fila de avaliação</h4>
+                                    <p class="hint" id="dashboard-admin-events-summary">Carregando eventos pendentes...</p>
+                                </div>
+                            </div>
+
+                            <div id="dashboard-admin-events-alert" class="alert" aria-live="polite" hidden></div>
+                            <div id="dashboard-admin-events-loading" class="dashboard-loading" aria-live="polite">Carregando eventos de outros usuários...</div>
+                            <p id="dashboard-admin-events-empty" class="dashboard-empty" hidden>Nenhum evento de outros usuários aguarda moderação agora.</p>
+                            <div id="dashboard-admin-events-list" class="dashboard-admin-list" hidden></div>
+                        </section>
+                    </div>
+
+                    <p class="dashboard-admin-note">As rotas administrativas continuam protegidas no servidor. O dashboard apenas libera esses controles quando a sessão autenticada já retorna o perfil de administrador.</p>
+                </article>
+            </div>
+
+            <p class="dashboard-note" id="dashboard-role-note">As ferramentas do seu perfil serão exibidas conforme a autenticação for confirmada.</p>
+        </section>
+    </main>
+
+    {{> footer}}
+</body>
+{{{template-vars}}}
+</html>
