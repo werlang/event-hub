@@ -6,6 +6,28 @@ function isDateOnlyValue(value) {
 }
 
 /**
+ * Reports whether a value is a midnight-UTC ISO string carrying only a calendar day.
+ */
+function isDateOnlyIsoValue(value) {
+	return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T00:00:00(?:\.000)?Z$/.test(value);
+}
+
+/**
+ * Extracts the normalized YYYY-MM-DD token from a supported date-only value.
+ */
+function readDateOnlyDay(value) {
+	if (isDateOnlyValue(value)) {
+		return value;
+	}
+
+	if (isDateOnlyIsoValue(value)) {
+		return value.slice(0, 10);
+	}
+
+	return null;
+}
+
+/**
  * Converts a date-only string into a local timestamp.
  */
 function toLocalDateOnlyTimestamp(value) {
@@ -25,8 +47,9 @@ function toLocalDateOnlyTimestamp(value) {
  * Converts a date-like value into a comparable timestamp.
  */
 function toTimestamp(value) {
-	if (isDateOnlyValue(value)) {
-		return toLocalDateOnlyTimestamp(value);
+	const dateOnlyDay = readDateOnlyDay(value);
+	if (dateOnlyDay) {
+		return toLocalDateOnlyTimestamp(dateOnlyDay);
 	}
 
 	const date = new Date(value);
@@ -37,8 +60,9 @@ function toTimestamp(value) {
  * Converts an event date into a day-level sort key.
  */
 function toDayKey(value) {
-	if (isDateOnlyValue(value)) {
-		return value;
+	const dateOnlyDay = readDateOnlyDay(value);
+	if (dateOnlyDay) {
+		return dateOnlyDay;
 	}
 
 	const date = new Date(value);
@@ -56,7 +80,7 @@ function toDayKey(value) {
  * Reports whether an event stores only a calendar day without time.
  */
 export function isDateOnlyEvent(event) {
-	return isDateOnlyValue(event?.date);
+	return Boolean(readDateOnlyDay(event?.date));
 }
 
 /**
@@ -68,8 +92,9 @@ export function isPastEvent(event, referenceDate = new Date()) {
 		return false;
 	}
 
-	if (isDateOnlyValue(value)) {
-		const [yearText, monthText, dayText] = value.split('-');
+	const dateOnlyDay = readDateOnlyDay(value);
+	if (dateOnlyDay) {
+		const [yearText, monthText, dayText] = dateOnlyDay.split('-');
 		const year = Number(yearText);
 		const month = Number(monthText);
 		const day = Number(dayText);
@@ -106,4 +131,11 @@ export function sortEventsByDate(events) {
 
 		return toTimestamp(left?.date) - toTimestamp(right?.date);
 	});
+}
+
+/**
+ * Returns a new event array sorted from the latest date to the earliest.
+ */
+export function sortEventsByDateDescending(events) {
+	return sortEventsByDate(events).reverse();
 }
