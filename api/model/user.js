@@ -6,6 +6,7 @@ export class User extends Model {
 
     static table = 'users';
     static view = ['id', 'name', 'email', 'role', 'password_hash', 'created_at'];
+    static SAFE_VIEW = ['id', 'name', 'email', 'role', 'created_at'];
     static BCRYPT_ROUNDS = 12;
     static ALLOWED_ROLES = ['admin', 'member'];
 
@@ -20,7 +21,7 @@ export class User extends Model {
         this.name = name || '';
         this.email = email?.toLowerCase() || '';
         this.role = User.normalizeRole(role);
-        this.#passwordHash = passwordHash || this.#hashPassword(password || '');
+        this.#passwordHash = passwordHash || User.hashPassword(password || '');
     }
 
     /**
@@ -34,7 +35,7 @@ export class User extends Model {
     /**
      * Hashes a plain-text password using the configured bcrypt rounds.
      */
-    #hashPassword(plain) {
+    static hashPassword(plain) {
         return bcrypt.hashSync(plain, User.BCRYPT_ROUNDS);
     }
 
@@ -109,10 +110,31 @@ export class User extends Model {
     }
 
     /**
-     * Lists every persisted user.
+     * Lists persisted users using a safe projection for administrative tooling.
      */
-    static async list() {
-        return this.find();
+    static async list({ role, excludeId, view = this.SAFE_VIEW } = {}) {
+        const filter = {};
+
+        if (role) {
+            filter.role = this.normalizeRole(role);
+        }
+
+        if (excludeId) {
+            filter.id = { not: excludeId };
+        }
+
+        return this.find({
+            filter,
+            view,
+            opt: { order: { name: 1 } },
+        });
+    }
+
+    /**
+     * Lists users visible to administrators while excluding the current actor.
+     */
+    static async listForAdministration({ excludeId } = {}) {
+        return this.list({ excludeId });
     }
 
     /**
@@ -137,5 +159,42 @@ export class User extends Model {
     static async create(payload) {
         const serialized = await this.insert(payload);
         return this.get(serialized.id);
+    }
+
+    /**
+     * Updates the stored password hash for a persisted user.
+     */
+    static async updatePassword(id, password) {
+        if (!id) {
+            return null;
+        }
+
+        await this.driver.update(this.table, {
+            password_hash: this.hashPassword(password || ''),
+        }, id);
+
+        return this.get(id);
+    }
+
+    /**
+     * Updates the persisted role for a user and returns the refreshed entity.
+     */
+    static async updateRole(id, role) {
+        if (!id) {
+            return null;
+        }
+
+        await this.driver.update(this.table, {
+            role: this.normalizeRole(role),
+        }, id);
+
+        return this.get(id);
+    }
+
+    /**
+     * Promotes a persisted member account to administrator.
+     */
+    static async promoteToAdmin(id) {
+        return this.updateRole(id, 'admin');
     }
 }
