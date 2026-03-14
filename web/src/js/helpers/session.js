@@ -1,42 +1,6 @@
-import { HeaderSessionNav } from '../components/header-session-nav.js';
 import { clearToken, readToken, requestApi } from './api.js';
 
 let currentSessionPromise = null;
-
-/**
- * Reads the current browser path as the default post-auth redirect target.
- */
-function readCurrentLocationTarget() {
-    return `${window.location.pathname}${window.location.search}`;
-}
-
-/**
- * Normalizes an internal redirect target and blocks unsafe or looping values.
- */
-export function normalizeRedirectTarget(target = readCurrentLocationTarget()) {
-    if (typeof target !== 'string' || !target.startsWith('/')) {
-        return '/';
-    }
-
-    if (target.startsWith('//') || target.startsWith('/login')) {
-        return '/';
-    }
-
-    return target;
-}
-
-/**
- * Builds the login URL used by auth-aware navigation controls.
- */
-export function createLoginHref(target = readCurrentLocationTarget()) {
-    const redirectTarget = normalizeRedirectTarget(target);
-    if (redirectTarget === '/') {
-        return '/login';
-    }
-
-    const params = new URLSearchParams({ redirect: redirectTarget });
-    return `/login?${params.toString()}`;
-}
 
 /**
  * Resolves the current authenticated session from local storage and the API.
@@ -108,31 +72,4 @@ export function getCurrentSession({ forceRefresh = false } = {}) {
     }
 
     return currentSessionPromise;
-}
-
-/**
- * Synchronizes the shared header call-to-action with the current session state.
- */
-export async function syncHeaderSessionNavigation({ redirectTarget, isDashboardPage = false } = {}) {
-    const headerNav = HeaderSessionNav.fromDocument();
-    if (headerNav.isReady()) {
-        headerNav.setChecking();
-    }
-
-    const session = await getCurrentSession();
-    if (!headerNav.isReady()) {
-        return { headerNav, session };
-    }
-
-    if (session.isAuthenticated) {
-        headerNav.setAuthenticated({
-            name: session.user?.name,
-            isCurrentPage: isDashboardPage,
-        });
-
-        return { headerNav, session };
-    }
-
-    headerNav.setAnonymous({ loginHref: createLoginHref(redirectTarget) });
-    return { headerNav, session };
 }

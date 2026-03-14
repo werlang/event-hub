@@ -12,7 +12,6 @@ import { EventList } from './components/event-list.js';
 import { FilterForm } from './components/filter-form.js';
 import { QuickChips } from './components/quick-chips.js';
 import { getCurrentWeekRangeLocal, getNextDaysRangeLocal } from './helpers/week-range.js';
-import { syncHeaderSessionNavigation } from './helpers/session.js';
 
 /**
  * Collects the home-page elements used by the client entry.
@@ -153,7 +152,5 @@ export function initHomePage() {
 
     loadEvents(initialFilters);
 }
-
-void syncHeaderSessionNavigation();
 
 initHomePage();

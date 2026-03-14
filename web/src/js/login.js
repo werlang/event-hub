@@ -3,7 +3,7 @@ import '../css/login.css';
 import { AuthTabs } from './components/auth-tabs.js';
 import { Form } from './components/form.js';
 import { requestApi, storeToken } from './helpers/api.js';
-import { getCurrentSession, syncHeaderSessionNavigation } from './helpers/session.js';
+import { getCurrentSession } from './helpers/session.js';
 import { TemplateVar } from './helpers/template-var.js';
 
 const LOGIN_TAB = 'login';
@@ -217,8 +217,6 @@ function initAuthTabs() {
 
 	configureSubmitButton(loginForm, 'Entrando...');
 	configureSubmitButton(registerForm, 'Criando conta...');
-
-	void syncHeaderSessionNavigation();
 
 	const authTabs = new AuthTabs({
 		tabs: elements.tabs,
