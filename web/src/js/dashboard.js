@@ -7,7 +7,6 @@ import { Form } from './components/form.js';
 import { MemberEventList, canManageMemberEvent, describeMemberEventStatus } from './components/member-event-list.js';
 import { StatusAlert } from './components/status-alert.js';
 import { requestApi } from './helpers/api.js';
-import { renderEventsUnavailableState } from './helpers/dashboard-state.js';
 import { createLoginHref, syncHeaderSessionNavigation } from './helpers/session.js';
 
 const DASHBOARD_PATH = '/dashboard';
@@ -191,6 +190,27 @@ function splitEventDateForForm(value) {
         time: `${hours}:${minutes}`,
         includeTime: true,
     };
+}
+
+/**
+ * Renders a clear unavailable state for the dashboard events surface.
+ */
+function renderEventsUnavailableState(elements, {
+    summaryText = 'Seus eventos estão indisponíveis no momento.',
+    detailText = 'Não foi possível carregar seus eventos agora.',
+    accountEventsTotalText = 'Indisponível',
+} = {}) {
+    if (!elements) {
+        return;
+    }
+
+    elements.eventsLoading.hidden = true;
+    elements.eventsList.replaceChildren();
+    elements.eventsList.hidden = true;
+    elements.eventsEmpty.hidden = false;
+    elements.eventsEmpty.textContent = detailText;
+    elements.eventsSummary.textContent = summaryText;
+    elements.accountEventsTotal.textContent = accountEventsTotalText;
 }
 
 /**
