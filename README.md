@@ -71,8 +71,18 @@ Para desenvolvimento com containers, use `docker compose -f compose.dev.yaml up 
 - ES Modules, Express 5, classes para modelos (`api/model/`), rotas puras em `api/routes/`.
 - JWT via `helpers/token.js`; persistência MySQL com helper/driver em `api/helpers/mysql.js` e base `Model` em `api/model/model.js`.
 - Documentação em código: toda função nomeada, método, getter/setter e helper reutilizável deve receber bloco JSDoc. Callbacks anônimos curtos podem permanecer sem bloco quando forem apenas detalhe local de implementação, mas handlers inline de rota/middleware devem ser documentados imediatamente acima do registro.
+- Cada arquivo e módulo deve ter uma responsabilidade principal clara. Quando o contrato principal de um arquivo for uma classe, helpers reutilizáveis devem ficar em módulos auxiliares dedicados.
+- Mudanças novas devem priorizar legibilidade e extensibilidade: nomes descritivos, métodos curtos, fluxo explícito e reaproveitamento das abstrações já existentes antes de criar novos desvios condicionais.
+- Refatorações devem reduzir acoplamento e arquivos inchados, separando responsabilidades por contexto, papel de usuário ou componente quando a complexidade crescer.
 - UI SSR com Mustache + assets estáticos em `web/public/` (`css` e `js`).
 - A pasta `.github/references/` existe como fonte de inspiração para estilo de código em helpers e componentes DOM; use-a como referência de ergonomia, não como documentação do runtime atual.
+
+## Critérios de manutenção
+
+- Toda tarefa nova deve buscar manter ou melhorar a clareza da arquitetura existente.
+- Antes de adicionar comportamento a arquivos grandes, avalie se a melhor solução é extrair colaboradores menores e mais coesos.
+- Prefira composição entre classes, componentes e helpers a concentrar múltiplas responsabilidades em uma única implementação.
+- Considere a facilidade de leitura e evolução futura como parte do critério de pronto, não apenas o funcionamento imediato.
 
 ## Arquitetura frontend (web/src/js)
 

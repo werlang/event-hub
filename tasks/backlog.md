@@ -11,6 +11,7 @@ Industry standard is to track work in an issue tracker (GitHub Issues/Jira) and 
 - Atomic (one focused outcome)
 - Prioritized
 - Testable (clear acceptance criteria)
+- Maintainable (clear module boundaries and sustainable implementation direction)
 - Linked to source/context
 
 For this repository, this markdown backlog complements that model and is optimized for AI agents to execute tasks directly.
@@ -21,6 +22,13 @@ For this repository, this markdown backlog complements that model and is optimiz
 2. Keep status updated (`todo`, `in-progress`, `blocked`, `done`).
 3. Use acceptance criteria as the completion contract.
 4. For large features, add a concise design note in this file, then track implementation steps here.
+
+## Engineering standard for all TODOs
+
+- Preserve or improve readability, maintainability, and scalability.
+- Prefer extracting focused collaborators when a file, class, or entrypoint is already carrying multiple concerns.
+- Keep class-oriented files centered on their class contract; reusable standalone helpers belong in companion modules.
+- Do not treat structural quality as optional polish. It is part of the task definition of done.
 
 ## Inbox Entry Template
 
@@ -36,9 +44,13 @@ For this repository, this markdown backlog complements that model and is optimiz
 ### Context
 One short paragraph with problem statement and current behavior.
 
+### Implementation Notes
+Optional engineering constraints such as module boundaries, abstractions to preserve, or refactor direction.
+
 ### Acceptance Criteria
 - [ ] Observable outcome 1
 - [ ] Observable outcome 2
+- [ ] Module/class responsibilities remain clear and no unrelated concerns are added to existing files
 - [ ] Validation step (manual or automated)
 ```
 

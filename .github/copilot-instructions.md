@@ -7,12 +7,21 @@
 - **Routes as functions**: route handlers live in `api/routes/*.js`.
 - **In-code documentation**: every named function, method, getter/setter, and reusable local helper must have a JSDoc block. Short anonymous callbacks may stay undocumented when they are clearly local implementation details, but inline route or middleware handlers must be documented directly above the registration call.
 - **Private class fields**: prefer `#field` / `#method` where state should be encapsulated.
+- **Single responsibility first**: keep files, classes, and helpers focused on one primary job. When a file exists to export a class, move reusable standalone helpers into companion modules instead of mixing multiple responsibilities in the same file.
+- **Readable over clever**: prefer descriptive names, small methods, guard clauses, explicit data flow, and predictable public APIs over compact but opaque implementations.
+- **Scalable structure**: extend existing abstractions or compose smaller collaborators before adding more branching to bloated modules, controllers, or UI entrypoints.
 
 ## Architecture
 - **API service** (`api/`): REST endpoints for auth and events.
 - **Web service** (`web/`): SSR shell with Mustache and client behavior bundled with Webpack.
 - **No shared package**: `api/` and `web/` are independent Node projects.
 - **Persistence**: MySQL access flows through the base `Model` class and the `Mysql` driver (`api/model/model.js`, `api/helpers/mysql.js`).
+
+## Implementation Expectations
+- Future tasks should preserve or improve maintainability, scalability, and ease of understanding.
+- Refactors should reduce coupling or file bloat, not merely relocate code without clarifying responsibilities.
+- Prefer extracting role-specific or concern-specific collaborators when flows start diverging instead of accumulating conditionals in a single class or module.
+- When the project already has a reusable UI or DOM interaction pattern, follow that pattern rather than introducing one-off implementations that are harder to maintain.
 
 ## API Overview
 - Base middleware in `api/app.js`: `cors()`, JSON/urlencoded parsing, readiness route (`GET /ready`), explicit 404 forwarding, and terminal error middleware.

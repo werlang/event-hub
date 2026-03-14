@@ -43,6 +43,7 @@ These are the minimum fields agents need to execute with low ambiguity.
 
 - `Out of scope` (to prevent scope creep)
 - `Validation` (how to verify done)
+- `Implementation notes` (module boundaries, abstractions to preserve, refactor constraints)
 - `Design-note` references (when available)
 
 ## Status definitions
@@ -52,6 +53,15 @@ These are the minimum fields agents need to execute with low ambiguity.
 - `blocked`: waiting on decision or dependency
 - `done`: acceptance criteria validated
 
+## Engineering standards
+
+Every task should be written and implemented with these defaults:
+
+- Preserve clear module boundaries and single responsibility.
+- Prefer extracting collaborators over enlarging bloated files or classes.
+- Keep class-focused modules class-focused; move reusable standalone helpers into dedicated modules when they stop being local implementation detail.
+- Treat readability, maintainability, and scalability as part of the completion bar, not as optional cleanup.
+
 ## Task quality checklist
 
 Before marking a task ready:
@@ -60,6 +70,8 @@ Before marking a task ready:
 - Are acceptance criteria testable?
 - Is scope small enough for one focused implementation session?
 - Are dependencies explicit?
+- Are responsibility boundaries explicit enough to prevent adding more code to an already bloated module or class?
+- Does the definition of done imply maintainable, easy-to-understand code aligned with project standards?
 
 If any answer is “no”, refine the task before execution.
 
