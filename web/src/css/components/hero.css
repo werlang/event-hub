@@ -85,23 +85,6 @@ h1 + .subtitle {
     margin-top: -2px;
 }
 
-.pill {
-    display: inline-flex;
-    align-items: center;
-    width: fit-content;
-    gap: 8px;
-    padding: 8px 14px;
-    border-radius: var(--radius-pill);
-    border: 1px solid color-mix(in srgb, var(--color-main), transparent 72%);
-    background: color-mix(in srgb, var(--color-background), var(--color-main) 8%);
-    color: var(--color-main);
-    font-family: var(--font-mono);
-    font-size: 12px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-}
-
 .hero__actions {
     display: flex;
     justify-content: center;

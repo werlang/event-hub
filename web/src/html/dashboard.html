@@ -10,23 +10,10 @@
 <body>
     {{> header}}
 
-    <section class="hero hero--dashboard">
-        <div class="hero__content">
-            <p class="pill">Área autenticada</p>
-            <h1 id="dashboard-title">Verificando sua sessão...</h1>
-            <p class="subtitle" id="dashboard-subtitle">Assim que a autenticação for confirmada, seu espaço de gerenciamento estará pronto para uso.</p>
-            <div class="hero__actions dashboard-summary">
-                <a class="button button--ghost" href="/publish">Novo evento</a>
-            </div>
-        </div>
-        <div class="hero__image"></div>
-    </section>
-
     <main class="dashboard-shell">
         <section class="panel">
             <div class="panel__header">
                 <div>
-                    <p class="pill">Minha área</p>
                     <h2>Gerencie seus eventos e sua conta</h2>
                     <p class="hint" id="dashboard-shell-hint">Assim que a autenticação for confirmada, seus eventos e o fluxo de senha serão carregados aqui.</p>
                 </div>
@@ -37,11 +24,10 @@
                 <article class="panel__block dashboard-card dashboard-card--events" id="dashboard-events-surface">
                     <div class="dashboard-section-heading">
                         <div>
-                            <p class="pill">Eventos</p>
                             <h3>Seus envios</h3>
                             <p class="hint" id="dashboard-events-summary">Carregando seus eventos...</p>
                         </div>
-                        <a class="button button--ghost" href="/publish">Novo evento</a>
+                        <a class="button button--ghost" href="/foo">Novo evento</a>
                     </div>
 
                     <div id="dashboard-events-alert" class="alert" aria-live="polite" hidden></div>
@@ -53,7 +39,6 @@
                 <article class="panel__block dashboard-card" id="dashboard-account-surface">
                     <div class="dashboard-section-heading">
                         <div>
-                            <p class="pill">Conta</p>
                             <h3>Sessão e senha</h3>
                             <p class="hint">Consulte os dados da sua conta e atualize sua senha sem sair do dashboard.</p>
                         </div>
@@ -93,7 +78,6 @@
                 <article class="panel__block dashboard-card" id="dashboard-editor-surface">
                     <div class="dashboard-section-heading">
                         <div>
-                            <p class="pill">Edição</p>
                             <h3>Atualize um evento não publicado</h3>
                             <p class="dashboard-editor-selection" id="dashboard-edit-selection">Selecione um evento pendente ou rejeitado para liberar a edição.</p>
                             <p class="hint" id="dashboard-edit-hint">Ao salvar, o evento volta para a fila de moderação com o status pendente.</p>
@@ -136,7 +120,6 @@
                 <article class="panel__block dashboard-card dashboard-card--admin" id="dashboard-admin-surface" hidden>
                     <div class="dashboard-section-heading">
                         <div>
-                            <p class="pill">Administração</p>
                             <h3>Ferramentas administrativas</h3>
                             <p class="hint">Promova membros e avalie os envios pendentes de outros usuários sem sair desta mesma página.</p>
                         </div>
@@ -146,7 +129,6 @@
                         <section class="dashboard-admin-panel" aria-labelledby="dashboard-admin-users-title">
                             <div class="dashboard-section-heading">
                                 <div>
-                                    <p class="pill">Usuários</p>
                                     <h4 id="dashboard-admin-users-title">Promoções</h4>
                                     <p class="hint" id="dashboard-admin-users-summary">Carregando usuários...</p>
                                 </div>
@@ -161,7 +143,6 @@
                         <section class="dashboard-admin-panel" aria-labelledby="dashboard-admin-events-title">
                             <div class="dashboard-section-heading">
                                 <div>
-                                    <p class="pill">Moderação</p>
                                     <h4 id="dashboard-admin-events-title">Fila de avaliação</h4>
                                     <p class="hint" id="dashboard-admin-events-summary">Carregando eventos pendentes...</p>
                                 </div>

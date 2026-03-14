@@ -23,7 +23,6 @@
         margin-bottom: 10px;
     }
 
-    & .pill + h2 + p,
     & .hint {
         color: var(--color-text-secondary);
     }
