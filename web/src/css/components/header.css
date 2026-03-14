@@ -86,6 +86,14 @@ header {
                 color: rgb(from var(--color-main-contrast) r g b / 1);
             }
         }
+
+        #header-logout-link {
+            display: none;
+
+            &.active {
+                display: block;
+            }
+        }
     }
 
     #logo {
