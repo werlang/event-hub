@@ -38,13 +38,6 @@ app.get('/login', (req, res) => {
 });
 
 /**
- * Renders the publish page shell and forwards redirect state.
- */
-app.get('/publish', (req, res) => {
-    res.templateRender('publish', { page: 'publish', redirect: req.query.redirect || '' });
-});
-
-/**
  * Renders the dashboard shell used for authenticated tooling.
  */
 app.get('/dashboard', (req, res) => {
