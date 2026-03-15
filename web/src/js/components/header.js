@@ -14,8 +14,9 @@ export async function updateLoginButton(messageElement) {
     }
 
     const userName = session.user?.name;
+    const initials = userName ? userName.split(' ').map((n) => n[0]).filter((c,i,a) => i === 0 || i === a.length - 1).join('').toUpperCase() : 'U';
     loginButton.href = '/dashboard';
-    loginButton.textContent = userName;
+    loginButton.textContent = initials;
 
     logoutButton.classList.add('active');
     logoutButton.addEventListener('click', async (e) => {
