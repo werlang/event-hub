@@ -7,6 +7,7 @@
 @import './components/panel.css';
 @import './components/form.css';
 @import './components/modal.css';
+@import './components/toast.css';
 
 body {
     min-height: 100vh;
@@ -88,31 +89,6 @@ main {
     color: var(--color-main);
 }
 
-.dashboard-feedback {
-    margin: 0;
-    padding: 14px 16px;
-    border-radius: var(--radius-sm);
-    border: 1px solid transparent;
-    line-height: 1.55;
-}
-
-.dashboard-feedback--info {
-    background: color-mix(in srgb, var(--color-info), transparent 90%);
-    border-color: color-mix(in srgb, var(--color-info), transparent 70%);
-    color: color-mix(in srgb, var(--color-info), var(--color-text) 36%);
-}
-
-.dashboard-feedback--success {
-    background: color-mix(in srgb, var(--color-success), transparent 90%);
-    border-color: color-mix(in srgb, var(--color-success), transparent 68%);
-    color: color-mix(in srgb, var(--color-success), var(--color-text) 42%);
-}
-
-.dashboard-feedback--error {
-    background: color-mix(in srgb, var(--color-error), transparent 90%);
-    border-color: color-mix(in srgb, var(--color-error), transparent 70%);
-    color: color-mix(in srgb, var(--color-error), var(--color-text) 38%);
-}
 
 .dashboard-sections {
     display: grid;

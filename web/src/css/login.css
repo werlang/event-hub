@@ -7,7 +7,6 @@
 @import './components/toast.css';
 @import './components/panel.css';
 @import './components/form.css';
-@import './components/status-alert.css';
 
 body {
     min-height: 100vh;
@@ -30,10 +29,6 @@ main > .panel {
     padding: clamp(24px, 4vw, 34px);
     isolation: isolate;
     background: linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 58%) 0%, var(--color-background) 100%);
-
-    & .alert {
-        margin: 0;
-    }
 }
 
 .tabs {

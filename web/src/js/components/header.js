@@ -1,5 +1,6 @@
 import { getCurrentSession } from '../helpers/session.js';
 import { clearToken } from '../helpers/api.js';
+import { Toast } from './toast.js';
 
 /**
  * Header component, responsible for rendering the header and managing the login/logout buttons.
@@ -14,6 +15,7 @@ export class Header {
     constructor(enforceAuth) {
         this.#enforceAuth = enforceAuth || false;
 
+        Toast.consumeFlash();
         this.#resolveSession();
     }
 
@@ -24,6 +26,13 @@ export class Header {
        this.#session = await this.getSession();
 
         if (this.#enforceAuth && !this.#session.isAuthenticated && this.#LOGIN_REDIRECT_REASONS.has(this.#session.reason)) {
+            Toast.flash(
+                this.#session.message || 'Faça login para continuar.',
+                {
+                    tone: this.#session.reason === 'invalid-token' ? 'warning' : 'info',
+                    group: 'auth-redirect',
+                },
+            );
             const target = `${window.location.pathname}${window.location.search}${window.location.hash}`;
             const url = `/login?redirect=${encodeURIComponent(target)}`;
             window.location.href = url;
@@ -43,9 +52,14 @@ export class Header {
         loginButton.textContent = initials;
 
         logoutButton.classList.add('active');
-        logoutButton.addEventListener('click', async (e) => {
+        logoutButton.addEventListener('click', (event) => {
+            event.preventDefault();
             // remove auth token and send user to login page
             clearToken();
+            Toast.flash('Sessão encerrada.', {
+                tone: 'info',
+                group: 'auth-redirect',
+            });
             window.location.href = '/';
         });
 

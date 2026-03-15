@@ -1,13 +1,13 @@
 import '../css/index.css';
 
 import { apiClient } from './helpers/api.js';
+import { Toast } from './components/toast.js';
 import {
     createHomeFilterParams,
     hasSpecificHomeQuery,
     readHomeFiltersFromUrl,
     syncUrlWithParams,
 } from './helpers/query-state.js';
-import { sortEventsByDate } from './helpers/event-sort.js';
 import { EventList } from './components/event-list.js';
 import { FilterForm } from './components/filter-form.js';
 import { QuickChips } from './components/quick-chips.js';
@@ -15,6 +15,8 @@ import { getCurrentWeekRangeLocal, getNextDaysRangeLocal } from './helpers/week-
 import { Header } from './components/header.js';
 
 new Header();
+
+const HOME_TOAST_GROUP = 'home-status';
 
 /**
  * Collects the home-page elements used by the client entry.
@@ -26,12 +28,34 @@ function createElements() {
         filterForm: document.querySelector('#filter-form'),
         quickChips: document.querySelector('#quick-chips'),
         grid: document.querySelector('#events-grid'),
-        emptyState: document.querySelector('#empty-state'),
         filterSearch: document.querySelector('#filter-search'),
         filterCategory: document.querySelector('#filter-category'),
         filterFrom: document.querySelector('#filter-from'),
         filterTo: document.querySelector('#filter-to'),
     };
+}
+
+/**
+ * Clears any visible home-page toast associated with filter feedback.
+ */
+function clearHomeToasts() {
+    Toast.dismissGroup(HOME_TOAST_GROUP);
+}
+
+/**
+ * Shows one home-page toast for transient status updates.
+ */
+function showHomeToast(text, tone = 'info') {
+    const normalizedText = typeof text === 'string' ? text.trim() : '';
+    if (!normalizedText) {
+        return null;
+    }
+
+    return Toast.show(normalizedText, {
+        tone,
+        group: HOME_TOAST_GROUP,
+        duration: tone === 'error' ? 6000 : 4800,
+    });
 }
 
 /**
@@ -87,7 +111,6 @@ export function initHomePage() {
     const elements = createElements();
     const eventList = new EventList({
         grid: elements.grid,
-        emptyState: elements.emptyState,
     });
     const filterForm = new FilterForm({
         form: elements.filterForm,
@@ -108,6 +131,8 @@ export function initHomePage() {
      * Loads events for the provided filters and syncs the current URL state.
      */
     const loadEvents = async (filters) => {
+        clearHomeToasts();
+
         const params = createHomeFilterParams(filters);
         syncUrlWithParams(params);
 
@@ -115,16 +140,19 @@ export function initHomePage() {
         const endpoint = query ? `/events?${query}` : '/events';
         const response = await apiClient.request(endpoint);
         if (!response.ok) {
-            eventList.render([], {
-                emptyMessage: 'Não foi possível carregar os eventos no momento.',
-            });
+            eventList.clear();
+            showHomeToast('Não foi possível carregar os eventos no momento.', 'error');
             return;
         }
 
-        const events = response.data?.events;
-        eventList.render(sortEventsByDate(events), {
-            emptyMessage: 'Nenhum evento encontrado para os filtros aplicados.',
-        });
+        const events = Array.isArray(response.data?.events) ? response.data.events : [];
+        if (events.length === 0) {
+            eventList.clear();
+            showHomeToast('Nenhum evento encontrado para os filtros aplicados.');
+            return;
+        }
+
+        eventList.render(events);
     };
 
     filterForm.hydrate(initialFilters);
@@ -147,9 +175,8 @@ export function initHomePage() {
     setEntrySurfacesVisibility(elements, agendaOnlyMode);
 
     if (!agendaOnlyMode) {
-        eventList.render([], {
-            emptyMessage: 'Use os filtros ou chips para carregar eventos.',
-        });
+        eventList.clear();
+        showHomeToast('Use os filtros ou chips para carregar eventos.');
         return;
     }
 

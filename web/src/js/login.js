@@ -2,6 +2,7 @@ import '../css/login.css';
 
 import { AuthTabs } from './components/auth-tabs.js';
 import { Form } from './components/form.js';
+import { Toast } from './components/toast.js';
 import { requestApi, storeToken } from './helpers/api.js';
 import { getCurrentSession } from './helpers/session.js';
 import { TemplateVar } from './helpers/template-var.js';
@@ -12,6 +13,8 @@ new Header();
 const LOGIN_TAB = 'login';
 const REGISTER_TAB = 'register';
 const SUBMIT_STATE_KEY = 'submitting';
+const AUTH_TOAST_GROUP = 'auth-status';
+const AUTH_REDIRECT_TOAST_GROUP = 'auth-redirect';
 
 /**
  * Collects the login page elements used by the auth flow.
@@ -19,7 +22,6 @@ const SUBMIT_STATE_KEY = 'submitting';
 function createElements() {
     return {
         tabs: Array.from(document.querySelectorAll('.tabs .tab[data-tab]')),
-        message: document.querySelector('#auth-message'),
         loginForm: document.querySelector('#login-form'),
         registerForm: document.querySelector('#register-form'),
     };
@@ -51,46 +53,45 @@ function syncAuthHash(activeTab) {
  * Reads and sanitizes the post-authentication redirect target.
  */
 function readRedirectTarget() {
+    const defaultRedirect = '/dashboard';
     const templateRedirect = TemplateVar.get('redirect');
     const queryRedirect = new URLSearchParams(window.location.search).get('redirect');
     const rawTarget = typeof templateRedirect === 'string' && templateRedirect
         ? templateRedirect
-        : queryRedirect || '/';
+        : queryRedirect || defaultRedirect;
 
     if (typeof rawTarget !== 'string' || !rawTarget.startsWith('/')) {
-        return '/';
+        return defaultRedirect;
     }
 
     if (rawTarget.startsWith('//') || rawTarget.startsWith('/login')) {
-        return '/';
+        return defaultRedirect;
     }
 
     return rawTarget;
 }
 
 /**
- * Renders the auth feedback message using the requested tone.
+ * Clears any visible auth toast associated with the current page.
  */
-function showMessage(messageElement, text, tone = 'error') {
-    if (!messageElement) {
-        return;
-    }
+function clearAuthToasts() {
+    Toast.dismissGroup(AUTH_TOAST_GROUP);
+}
 
+/**
+ * Shows one authentication toast using the shared notification pattern.
+ */
+function showAuthToast(text, tone = 'error') {
     const normalizedText = typeof text === 'string' ? text.trim() : '';
-    messageElement.hidden = !normalizedText;
-    messageElement.textContent = normalizedText;
-    messageElement.classList.remove('alert--error', 'alert--success');
-
     if (!normalizedText) {
-        return;
+        return null;
     }
 
-    if (tone === 'success') {
-        messageElement.classList.add('alert--success');
-        return;
-    }
-
-    messageElement.classList.add('alert--error');
+    return Toast.show(normalizedText, {
+        tone,
+        group: AUTH_TOAST_GROUP,
+        duration: tone === 'success' ? 4200 : 5600,
+    });
 }
 
 /**
@@ -103,11 +104,11 @@ function configureSubmitButton(form, label) {
 /**
  * Submits login credentials and redirects after a successful response.
  */
-async function submitLogin({ form, values, messageElement }) {
+async function submitLogin({ form, values }) {
     const email = String(values.email || '').trim();
     const password = String(values.password || '');
     form.disable({ stateKey: SUBMIT_STATE_KEY });
-    showMessage(messageElement, '');
+    clearAuthToasts();
 
     try {
         const response = await requestApi('/auth/login', {
@@ -119,17 +120,21 @@ async function submitLogin({ form, values, messageElement }) {
         });
 
         if (!response.ok) {
-            showMessage(messageElement, response.message || 'Não foi possível autenticar.');
+            showAuthToast(response.message || 'Não foi possível autenticar.');
             return;
         }
 
         const token = response.data?.token;
         if (!token) {
-            showMessage(messageElement, 'Resposta de autenticação inválida.');
+            showAuthToast('Resposta de autenticação inválida.');
             return;
         }
 
         storeToken(token);
+        Toast.flash('Login realizado com sucesso.', {
+            tone: 'success',
+            group: AUTH_REDIRECT_TOAST_GROUP,
+        });
         window.location.assign(readRedirectTarget());
     } finally {
         form.enable({ stateKey: SUBMIT_STATE_KEY });
@@ -139,25 +144,25 @@ async function submitLogin({ form, values, messageElement }) {
 /**
  * Submits the register form and starts the new session when successful.
  */
-async function submitRegister({ form, values, messageElement }) {
+async function submitRegister({ form, values }) {
     const name = String(values.name || '').trim();
     const email = String(values.email || '').trim();
     const password = String(values.password || '');
     const confirmPassword = String(values.confirmPassword || '');
 
     if (!name || !email || !password) {
-        showMessage(messageElement, 'Preencha nome, e-mail e senha para continuar.');
+        showAuthToast('Preencha nome, e-mail e senha para continuar.');
         return;
     }
 
     if (password !== confirmPassword) {
-        showMessage(messageElement, 'A confirmação de senha não confere.');
+        showAuthToast('A confirmação de senha não confere.');
         form.getField('confirmPassword')?.focus();
         return;
     }
 
     form.disable({ stateKey: SUBMIT_STATE_KEY });
-    showMessage(messageElement, '');
+    clearAuthToasts();
 
     try {
         const response = await requestApi('/auth/register', {
@@ -170,21 +175,22 @@ async function submitRegister({ form, values, messageElement }) {
         });
 
         if (!response.ok) {
-            showMessage(messageElement, response.message || 'Não foi possível concluir o registro.');
+            showAuthToast(response.message || 'Não foi possível concluir o registro.');
             return;
         }
 
         const token = response.data?.token;
         if (!token) {
-            showMessage(messageElement, 'Resposta de autenticação inválida.');
+            showAuthToast('Resposta de autenticação inválida.');
             return;
         }
 
         storeToken(token);
-        showMessage(messageElement, 'Conta criada com sucesso. Redirecionando...', 'success');
-        window.setTimeout(() => {
-            window.location.assign(readRedirectTarget());
-        }, 150);
+        Toast.flash('Conta criada com sucesso. Redirecionando...', {
+            tone: 'success',
+            group: AUTH_REDIRECT_TOAST_GROUP,
+        });
+        window.location.assign(readRedirectTarget());
     } finally {
         form.enable({ stateKey: SUBMIT_STATE_KEY });
     }
@@ -193,16 +199,15 @@ async function submitRegister({ form, values, messageElement }) {
 /**
  * Validates the current stored session to inform the login screen.
  */
-async function checkCurrentSession(messageElement) {
+async function checkCurrentSession() {
     const session = await getCurrentSession();
     if (!session.isAuthenticated) {
         return;
     }
 
     const userName = session.user?.name;
-    const hasVisibleMessage = Boolean(messageElement?.textContent?.trim());
-    if (userName && !hasVisibleMessage) {
-        showMessage(messageElement, `Sessão ativa como ${userName}. Você pode entrar novamente para trocar de conta.`, 'success');
+    if (userName) {
+        showAuthToast(`Sessão ativa como ${userName}. Você pode entrar novamente para trocar de conta.`, 'success');
     }
 }
 
@@ -236,7 +241,6 @@ function initAuthTabs() {
         await submitLogin({
             form,
             values,
-            messageElement: elements.message,
         });
     });
 
@@ -244,11 +248,10 @@ function initAuthTabs() {
         await submitRegister({
             form,
             values,
-            messageElement: elements.message,
         });
     });
 
-    checkCurrentSession(elements.message);
+    checkCurrentSession();
 }
 
 initAuthTabs();

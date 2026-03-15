@@ -16,26 +16,30 @@ export class EventList extends BaseComponent {
 	}
 
 	/**
-	 * Reports whether both the grid and empty state are available.
+	 * Reports whether the event grid is available.
 	 */
 	isReady() {
-		return super.isReady() && Boolean(this.#emptyState);
+		return super.isReady();
 	}
 
 	/**
-	 * Renders the provided events or the empty-state message when none exist.
+	 * Renders the provided events or clears the grid when none exist.
 	 */
-	render(events, { emptyMessage } = {}) {
+	render(events, { emptyMessage, showEmptyState = true } = {}) {
 		if (!this.isReady()) {
 			return this;
 		}
 
-		this.#emptyState.textContent = emptyMessage || this.#defaultEmptyMessage;
+		if (this.#emptyState) {
+			this.#emptyState.textContent = emptyMessage || this.#defaultEmptyMessage;
+		}
 
 		const sortedEvents = Array.isArray(events) ? sortEventsByDate(events) : [];
 		if (sortedEvents.length === 0) {
 			this.get().replaceChildren();
-			this.#emptyState.hidden = false;
+			if (this.#emptyState) {
+				this.#emptyState.hidden = !showEmptyState;
+			}
 			return this;
 		}
 
@@ -45,14 +49,16 @@ export class EventList extends BaseComponent {
 		});
 
 		this.get().replaceChildren(fragment);
-		this.#emptyState.hidden = true;
+		if (this.#emptyState) {
+			this.#emptyState.hidden = true;
+		}
 		return this;
 	}
 
 	/**
-	 * Clears the event grid while preserving the empty-state message flow.
+	 * Clears the event grid while preserving optional empty-state behavior.
 	 */
-	clear({ emptyMessage } = {}) {
-		return this.render([], { emptyMessage });
+	clear({ emptyMessage, showEmptyState } = {}) {
+		return this.render([], { emptyMessage, showEmptyState });
 	}
 }

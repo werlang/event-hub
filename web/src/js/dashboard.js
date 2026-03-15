@@ -4,9 +4,14 @@ import { BaseComponent } from './components/base-component.js';
 import { Form } from './components/form.js';
 import { Header } from './components/header.js';
 import { Modal } from './components/modal.js';
+import { Toast } from './components/toast.js';
 import { requestApi } from './helpers/api.js';
 import { formatDateTimePtBr } from './helpers/date-format.js';
 import { isPastEvent, sortEventsByDateDescending } from './helpers/event-sort.js';
+
+const DASHBOARD_STATUS_TOAST_GROUP = 'dashboard-status';
+const DASHBOARD_CREATE_TOAST_GROUP = 'dashboard-create';
+const DASHBOARD_ACTION_TOAST_GROUP = 'dashboard-action';
 
 /**
  * Returns the UI metadata associated with an event moderation status.
@@ -245,8 +250,6 @@ function createCreateModalContent() {
             Preencha os campos abaixo para enviar um novo evento para moderação sem sair da sua área.
         </p>
 
-        <p class="dashboard-feedback" id="dashboard-modal-create-feedback" hidden></p>
-
         <form class="form form--visible" id="dashboard-modal-create-form">
             <div class="form-row">
                 <label for="dashboard-modal-event-title">
@@ -302,7 +305,6 @@ function createCreateModalContent() {
 
     return {
         root: wrapper,
-        feedback: wrapper.querySelector('#dashboard-modal-create-feedback'),
         form: wrapper.querySelector('#dashboard-modal-create-form'),
         titleField: wrapper.querySelector('#dashboard-modal-event-title'),
         dateField: wrapper.querySelector('#dashboard-modal-event-date'),
@@ -364,16 +366,18 @@ class DashboardPage extends BaseComponent {
         }
 
         if (!session.isAuthenticated) {
-            this.#setFeedback(
-                this.#elements.pageMessage,
-                session.message || 'Não foi possível validar a sua sessão agora.',
-                'error',
-            );
+            if (!['missing-token', 'invalid-token'].includes(session.reason)) {
+                this.#showToast(
+                    session.message || 'Não foi possível validar a sua sessão agora.',
+                    'error',
+                    { group: DASHBOARD_STATUS_TOAST_GROUP },
+                );
+            }
             return;
         }
 
         this.#session = session;
-        this.#setFeedback(this.#elements.pageMessage, '');
+        Toast.dismissGroup(DASHBOARD_STATUS_TOAST_GROUP);
         this.#renderHeader();
         await this.refreshEvents();
     }
@@ -386,7 +390,7 @@ class DashboardPage extends BaseComponent {
             return;
         }
 
-        this.#setFeedback(this.#elements.pageMessage, '');
+        Toast.dismissGroup(DASHBOARD_STATUS_TOAST_GROUP);
 
         const response = await requestApi('/events/mine', {
             token: this.#session.token,
@@ -397,10 +401,10 @@ class DashboardPage extends BaseComponent {
             this.#renderHeader();
             this.#renderOverview();
             this.#renderEventList();
-            this.#setFeedback(
-                this.#elements.pageMessage,
+            this.#showToast(
                 response.message || 'Não foi possível carregar os seus eventos no momento.',
                 'error',
+                { group: DASHBOARD_STATUS_TOAST_GROUP },
             );
             return;
         }
@@ -419,7 +423,6 @@ class DashboardPage extends BaseComponent {
 
         return {
             root,
-            pageMessage: root?.querySelector('#dashboard-page-message') || null,
             roleChip: root?.querySelector('#dashboard-role-chip') || null,
             overviewBadge: root?.querySelector('#dashboard-overview-badge') || null,
             overviewNote: root?.querySelector('#dashboard-overview-note') || null,
@@ -431,7 +434,6 @@ class DashboardPage extends BaseComponent {
             eventsEmpty: root?.querySelector('#dashboard-events-empty') || null,
             actionsSection: root?.querySelector('#dashboard-actions-section') || null,
             actionsBadge: root?.querySelector('#dashboard-actions-badge') || null,
-            actionFeedback: root?.querySelector('#dashboard-action-feedback') || null,
             createToggle: root?.querySelector('#dashboard-create-toggle') || null,
             settingsButton: root?.querySelector('#dashboard-settings-button') || null,
         };
@@ -480,7 +482,7 @@ class DashboardPage extends BaseComponent {
         const form = new Form(content.form);
 
         content.dateField.value = createDefaultDateTimeValue();
-        this.#setFeedback(this.#elements.actionFeedback, '');
+        Toast.dismissGroup(DASHBOARD_CREATE_TOAST_GROUP);
 
         form.getButton('dashboard-modal-create-cancel')?.click(() => {
             modal.close();
@@ -489,15 +491,15 @@ class DashboardPage extends BaseComponent {
         form.submit(async (data, formComponent) => {
             const payload = this.#readCreatePayload(data);
             if (!payload.title || !payload.description || !payload.date) {
-                this.#setFeedback(
-                    content.feedback,
+                this.#showToast(
                     'Preencha título, descrição e data antes de enviar o evento.',
                     'error',
+                    { group: DASHBOARD_CREATE_TOAST_GROUP },
                 );
                 return;
             }
 
-            this.#setFeedback(content.feedback, '');
+            Toast.dismissGroup(DASHBOARD_CREATE_TOAST_GROUP);
             formComponent.disable({ stateKey: 'submit' });
 
             try {
@@ -508,10 +510,10 @@ class DashboardPage extends BaseComponent {
                 });
 
                 if (!response.ok) {
-                    this.#setFeedback(
-                        content.feedback,
+                    this.#showToast(
                         response.message || 'Não foi possível enviar o evento para aprovação.',
                         'error',
+                        { group: DASHBOARD_CREATE_TOAST_GROUP },
                     );
                     return;
                 }
@@ -531,10 +533,10 @@ class DashboardPage extends BaseComponent {
                 }
 
                 modal.close();
-                this.#setFeedback(
-                    this.#elements.actionFeedback,
+                this.#showToast(
                     response.message || 'Evento enviado para aprovação com sucesso.',
                     'success',
+                    { group: DASHBOARD_ACTION_TOAST_GROUP },
                 );
             } finally {
                 formComponent.enable({ stateKey: 'submit' });
@@ -559,7 +561,6 @@ class DashboardPage extends BaseComponent {
             content: createSettingsModalContent(),
         });
 
-        this.#setFeedback(this.#elements.actionFeedback, '');
         modal.addAction({
             id: 'dashboard-settings-close',
             label: 'Entendi',
@@ -653,27 +654,19 @@ class DashboardPage extends BaseComponent {
     }
 
     /**
-     * Updates a dashboard feedback element with the given tone.
+     * Emits a shared toast for dashboard status changes.
      */
-    #setFeedback(element, text, tone = 'info') {
-        if (!element) {
-            return;
-        }
-
+    #showToast(text, tone = 'info', options = {}) {
         const normalizedText = readText(text, '');
-        element.hidden = !normalizedText;
-        element.textContent = normalizedText;
-        element.classList.remove(
-            'dashboard-feedback--info',
-            'dashboard-feedback--success',
-            'dashboard-feedback--error',
-        );
-
         if (!normalizedText) {
-            return;
+            return null;
         }
 
-        element.classList.add(`dashboard-feedback--${tone}`);
+        return Toast.show(normalizedText, {
+            tone,
+            group: options.group,
+            duration: options.duration ?? (tone === 'success' ? 4400 : 6000),
+        });
     }
 }
 
