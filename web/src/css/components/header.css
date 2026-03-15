@@ -87,7 +87,7 @@ header {
             }
         }
 
-        #header-login-link {
+        #header-login-link.logged {
             border-radius: 100%;
             background-color: var(--color-main-contrast);
             color: var(--color-main-alt);

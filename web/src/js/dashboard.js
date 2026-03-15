@@ -1,13 +1,11 @@
 import '../css/dashboard.css';
 
 import { BaseComponent } from './components/base-component.js';
-import { updateLoginButton } from './components/header.js';
+import { Header } from './components/header.js';
 import { requestApi } from './helpers/api.js';
 import { formatDateTimePtBr } from './helpers/date-format.js';
 import { isPastEvent, sortEventsByDateDescending } from './helpers/event-sort.js';
 import { getCurrentSession } from './helpers/session.js';
-
-const LOGIN_REDIRECT_REASONS = new Set(['missing-token', 'invalid-token']);
 
 /**
  * Returns the UI metadata associated with an event moderation status.
@@ -235,14 +233,6 @@ function createDefaultDateTimeValue(referenceDate = new Date()) {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-/**
- * Builds the login redirect URL for unauthenticated dashboard access.
- */
-function createLoginRedirectUrl() {
-    const target = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    return `/login?redirect=${encodeURIComponent(target)}`;
-}
-
 class DashboardPage extends BaseComponent {
     #elements;
     #events = [];
@@ -265,14 +255,20 @@ class DashboardPage extends BaseComponent {
             return;
         }
 
-        await updateLoginButton();
         this.#wireActions();
         this.#hydrateDefaultCreateDate();
-
-        const session = await this.#resolveSession();
+        
+        const header = new Header(true);
+        const session = await header.getSession();
         if (!session) {
             return;
         }
+
+        this.#setFeedback(
+            this.#elements.pageMessage,
+            session.message || 'Não foi possível validar a sua sessão agora.',
+            'error',
+        );
 
         this.#session = session;
         this.#renderHeader();
@@ -357,29 +353,6 @@ class DashboardPage extends BaseComponent {
             && this.#elements.createToggle
             && this.#elements.composePanel,
         );
-    }
-
-    /**
-     * Resolves the current authenticated session or redirects to login when required.
-     */
-    async #resolveSession() {
-        const session = await getCurrentSession();
-
-        if (session.isAuthenticated) {
-            return session;
-        }
-
-        if (LOGIN_REDIRECT_REASONS.has(session.reason)) {
-            window.location.assign(createLoginRedirectUrl());
-            return null;
-        }
-
-        this.#setFeedback(
-            this.#elements.pageMessage,
-            session.message || 'Não foi possível validar a sua sessão agora.',
-            'error',
-        );
-        return null;
     }
 
     /**

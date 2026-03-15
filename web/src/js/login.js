@@ -5,9 +5,9 @@ import { Form } from './components/form.js';
 import { requestApi, storeToken } from './helpers/api.js';
 import { getCurrentSession } from './helpers/session.js';
 import { TemplateVar } from './helpers/template-var.js';
-import { updateLoginButton } from './components/header.js';
+import { Header } from './components/header.js';
 
-updateLoginButton();
+new Header();
 
 const LOGIN_TAB = 'login';
 const REGISTER_TAB = 'register';
