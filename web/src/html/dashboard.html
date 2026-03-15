@@ -1,17 +1,185 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard · Agenda Acadêmica</title>
+    <title>Central de Eventos · Agenda Acadêmica</title>
     <link rel="stylesheet" href="/css/dashboard.min.css">
     <script type="module" src="/js/dashboard.min.js"></script>
 </head>
+
 <body>
     {{> header}}
 
+    <main id="dashboard-root">
+        <div class="panel__header dashboard-shell">
+            <div class="dashboard-shell__intro">
+                <span class="dashboard-chip" id="dashboard-role-chip">Conta</span>
+                <p class="dashboard-eyebrow">Área do usuário</p>
+            </div>
+            <h1 id="dashboard-heading">Central de eventos</h1>
+        </div>
+
+        <p class="dashboard-feedback" id="dashboard-page-message" hidden></p>
+
+        <div class="dashboard-sections">
+            <details class="dashboard-section" id="dashboard-overview-section" open>
+                <summary class="dashboard-section__summary">
+                    <div class="dashboard-section__summary-copy">
+                        <p class="dashboard-section__eyebrow">Resumo</p>
+                        <h2>Panorama dos seus envios</h2>
+                        <p class="dashboard-section__description">
+                            Veja quantos eventos você já enviou, o que ainda depende de aprovação e o que já está
+                            publicado.
+                        </p>
+                    </div>
+
+                    <div class="dashboard-section__summary-side">
+                        <span class="dashboard-section__badge" id="dashboard-overview-badge">0 envios</span>
+                        <span class="dashboard-section__toggle" aria-hidden="true"></span>
+                    </div>
+                </summary>
+
+                <div class="dashboard-section__content">
+                    <div class="dashboard-summary-grid" id="dashboard-summary-grid"></div>
+                    <p class="dashboard-inline-note" id="dashboard-overview-note">
+                        Seus indicadores aparecem aqui assim que os eventos forem carregados.
+                    </p>
+                </div>
+            </details>
+
+            <details class="dashboard-section" id="dashboard-events-section" open>
+                <summary class="dashboard-section__summary">
+                    <div class="dashboard-section__summary-copy">
+                        <p class="dashboard-section__eyebrow">Eventos</p>
+                        <h2>Todos os seus eventos</h2>
+                        <p class="dashboard-section__description">
+                            Consulte a lista completa dos eventos criados pela sua conta, com status, data, categoria e
+                            local.
+                        </p>
+                    </div>
+
+                    <div class="dashboard-section__summary-side">
+                        <span class="dashboard-section__badge" id="dashboard-events-badge">0 eventos</span>
+                        <span class="dashboard-section__toggle" aria-hidden="true"></span>
+                    </div>
+                </summary>
+
+                <div class="dashboard-section__content">
+                    <p class="dashboard-inline-note" id="dashboard-events-caption">
+                        A lista será preenchida assim que a sua área for carregada.
+                    </p>
+
+                    <p class="empty-state" id="dashboard-events-empty" hidden>
+                        Você ainda não enviou nenhum evento. Use a seção de ações para criar a primeira postagem.
+                    </p>
+
+                    <div class="dashboard-events-list" id="dashboard-events-list"></div>
+                </div>
+            </details>
+
+            <details class="dashboard-section" id="dashboard-actions-section" open>
+                <summary class="dashboard-section__summary">
+                    <div class="dashboard-section__summary-copy">
+                        <p class="dashboard-section__eyebrow">Ações</p>
+                        <h2>Atalhos rápidos</h2>
+                        <p class="dashboard-section__description">
+                            Centralize aqui as ações mais frequentes da sua conta. Novos atalhos podem ser adicionados
+                            depois sem mudar o resto do painel.
+                        </p>
+                    </div>
+
+                    <div class="dashboard-section__summary-side">
+                        <span class="dashboard-section__badge" id="dashboard-actions-badge">2 atalhos</span>
+                        <span class="dashboard-section__toggle" aria-hidden="true"></span>
+                    </div>
+                </summary>
+
+                <div class="dashboard-section__content">
+                    <div class="dashboard-actions-grid">
+                        <button class="button button--primary" id="dashboard-create-toggle" type="button">
+                            Criar nova postagem
+                        </button>
+
+                        <button class="button button--ghost" id="dashboard-settings-button" type="button">
+                            Configurações do usuário
+                        </button>
+                    </div>
+
+                    <p class="dashboard-inline-note">
+                        A criação de novos eventos já funciona por aqui. A área de configurações foi reservada para a
+                        próxima etapa do dashboard.
+                    </p>
+
+                    <p class="dashboard-feedback" id="dashboard-action-feedback" hidden></p>
+
+                    <section class="panel__block dashboard-compose" id="dashboard-compose-panel" hidden
+                        aria-labelledby="dashboard-compose-heading">
+                        <div class="dashboard-compose__header">
+                            <div>
+                                <p class="dashboard-section__eyebrow">Nova postagem</p>
+                                <h3 id="dashboard-compose-heading">Enviar evento para moderação</h3>
+                            </div>
+
+                            <button class="button button--ghost" id="dashboard-compose-close" type="button">
+                                Fechar
+                            </button>
+                        </div>
+
+                        <form class="form form--visible" id="dashboard-create-form">
+                            <div class="form-row">
+                                <label for="dashboard-event-title">
+                                    Título
+                                    <input id="dashboard-event-title" name="title" type="text" maxlength="160"
+                                        placeholder="Ex.: Semana Acadêmica de Sistemas" required>
+                                </label>
+
+                                <label for="dashboard-event-date">
+                                    Data e horário
+                                    <input id="dashboard-event-date" name="date" type="datetime-local" required>
+                                </label>
+                            </div>
+
+                            <label for="dashboard-event-description">
+                                Descrição
+                                <textarea id="dashboard-event-description" name="description"
+                                    placeholder="Resumo do evento, tema central e público esperado."
+                                    required></textarea>
+                            </label>
+
+                            <div class="form-row">
+                                <label for="dashboard-event-category">
+                                    Categoria
+                                    <select id="dashboard-event-category" name="category">
+                                        <option value="Geral">Geral</option>
+                                        <option value="Pesquisa">Pesquisa</option>
+                                        <option value="Extensão">Extensão</option>
+                                        <option value="Comunidade">Comunidade</option>
+                                        <option value="Ensino">Ensino</option>
+                                        <option value="Cultura">Cultura</option>
+                                    </select>
+                                </label>
+
+                                <label for="dashboard-event-location">
+                                    Local
+                                    <input id="dashboard-event-location" name="location" type="text" maxlength="120"
+                                        placeholder="Auditório, sala, laboratório ou link">
+                                </label>
+                            </div>
+
+                            <button class="button button--primary" id="dashboard-create-submit" type="submit">
+                                Enviar para aprovação
+                            </button>
+                        </form>
+                    </section>
+                </div>
+            </details>
+        </div>
+    </main>
 
     {{> footer}}
 </body>
 {{{template-vars}}}
+
 </html>
