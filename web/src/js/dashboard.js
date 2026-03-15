@@ -1,11 +1,12 @@
 import '../css/dashboard.css';
 
 import { BaseComponent } from './components/base-component.js';
+import { Form } from './components/form.js';
 import { Header } from './components/header.js';
+import { Modal } from './components/modal.js';
 import { requestApi } from './helpers/api.js';
 import { formatDateTimePtBr } from './helpers/date-format.js';
 import { isPastEvent, sortEventsByDateDescending } from './helpers/event-sort.js';
-import { getCurrentSession } from './helpers/session.js';
 
 /**
  * Returns the UI metadata associated with an event moderation status.
@@ -233,11 +234,110 @@ function createDefaultDateTimeValue(referenceDate = new Date()) {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
+/**
+ * Builds the modal body used for creating a new event from the dashboard.
+ */
+function createCreateModalContent() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'dashboard-modal dashboard-modal--create';
+    wrapper.innerHTML = `
+        <p class="dashboard-modal__intro">
+            Preencha os campos abaixo para enviar um novo evento para moderação sem sair da sua área.
+        </p>
+
+        <p class="dashboard-feedback" id="dashboard-modal-create-feedback" hidden></p>
+
+        <form class="form form--visible" id="dashboard-modal-create-form">
+            <div class="form-row">
+                <label for="dashboard-modal-event-title">
+                    Título
+                    <input id="dashboard-modal-event-title" name="title" type="text" maxlength="160"
+                        placeholder="Ex.: Semana Acadêmica de Sistemas" required>
+                </label>
+
+                <label for="dashboard-modal-event-date">
+                    Data e horário
+                    <input id="dashboard-modal-event-date" name="date" type="datetime-local" required>
+                </label>
+            </div>
+
+            <label for="dashboard-modal-event-description">
+                Descrição
+                <textarea id="dashboard-modal-event-description" name="description"
+                    placeholder="Resumo do evento, tema central e público esperado."
+                    required></textarea>
+            </label>
+
+            <div class="form-row">
+                <label for="dashboard-modal-event-category">
+                    Categoria
+                    <select id="dashboard-modal-event-category" name="category">
+                        <option value="Geral">Geral</option>
+                        <option value="Pesquisa">Pesquisa</option>
+                        <option value="Extensão">Extensão</option>
+                        <option value="Comunidade">Comunidade</option>
+                        <option value="Ensino">Ensino</option>
+                        <option value="Cultura">Cultura</option>
+                    </select>
+                </label>
+
+                <label for="dashboard-modal-event-location">
+                    Local
+                    <input id="dashboard-modal-event-location" name="location" type="text" maxlength="120"
+                        placeholder="Auditório, sala, laboratório ou link">
+                </label>
+            </div>
+
+            <div class="dashboard-modal__actions">
+                <button class="button button--primary" id="dashboard-modal-create-submit" type="submit">
+                    Enviar para aprovação
+                </button>
+
+                <button class="button button--ghost" id="dashboard-modal-create-cancel" type="button">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    `;
+
+    return {
+        root: wrapper,
+        feedback: wrapper.querySelector('#dashboard-modal-create-feedback'),
+        form: wrapper.querySelector('#dashboard-modal-create-form'),
+        titleField: wrapper.querySelector('#dashboard-modal-event-title'),
+        dateField: wrapper.querySelector('#dashboard-modal-event-date'),
+    };
+}
+
+/**
+ * Builds the placeholder copy shown inside the user-settings modal.
+ */
+function createSettingsModalContent() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'dashboard-modal dashboard-modal--settings';
+    wrapper.innerHTML = `
+        <p class="dashboard-modal__intro">
+            Esta área foi reservada para a próxima etapa do dashboard e vai concentrar as preferências da sua conta.
+        </p>
+
+        <ul class="list dashboard-settings-list">
+            <li>Editar dados básicos do perfil e o nome exibido no cabeçalho.</li>
+            <li>Revisar preferências de publicação e notificações sobre moderação.</li>
+            <li>Acompanhar atalhos administrativos adicionais para contas com mais permissões.</li>
+        </ul>
+
+        <p class="dashboard-settings-note">
+            Enquanto isso, o login, a listagem dos seus envios e a criação de novos eventos continuam disponíveis normalmente por aqui.
+        </p>
+    `;
+
+    return wrapper;
+}
+
 class DashboardPage extends BaseComponent {
     #elements;
     #events = [];
     #session = null;
-    #isSubmitting = false;
 
     /**
      * Creates the dashboard page controller around the page root.
@@ -256,7 +356,6 @@ class DashboardPage extends BaseComponent {
         }
 
         this.#wireActions();
-        this.#hydrateDefaultCreateDate();
         
         const header = new Header(true);
         const session = await header.getSession();
@@ -264,13 +363,17 @@ class DashboardPage extends BaseComponent {
             return;
         }
 
-        this.#setFeedback(
-            this.#elements.pageMessage,
-            session.message || 'Não foi possível validar a sua sessão agora.',
-            'error',
-        );
+        if (!session.isAuthenticated) {
+            this.#setFeedback(
+                this.#elements.pageMessage,
+                session.message || 'Não foi possível validar a sua sessão agora.',
+                'error',
+            );
+            return;
+        }
 
         this.#session = session;
+        this.#setFeedback(this.#elements.pageMessage, '');
         this.#renderHeader();
         await this.refreshEvents();
     }
@@ -331,12 +434,6 @@ class DashboardPage extends BaseComponent {
             actionFeedback: root?.querySelector('#dashboard-action-feedback') || null,
             createToggle: root?.querySelector('#dashboard-create-toggle') || null,
             settingsButton: root?.querySelector('#dashboard-settings-button') || null,
-            composePanel: root?.querySelector('#dashboard-compose-panel') || null,
-            composeClose: root?.querySelector('#dashboard-compose-close') || null,
-            createForm: root?.querySelector('#dashboard-create-form') || null,
-            createTitle: root?.querySelector('#dashboard-event-title') || null,
-            createDate: root?.querySelector('#dashboard-event-date') || null,
-            createSubmit: root?.querySelector('#dashboard-create-submit') || null,
         };
     }
 
@@ -349,9 +446,8 @@ class DashboardPage extends BaseComponent {
             && this.#elements.summaryGrid
             && this.#elements.eventsList
             && this.#elements.eventsEmpty
-            && this.#elements.createForm
             && this.#elements.createToggle
-            && this.#elements.composePanel,
+            && this.#elements.settingsButton,
         );
     }
 
@@ -360,40 +456,118 @@ class DashboardPage extends BaseComponent {
      */
     #wireActions() {
         this.on(this.#elements.createToggle, 'click', () => {
-            this.#setComposeVisibility(true);
-            this.#setFeedback(this.#elements.actionFeedback, '');
-        });
-
-        this.on(this.#elements.composeClose, 'click', () => {
-            this.#setComposeVisibility(false);
+            this.#openCreateModal();
         });
 
         this.on(this.#elements.settingsButton, 'click', () => {
-            if (this.#elements.actionsSection) {
-                this.#elements.actionsSection.open = true;
-            }
-
-            this.#setFeedback(
-                this.#elements.actionFeedback,
-                'A área de configurações do usuário fica reservada para a próxima etapa deste dashboard.',
-                'info',
-            );
-        });
-
-        this.on(this.#elements.createForm, 'submit', async (event) => {
-            await this.#handleCreateSubmit(event);
+            this.#openSettingsModal();
         });
     }
 
     /**
-     * Preloads the create form date field with the next rounded hour.
+     * Opens the new-event modal and wires its submit lifecycle.
      */
-    #hydrateDefaultCreateDate() {
-        if (!this.#elements.createDate || this.#elements.createDate.value) {
-            return;
-        }
+    #openCreateModal() {
+        const content = createCreateModalContent();
+        const modal = new Modal({
+            id: 'dashboard-create-modal',
+            size: 'large',
+            eyebrow: 'Nova postagem',
+            title: 'Enviar evento para moderação',
+            description: 'Revise os dados com atenção antes de confirmar o envio.',
+            content: content.root,
+        });
+        const form = new Form(content.form);
 
-        this.#elements.createDate.value = createDefaultDateTimeValue();
+        content.dateField.value = createDefaultDateTimeValue();
+        this.#setFeedback(this.#elements.actionFeedback, '');
+
+        form.getButton('dashboard-modal-create-cancel')?.click(() => {
+            modal.close();
+        }, { manageBusy: false });
+
+        form.submit(async (data, formComponent) => {
+            const payload = this.#readCreatePayload(data);
+            if (!payload.title || !payload.description || !payload.date) {
+                this.#setFeedback(
+                    content.feedback,
+                    'Preencha título, descrição e data antes de enviar o evento.',
+                    'error',
+                );
+                return;
+            }
+
+            this.#setFeedback(content.feedback, '');
+            formComponent.disable({ stateKey: 'submit' });
+
+            try {
+                const response = await requestApi('/events', {
+                    method: 'POST',
+                    token: this.#session.token,
+                    body: payload,
+                });
+
+                if (!response.ok) {
+                    this.#setFeedback(
+                        content.feedback,
+                        response.message || 'Não foi possível enviar o evento para aprovação.',
+                        'error',
+                    );
+                    return;
+                }
+
+                const createdEvent = response.data?.event || null;
+                if (createdEvent) {
+                    this.#events = sortEventsByDateDescending([createdEvent, ...this.#events]);
+                    this.#renderHeader();
+                    this.#renderOverview();
+                    this.#renderEventList();
+                } else {
+                    await this.refreshEvents();
+                }
+
+                if (this.#elements.eventsSection) {
+                    this.#elements.eventsSection.open = true;
+                }
+
+                modal.close();
+                this.#setFeedback(
+                    this.#elements.actionFeedback,
+                    response.message || 'Evento enviado para aprovação com sucesso.',
+                    'success',
+                );
+            } finally {
+                formComponent.enable({ stateKey: 'submit' });
+            }
+        });
+
+        modal.onClose(() => {
+            form.destroy();
+        });
+        modal.open({ focusTarget: content.titleField });
+    }
+
+    /**
+     * Opens the placeholder modal reserved for future user settings.
+     */
+    #openSettingsModal() {
+        const modal = new Modal({
+            id: 'dashboard-settings-modal',
+            eyebrow: 'Configurações',
+            title: 'Preferências da conta',
+            description: 'Esta área ainda está em preparação, mas já tem um lugar próprio dentro do dashboard.',
+            content: createSettingsModalContent(),
+        });
+
+        this.#setFeedback(this.#elements.actionFeedback, '');
+        modal.addAction({
+            id: 'dashboard-settings-close',
+            label: 'Entendi',
+            tone: 'primary',
+            closeOnClick: true,
+            autofocus: true,
+        });
+        modal.open();
     }
 
     /**
@@ -466,121 +640,16 @@ class DashboardPage extends BaseComponent {
     }
 
     /**
-     * Shows or hides the inline composer panel.
+     * Reads the create-form payload into the API contract shape.
      */
-    #setComposeVisibility(visible) {
-        const shouldShow = Boolean(visible);
-        if (this.#elements.actionsSection) {
-            this.#elements.actionsSection.open = true;
-        }
-
-        this.#elements.composePanel.hidden = !shouldShow;
-
-        if (shouldShow) {
-            this.#elements.createTitle?.focus();
-        }
-    }
-
-    /**
-     * Reads the create form payload into the API contract shape.
-     */
-    #readCreatePayload() {
-        const formData = new FormData(this.#elements.createForm);
+    #readCreatePayload(formData = {}) {
         return {
-            title: readText(formData.get('title'), ''),
-            description: readText(formData.get('description'), ''),
-            date: readText(formData.get('date'), ''),
-            category: readText(formData.get('category'), 'Geral'),
-            location: readText(formData.get('location'), 'A definir'),
+            title: readText(formData.title, ''),
+            description: readText(formData.description, ''),
+            date: readText(formData.date, ''),
+            category: readText(formData.category, 'Geral'),
+            location: readText(formData.location, 'A definir'),
         };
-    }
-
-    /**
-     * Enables or disables the create form while a submission is in flight.
-     */
-    #setCreatePending(isPending) {
-        this.#isSubmitting = Boolean(isPending);
-
-        const controls = this.#elements.createForm.querySelectorAll('input, select, textarea, button');
-        controls.forEach((control) => {
-            control.disabled = this.#isSubmitting;
-        });
-
-        if (this.#elements.createSubmit) {
-            this.#elements.createSubmit.textContent = this.#isSubmitting
-                ? 'Enviando...'
-                : 'Enviar para aprovação';
-        }
-    }
-
-    /**
-     * Submits a new event through the dashboard composer.
-     */
-    async #handleCreateSubmit(event) {
-        event.preventDefault();
-
-        if (this.#isSubmitting || !this.#session?.token) {
-            return;
-        }
-
-        const payload = this.#readCreatePayload();
-        if (!payload.title || !payload.description || !payload.date) {
-            this.#setFeedback(
-                this.#elements.actionFeedback,
-                'Preencha título, descrição e data antes de enviar o evento.',
-                'error',
-            );
-            if (this.#elements.actionsSection) {
-                this.#elements.actionsSection.open = true;
-            }
-
-            return;
-        }
-
-        this.#setFeedback(this.#elements.actionFeedback, '');
-        this.#setCreatePending(true);
-
-        try {
-            const response = await requestApi('/events', {
-                method: 'POST',
-                token: this.#session.token,
-                body: payload,
-            });
-
-            if (!response.ok) {
-                this.#setFeedback(
-                    this.#elements.actionFeedback,
-                    response.message || 'Não foi possível enviar o evento para aprovação.',
-                    'error',
-                );
-                return;
-            }
-
-            const createdEvent = response.data?.event || null;
-            if (createdEvent) {
-                this.#events = sortEventsByDateDescending([createdEvent, ...this.#events]);
-                this.#renderHeader();
-                this.#renderOverview();
-                this.#renderEventList();
-            } else {
-                await this.refreshEvents();
-            }
-
-            this.#elements.createForm.reset();
-            this.#hydrateDefaultCreateDate();
-            if (this.#elements.eventsSection) {
-                this.#elements.eventsSection.open = true;
-            }
-
-            this.#setComposeVisibility(false);
-            this.#setFeedback(
-                this.#elements.actionFeedback,
-                response.message || 'Evento enviado para aprovação com sucesso.',
-                'success',
-            );
-        } finally {
-            this.#setCreatePending(false);
-        }
     }
 
     /**

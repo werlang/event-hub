@@ -108,71 +108,10 @@
                     </div>
 
                     <p class="dashboard-inline-note">
-                        A criação de novos eventos já funciona por aqui. A área de configurações foi reservada para a
-                        próxima etapa do dashboard.
+                        Os atalhos abaixo abrem ações rápidas em modal, sem tirar você do painel.
                     </p>
 
                     <p class="dashboard-feedback" id="dashboard-action-feedback" hidden></p>
-
-                    <section class="panel__block dashboard-compose" id="dashboard-compose-panel" hidden
-                        aria-labelledby="dashboard-compose-heading">
-                        <div class="dashboard-compose__header">
-                            <div>
-                                <p class="dashboard-section__eyebrow">Nova postagem</p>
-                                <h3 id="dashboard-compose-heading">Enviar evento para moderação</h3>
-                            </div>
-
-                            <button class="button button--ghost" id="dashboard-compose-close" type="button">
-                                Fechar
-                            </button>
-                        </div>
-
-                        <form class="form form--visible" id="dashboard-create-form">
-                            <div class="form-row">
-                                <label for="dashboard-event-title">
-                                    Título
-                                    <input id="dashboard-event-title" name="title" type="text" maxlength="160"
-                                        placeholder="Ex.: Semana Acadêmica de Sistemas" required>
-                                </label>
-
-                                <label for="dashboard-event-date">
-                                    Data e horário
-                                    <input id="dashboard-event-date" name="date" type="datetime-local" required>
-                                </label>
-                            </div>
-
-                            <label for="dashboard-event-description">
-                                Descrição
-                                <textarea id="dashboard-event-description" name="description"
-                                    placeholder="Resumo do evento, tema central e público esperado."
-                                    required></textarea>
-                            </label>
-
-                            <div class="form-row">
-                                <label for="dashboard-event-category">
-                                    Categoria
-                                    <select id="dashboard-event-category" name="category">
-                                        <option value="Geral">Geral</option>
-                                        <option value="Pesquisa">Pesquisa</option>
-                                        <option value="Extensão">Extensão</option>
-                                        <option value="Comunidade">Comunidade</option>
-                                        <option value="Ensino">Ensino</option>
-                                        <option value="Cultura">Cultura</option>
-                                    </select>
-                                </label>
-
-                                <label for="dashboard-event-location">
-                                    Local
-                                    <input id="dashboard-event-location" name="location" type="text" maxlength="120"
-                                        placeholder="Auditório, sala, laboratório ou link">
-                                </label>
-                            </div>
-
-                            <button class="button button--primary" id="dashboard-create-submit" type="submit">
-                                Enviar para aprovação
-                            </button>
-                        </form>
-                    </section>
                 </div>
             </details>
         </div>
