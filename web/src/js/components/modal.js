@@ -2,6 +2,7 @@ import { BaseComponent } from './base-component.js';
 
 let activeModal = null;
 let modalSequence = 0;
+const MODAL_HIDDEN_CLASS = 'modal__hidden';
 
 /**
  * Creates a stable unique token for modal-owned element ids.
@@ -125,17 +126,17 @@ export class Modal extends BaseComponent {
 
         const eyebrowElement = document.createElement('p');
         eyebrowElement.className = 'modal__eyebrow';
-        eyebrowElement.hidden = true;
+        eyebrowElement.classList.add(MODAL_HIDDEN_CLASS);
 
         const titleElement = document.createElement('h2');
         titleElement.className = 'modal__title';
         titleElement.id = createModalToken('modal-title');
-        titleElement.hidden = true;
+        titleElement.classList.add(MODAL_HIDDEN_CLASS);
 
         const descriptionElement = document.createElement('p');
         descriptionElement.className = 'modal__description';
         descriptionElement.id = createModalToken('modal-description');
-        descriptionElement.hidden = true;
+        descriptionElement.classList.add(MODAL_HIDDEN_CLASS);
 
         headerCopy.append(eyebrowElement, titleElement, descriptionElement);
 
@@ -144,7 +145,7 @@ export class Modal extends BaseComponent {
         closeButton.type = 'button';
         closeButton.setAttribute('aria-label', 'Fechar janela');
         closeButton.innerHTML = '<span aria-hidden="true">&times;</span>';
-        closeButton.hidden = !showCloseButton;
+        closeButton.classList.toggle(MODAL_HIDDEN_CLASS, !showCloseButton);
 
         header.append(headerCopy, closeButton);
 
@@ -153,7 +154,7 @@ export class Modal extends BaseComponent {
 
         const actionsContainer = document.createElement('div');
         actionsContainer.className = 'modal__actions';
-        actionsContainer.hidden = true;
+        actionsContainer.classList.add(MODAL_HIDDEN_CLASS);
 
         dialog.append(header, body, actionsContainer);
         backdrop.appendChild(dialog);
@@ -287,7 +288,7 @@ export class Modal extends BaseComponent {
     setEyebrow(text = '') {
         const normalizedText = typeof text === 'string' ? text.trim() : '';
         this.#eyebrow.textContent = normalizedText;
-        this.#eyebrow.hidden = !normalizedText;
+        this.#eyebrow.classList.toggle(MODAL_HIDDEN_CLASS, !normalizedText);
         this.#syncHeaderVisibility();
         return this;
     }
@@ -298,7 +299,7 @@ export class Modal extends BaseComponent {
     setTitle(text = '') {
         const normalizedText = typeof text === 'string' ? text.trim() : '';
         this.#title.textContent = normalizedText;
-        this.#title.hidden = !normalizedText;
+        this.#title.classList.toggle(MODAL_HIDDEN_CLASS, !normalizedText);
 
         if (normalizedText) {
             this.get().setAttribute('aria-labelledby', this.#title.id);
@@ -318,7 +319,7 @@ export class Modal extends BaseComponent {
     setDescription(text = '') {
         const normalizedText = typeof text === 'string' ? text.trim() : '';
         this.#description.textContent = normalizedText;
-        this.#description.hidden = !normalizedText;
+        this.#description.classList.toggle(MODAL_HIDDEN_CLASS, !normalizedText);
 
         if (normalizedText) {
             this.get().setAttribute('aria-describedby', this.#description.id);
@@ -464,10 +465,14 @@ export class Modal extends BaseComponent {
      */
     #resolveFocusTarget(target) {
         if (typeof target === 'string' && target.trim()) {
-            return this.get(target.trim()) || this.#findFallbackFocusTarget();
+            const resolvedTarget = this.get(target.trim());
+
+            return resolvedTarget && !resolvedTarget.closest(`.${MODAL_HIDDEN_CLASS}`)
+                ? resolvedTarget
+                : this.#findFallbackFocusTarget();
         }
 
-        if (isFocusableElement(target)) {
+        if (isFocusableElement(target) && !target.closest(`.${MODAL_HIDDEN_CLASS}`)) {
             return target;
         }
 
@@ -478,9 +483,11 @@ export class Modal extends BaseComponent {
      * Finds the first field, button, or link worth focusing inside the modal.
      */
     #findFallbackFocusTarget() {
-        return this.get('[autofocus]')
-            || this.get('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]):not(.modal__close), [href], [tabindex]:not([tabindex="-1"])')
-            || this.#closeButton
+        return Array.from(this.getAll('[autofocus]'))
+            .find(element => !element.closest(`.${MODAL_HIDDEN_CLASS}`))
+            || Array.from(this.getAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]):not(.modal__close), [href], [tabindex]:not([tabindex="-1"])'))
+                .find(element => !element.closest(`.${MODAL_HIDDEN_CLASS}`))
+            || (!this.#closeButton.classList.contains(MODAL_HIDDEN_CLASS) ? this.#closeButton : null)
             || this.get();
     }
 
@@ -488,15 +495,19 @@ export class Modal extends BaseComponent {
      * Shows or hides the modal header depending on available content.
      */
     #syncHeaderVisibility() {
-        const hasVisibleText = !this.#eyebrow.hidden || !this.#title.hidden || !this.#description.hidden;
-        this.#header.hidden = !hasVisibleText && this.#closeButton.hidden;
+        const hasVisibleHeader = !this.#eyebrow.classList.contains(MODAL_HIDDEN_CLASS)
+            || !this.#title.classList.contains(MODAL_HIDDEN_CLASS)
+            || !this.#description.classList.contains(MODAL_HIDDEN_CLASS)
+            || !this.#closeButton.classList.contains(MODAL_HIDDEN_CLASS);
+
+        this.#header.classList.toggle(MODAL_HIDDEN_CLASS, !hasVisibleHeader && this.#closeButton.classList.contains(MODAL_HIDDEN_CLASS));
     }
 
     /**
      * Shows or hides the footer action row depending on button count.
      */
     #syncActionsVisibility() {
-        this.#actions.hidden = this.#actions.children.length === 0;
+        this.#actions.classList.toggle(MODAL_HIDDEN_CLASS, this.#actionMap.size === 0);
     }
 }
 

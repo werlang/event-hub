@@ -12,6 +12,7 @@ import { isPastEvent, sortEventsByDateDescending } from './helpers/event-sort.js
 const DASHBOARD_STATUS_TOAST_GROUP = 'dashboard-status';
 const DASHBOARD_CREATE_TOAST_GROUP = 'dashboard-create';
 const DASHBOARD_ACTION_TOAST_GROUP = 'dashboard-action';
+const DASHBOARD_HIDDEN_CLASS = 'dashboard-empty-state--hidden';
 
 /**
  * Returns the UI metadata associated with an event moderation status.
@@ -347,6 +348,8 @@ class DashboardPage extends BaseComponent {
     constructor() {
         super(document.querySelector('#dashboard-root'));
         this.#elements = this.#collectElements();
+
+        this.#elements.eventsEmpty?.classList.add(DASHBOARD_HIDDEN_CLASS);
     }
 
     /**
@@ -627,7 +630,7 @@ class DashboardPage extends BaseComponent {
 
         if (this.#events.length === 0) {
             this.#elements.eventsList.replaceChildren();
-            this.#elements.eventsEmpty.hidden = false;
+            this.#elements.eventsEmpty?.classList.remove(DASHBOARD_HIDDEN_CLASS);
             return;
         }
 
@@ -637,7 +640,7 @@ class DashboardPage extends BaseComponent {
         });
 
         this.#elements.eventsList.replaceChildren(fragment);
-        this.#elements.eventsEmpty.hidden = true;
+        this.#elements.eventsEmpty?.classList.add(DASHBOARD_HIDDEN_CLASS);
     }
 
     /**
