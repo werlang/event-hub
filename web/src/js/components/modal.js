@@ -3,6 +3,14 @@ import { BaseComponent } from './base-component.js';
 let activeModal = null;
 let modalSequence = 0;
 const MODAL_HIDDEN_CLASS = 'modal__hidden';
+const modalContentCache = new Map();
+const HTML_ESCAPE_MAP = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+};
 
 /**
  * Creates a stable unique token for modal-owned element ids.
@@ -65,6 +73,86 @@ function scheduleFocus(callback) {
     }
 
     globalThis.setTimeout(callback, 0);
+}
+
+/**
+ * Retrieves and caches HTML content loaded from a public file path.
+ */
+async function fetchModalContentFile(filePath, { forceRefresh = false } = {}) {
+    const normalizedPath = typeof filePath === 'string' ? filePath.trim() : '';
+
+    if (!normalizedPath) {
+        throw new Error('A modal content file path is required.');
+    }
+
+    if (!forceRefresh && modalContentCache.has(normalizedPath)) {
+        return modalContentCache.get(normalizedPath);
+    }
+
+    const request = fetch(normalizedPath)
+        .then(async (response) => {
+            if (!response.ok) {
+                throw new Error(`Unable to load modal content from "${normalizedPath}".`);
+            }
+
+            return response.text();
+        })
+        .catch((error) => {
+            if (modalContentCache.get(normalizedPath) === request) {
+                modalContentCache.delete(normalizedPath);
+            }
+
+            throw error;
+        });
+
+    modalContentCache.set(normalizedPath, request);
+    return request;
+}
+
+/**
+ * Escapes HTML-sensitive characters in template argument values.
+ */
+function escapeTemplateValue(value) {
+    const normalizedValue = value == null ? '' : String(value);
+    return normalizedValue.replace(/[&<>"']/g, character => HTML_ESCAPE_MAP[character]);
+}
+
+/**
+ * Reads one template argument by supporting dot-separated object paths.
+ */
+function readTemplateValue(args, key) {
+    return String(key || '')
+        .split('.')
+        .reduce((currentValue, segment) => {
+            if (!segment || currentValue == null || typeof currentValue !== 'object') {
+                return undefined;
+            }
+
+            return currentValue[segment];
+        }, args);
+}
+
+/**
+ * Replaces {{token}} placeholders in loaded HTML using escaped template arguments.
+ */
+function applyTemplateArgs(template, args = {}) {
+    const normalizedArgs = args && typeof args === 'object' ? args : {};
+
+    return String(template || '').replace(/{{\s*([\w.-]+)\s*}}/g, (_match, key) => {
+        const value = readTemplateValue(normalizedArgs, key);
+
+        if (value == null) {
+            return '';
+        }
+
+        if (typeof value === 'object') {
+            return Array.isArray(value)
+                ? escapeTemplateValue(value.join(', '))
+                : '';
+        }
+
+        return escapeTemplateValue(value);
+    });
 }
 
 export class Modal extends BaseComponent {
@@ -338,6 +426,30 @@ export class Modal extends BaseComponent {
         this.#body.replaceChildren();
         appendModalContent(this.#body, content);
         return this;
+    }
+
+    /**
+     * Preloads and caches raw HTML content from a public file without mounting it.
+     */
+    async preloadContentFromFile(filePath, options = {}) {
+        const { args, ...fetchOptions } = options;
+
+        void args;
+        await fetchModalContentFile(filePath, fetchOptions);
+        return this;
+    }
+
+    /**
+     * Loads HTML content from a public file, applies template arguments, and replaces the modal body.
+     */
+    async loadContentFromFile(filePath, options = {}) {
+        const {
+            args = {},
+            ...fetchOptions
+        } = options;
+        const content = await fetchModalContentFile(filePath, fetchOptions);
+
+        return this.setContent(applyTemplateArgs(content, args));
     }
 
     /**
