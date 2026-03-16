@@ -28,6 +28,7 @@ Para desenvolvimento com containers, use `docker compose -f compose.dev.yaml up 
 ## Fluxos principais
 
 - **Páginas web**: `/` opera em dois modos (neutro sem carregar eventos por padrão, ou agenda-only quando acessada com query de filtro); `/login` renderiza a troca visual entre abas de entrada e registro; `/publish` renderiza o formulário de publicação.
+- **Dashboard (`/dashboard`)**: área autenticada que resume os seus envios, lista eventos da própria conta e abre ações rápidas por modais com templates HTML estáticos pré-carregados e argumentos de template aplicados na abertura.
 - **Home (`/`)**: filtros por busca/categoria/período e chips rápidos (esta semana, próximos 7 dias e categorias) sincronizam a URL para compartilhamento de estado.
 - **Home em modo agenda-only por link**: ao acessar `/` com query relevante (`search|q`, `category`, `from`, `to`), a tela prioriza apenas os resultados da agenda e oculta superfícies de entrada.
 - **Autenticação**:
@@ -88,5 +89,8 @@ Para desenvolvimento com containers, use `docker compose -f compose.dev.yaml up 
 
 - `index.js`: entry da home pública, responsável por filtros, chips, URL state e renderização de eventos.
 - `login.js`: entry da página de login, responsável apenas pelas abas visuais de autenticação.
+- `dashboard.js`: entry da área autenticada, responsável por sessão, resumo/listagem de eventos e sincronização do estado principal do painel.
+- `dashboard/*.js`: controladores de UI específicos do dashboard, responsáveis pelos gatilhos, ciclo de abertura, submissão e template args dos modais relacionados.
 - `components/*`: blocos de UI reutilizáveis, como `EventList`, `FilterForm`, `QuickChips`, `AuthTabs`, `StatusAlert` e `EventForm`.
 - `helpers/*`: utilitários não-UI para request, template vars, query state, datas e ordenação.
+- `public/html/*.html`: fragmentos HTML estáticos consumidos por `Modal.loadContentFromFile(..., { args })`, úteis para corpos de modal reutilizáveis, pré-carregáveis e com substituição segura de placeholders `{{token}}`.

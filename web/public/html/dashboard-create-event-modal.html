@@ -1,0 +1,57 @@
+<div class="dashboard-modal dashboard-modal--create">
+    <p class="dashboard-modal__intro">
+        Preencha os campos abaixo para enviar um novo evento para moderação sem sair da sua área.
+    </p>
+
+    <form class="form form--visible" id="dashboard-modal-create-form">
+        <div class="form-row">
+            <label for="dashboard-modal-event-title">
+                Título
+                <input id="dashboard-modal-event-title" name="title" type="text" maxlength="160"
+                    placeholder="Ex.: Semana Acadêmica de Sistemas" required>
+            </label>
+
+            <label for="dashboard-modal-event-date">
+                Data e horário
+                <input id="dashboard-modal-event-date" name="date" type="datetime-local" required>
+            </label>
+        </div>
+
+        <label for="dashboard-modal-event-description">
+            Descrição
+            <textarea id="dashboard-modal-event-description" name="description"
+                placeholder="Resumo do evento, tema central e público esperado."
+                required></textarea>
+        </label>
+
+        <div class="form-row">
+            <label for="dashboard-modal-event-category">
+                Categoria
+                <select id="dashboard-modal-event-category" name="category">
+                    <option value="Geral">Geral</option>
+                    <option value="Pesquisa">Pesquisa</option>
+                    <option value="Extensão">Extensão</option>
+                    <option value="Comunidade">Comunidade</option>
+                    <option value="Ensino">Ensino</option>
+                    <option value="Cultura">Cultura</option>
+                </select>
+            </label>
+
+            <label for="dashboard-modal-event-location">
+                Local
+                <input id="dashboard-modal-event-location" name="location" type="text" maxlength="120"
+                    placeholder="Auditório, sala, laboratório ou link">
+            </label>
+        </div>
+
+        <div class="dashboard-modal__actions">
+            <button class="button button--primary" id="dashboard-modal-create-submit" type="submit">
+                Enviar para aprovação
+            </button>
+
+            <button class="button button--ghost" id="dashboard-modal-create-cancel" type="button">
+                Cancelar
+            </button>
+        </div>
+    </form>
+</div>
