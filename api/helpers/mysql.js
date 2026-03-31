@@ -62,18 +62,51 @@ export class Mysql {
     /**
      * Inserts one or many rows into the provided table.
      */
-    static async insert(table, data) {
-        if (!data) {
-            throw new CustomError(400, 'Invalid data for insert operation.');
-        }
+    static async insert(table, data, opt={}) {
         if (!Array.isArray(data)) data = [ data ];
+        if (data.length === 0) return [];
 
-        return Promise.all(data.map(row => {
-            const values = Object.values(row);
-            const fields = Object.keys(row).map(k => `\`${k}\``);
-            let sql = `INSERT INTO \`${table}\` (${fields.join(',')}) VALUES (${values.map(() => '?').join(',')})`;
-            return Mysql.query(sql, values);
-        }));
+        const maxParams = opt.maxParams || 5000;
+        const chunkSize = opt.chunkSize || 500;
+        const groupedRows = new Map();
+
+        data.forEach(row => {
+            const cleanRow = Object.fromEntries(Object.entries(row).filter(([, value]) => value !== undefined));
+            const fields = Object.keys(cleanRow).sort();
+
+            if (fields.length === 0) {
+                throw new CustomError(400, `Could not insert empty row into ${table}.`);
+            }
+
+            const signature = fields.join('|');
+            if (!groupedRows.has(signature)) {
+                groupedRows.set(signature, { fields, rows: [] });
+            }
+
+            groupedRows.get(signature).rows.push(cleanRow);
+        });
+
+        const results = [];
+
+        for (const { fields, rows } of groupedRows.values()) {
+            const maxRowsPerInsert = Math.max(1, Math.floor(maxParams / fields.length));
+            const rowsPerInsert = Math.max(1, Math.min(chunkSize, maxRowsPerInsert));
+            const fieldsSql = fields.map(field => `\`${field}\``).join(',');
+
+            for (let i = 0; i < rows.length; i += rowsPerInsert) {
+                const chunk = rows.slice(i, i + rowsPerInsert);
+                const values = [];
+                const placeholders = chunk.map(row => {
+                    fields.forEach(field => values.push(row[field] ?? null));
+                    return `(${fields.map(() => '?').join(',')})`;
+                }).join(',');
+
+                const sql = `INSERT INTO \`${table}\` (${fieldsSql}) VALUES ${placeholders}`;
+                results.push(await Mysql.query(sql, values));
+            }
+        }
+
+        return results;
     }
 
     /**
@@ -110,8 +143,9 @@ export class Mysql {
         }).join(', ');
 
         if (typeof id === 'object') {
-            values.push(...Object.values(id));
-            id = Object.keys(id).map(k => `\`${k}\` = ?`).join(' AND ');
+            const { statement, values: v } = this.getWhereStatements(id);
+            id = statement;
+            values.push(...v);
         }
         else {
             values.push(id);
@@ -319,6 +353,13 @@ export class Mysql {
      */
     static between(a, b) {
         return { between: [ a, b ] };
+    }
+
+    /**
+     * Builds a not equal filter helper.
+     */
+    static ne(value) {
+        return { not: value };
     }
 
     /**
