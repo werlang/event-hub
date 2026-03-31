@@ -1,7 +1,7 @@
 import { BaseComponent } from './base-component.js';
 
 const DEFAULT_DURATION = 5000;
-const FADE_OFFSET_MS = 700;
+const FADE_OFFSET_MS = 100;
 const CLOSE_TRANSITION_MS = 180;
 const FLASH_STORAGE_KEY = 'ae_flash_toast';
 const TOAST_SELECTOR = '.toast';
@@ -186,7 +186,7 @@ export class Toast extends BaseComponent {
         closeButton.className = 'toast__close';
         closeButton.type = 'button';
         closeButton.setAttribute('aria-label', 'Fechar notificacao');
-        closeButton.innerHTML = '<span aria-hidden="true">&times;</span>';
+        closeButton.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
         closeButton.hidden = !dismissible;
 
         contentWrapper.append(titleElement, bodyElement);
@@ -348,10 +348,13 @@ export class Toast extends BaseComponent {
     fade(duration = this.#duration) {
         const normalizedDuration = Number(duration);
         if (!Number.isFinite(normalizedDuration) || normalizedDuration <= 0 || this.#isClosed) {
+            this.#clearTimerIndicator();
             return this;
         }
 
         this.#clearTimers();
+        this.#duration = normalizedDuration;
+        this.#syncTimerIndicator(normalizedDuration);
 
         const fadeDelay = Math.max(normalizedDuration - FADE_OFFSET_MS, 0);
         this.#fadeTimer = globalThis.setTimeout(() => {
@@ -377,6 +380,7 @@ export class Toast extends BaseComponent {
 
         this.#isClosed = true;
         this.#clearTimers();
+        this.#clearTimerIndicator();
 
         const removeToast = () => {
             this.clearListeners();
@@ -404,5 +408,23 @@ export class Toast extends BaseComponent {
         this.#fadeTimer = null;
         this.#dismissTimer = null;
         this.#removeTimer = null;
+    }
+
+    /**
+     * Restarts the timed-progress indicator shown for auto-expiring toasts.
+     */
+    #syncTimerIndicator(duration) {
+        this.get().style.setProperty('--toast-duration', `${duration}ms`);
+        this.get().classList.remove('toast--timed');
+        void this.get().offsetWidth;
+        this.get().classList.add('toast--timed');
+    }
+
+    /**
+     * Removes the timed-progress indicator once the toast is dismissed.
+     */
+    #clearTimerIndicator() {
+        this.get().classList.remove('toast--timed');
+        this.get().style.removeProperty('--toast-duration');
     }
 }
