@@ -8,6 +8,7 @@ node_modules
 # webpack build outputs
 web/public/js
 web/public/css
+web/public/assets/fonts
 web/public/**/generated
 
 .github/references

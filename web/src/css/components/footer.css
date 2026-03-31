@@ -42,10 +42,12 @@ footer {
                     color: color-mix(in srgb, var(--color-link) 80%, transparent 20%);
                 }
 
-                svg {
+                i {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
                     width: 1.2rem;
                     height: 1.2rem;
-                    fill: var(--color-link);
                 }
 
             }

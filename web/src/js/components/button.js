@@ -163,7 +163,15 @@ export class Button extends BaseComponent {
 			this.#snapshotIdleMarkup();
 			this.#busy = true;
 			this.get().dataset.buttonBusy = 'true';
-			this.get().textContent = this.#loadingLabel;
+
+			const spinner = document.createElement('i');
+			spinner.className = 'fa-solid fa-spinner fa-spin';
+			spinner.setAttribute('aria-hidden', 'true');
+
+			const label = document.createElement('span');
+			label.textContent = this.#loadingLabel;
+
+			this.get().replaceChildren(spinner, label);
 		}
 
 		return this;

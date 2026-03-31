@@ -2,6 +2,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 10px;
     min-height: 48px;
     border: 2px solid var(--color-main-alt);
     background: color-mix(in srgb, var(--color-main-alt), transparent 74%);
@@ -46,5 +47,9 @@
         background: color-mix(in srgb, var(--color-background), var(--color-main-alt) 8%);
         border-color: color-mix(in srgb, var(--color-main-alt), var(--color-background) 42%);
         color: var(--color-text);
+    }
+
+    & i {
+        font-size: 0.95em;
     }
 }

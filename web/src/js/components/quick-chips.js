@@ -1,5 +1,28 @@
 import { BaseComponent } from './base-component.js';
 
+/**
+ * Writes chip label content with an optional Font Awesome icon.
+ */
+function setChipContent(button, chip) {
+	const icon = typeof chip?.icon === 'string' ? chip.icon.trim() : '';
+	button.replaceChildren();
+
+	if (icon) {
+		const iconElement = document.createElement('i');
+		if (icon.includes(' ')) {
+			iconElement.classList.add(...icon.split(/\s+/));
+		} else {
+			iconElement.classList.add('fa-solid', `fa-${icon}`);
+		}
+		iconElement.setAttribute('aria-hidden', 'true');
+		button.appendChild(iconElement);
+	}
+
+	const label = document.createElement('span');
+	label.textContent = chip.label;
+	button.appendChild(label);
+}
+
 export class QuickChips extends BaseComponent {
 	#chips = [];
 
@@ -28,7 +51,7 @@ export class QuickChips extends BaseComponent {
 			button.className = 'chip';
 			button.type = 'button';
 			button.dataset.chipId = String(chip.id);
-			button.textContent = chip.label;
+			setChipContent(button, chip);
 			fragment.appendChild(button);
 		});
 

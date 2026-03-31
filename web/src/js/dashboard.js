@@ -163,7 +163,23 @@ function createMetaPill(text, modifier = '') {
     pill.className = modifier
         ? `dashboard-meta-pill dashboard-meta-pill--${modifier}`
         : 'dashboard-meta-pill';
-    pill.textContent = text;
+
+    if (typeof modifier === 'string' && modifier.trim()) {
+        const iconElement = document.createElement('i');
+
+        if (modifier === 'category') {
+            iconElement.classList.add('fa-solid', 'fa-tag');
+        } else if (modifier === 'date') {
+            iconElement.classList.add('fa-solid', 'fa-calendar-days');
+        } else {
+            iconElement.classList.add('fa-solid', 'fa-location-dot');
+        }
+
+        iconElement.setAttribute('aria-hidden', 'true');
+        pill.appendChild(iconElement);
+    }
+
+    pill.appendChild(document.createTextNode(text));
     return pill;
 }
 
@@ -209,7 +225,7 @@ function createDashboardEventElement(event) {
     meta.className = 'dashboard-event__meta';
     meta.append(
         createMetaPill(readText(event?.category, 'Geral'), 'category'),
-        createMetaPill(readText(event?.location, 'A definir')),
+        createMetaPill(readText(event?.location, 'A definir'), 'location'),
         createMetaPill(formatDateTimePtBr(event?.date), 'date'),
     );
 

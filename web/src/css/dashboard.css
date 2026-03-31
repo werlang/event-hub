@@ -72,6 +72,7 @@ main {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
     width: fit-content;
     min-height: 34px;
     padding: 7px 12px;
@@ -97,7 +98,7 @@ main {
 
 .dashboard-section {
     border: 1px solid color-mix(in srgb, var(--color-main), transparent 82%);
-    border-radius: var(--radius);
+    border-radius: var(--radius-lg);
     background: linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 24%) 0%, color-mix(in srgb, var(--color-background), var(--color-text) 2%) 100%);
     box-shadow: 0 16px 34px color-mix(in srgb, var(--color-text), transparent 92%);
     overflow: hidden;
@@ -146,28 +147,23 @@ main {
 .dashboard-section__toggle {
     width: 40px;
     height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 50%;
     border: 1px solid color-mix(in srgb, var(--color-main), transparent 76%);
     background: color-mix(in srgb, var(--color-main), transparent 92%);
-    position: relative;
     flex-shrink: 0;
 }
 
-.dashboard-section__toggle::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    margin: auto;
-    width: 10px;
-    height: 10px;
-    border-right: 2px solid color-mix(in srgb, var(--color-main), var(--color-text) 18%);
-    border-bottom: 2px solid color-mix(in srgb, var(--color-main), var(--color-text) 18%);
-    transform: rotate(45deg) translate(-1px, -1px);
+.dashboard-section__toggle i {
+    color: color-mix(in srgb, var(--color-main), var(--color-text) 18%);
+    font-size: 0.95rem;
     transition: transform 0.2s ease;
 }
 
-.dashboard-section[open] .dashboard-section__toggle::before {
-    transform: rotate(225deg) translate(-1px, -1px);
+.dashboard-section[open] .dashboard-section__toggle i {
+    transform: rotate(180deg);
 }
 
 .dashboard-section__content {
@@ -198,7 +194,7 @@ main {
     gap: 8px;
     min-height: 148px;
     padding: 20px;
-    border-radius: calc(var(--radius) - 2px);
+    border-radius: var(--radius);
     border: 1px solid color-mix(in srgb, var(--color-main), transparent 82%);
     background: linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 18%) 0%, color-mix(in srgb, var(--color-background), var(--color-text) 3%) 100%);
     overflow: hidden;
@@ -260,7 +256,7 @@ main {
     display: grid;
     gap: 14px;
     padding: 20px;
-    border-radius: calc(var(--radius) - 2px);
+    border-radius: var(--radius);
     border: 1px solid color-mix(in srgb, var(--color-main), transparent 82%);
     background: linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 18%) 0%, color-mix(in srgb, var(--color-background), var(--color-text) 3%) 100%);
     box-shadow: 0 12px 28px color-mix(in srgb, var(--color-text), transparent 93%);
@@ -361,6 +357,10 @@ main {
     font-family: var(--font-body);
     font-size: 0.92rem;
     font-weight: 600;
+}
+
+.dashboard-meta-pill i {
+    font-size: 0.88rem;
 }
 
 .dashboard-meta-pill--category {

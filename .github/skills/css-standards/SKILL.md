@@ -22,8 +22,17 @@ Applies to the web client styles under `web/src/css/` and class names used in `w
 - Use `--font-body` for normal UI copy and form controls.
 - Use `--font-display` for hero headings, section headings, and brand-forward moments.
 - Use `--font-mono` sparingly for pills, badges, or compact metadata that benefits from a coded label feel.
+- Use Font Awesome for UI icons and keep icon styling tied to the package-provided CSS variables instead of version-pinned font-family names.
 - The current stack is `Roboto`, `Raleway`, and `Source Code Pro`, defined across `base.css` and `tokens.css`.
 - Do not add new font families in component files. If typography needs to change globally, update `base.css` and `tokens.css` together.
+
+## Icons
+
+- Font Awesome is the shared icon system for the web app and is loaded globally through `web/src/css/base.css`.
+- Prefer semantic Font Awesome markup in HTML/JS components for visible controls, badges, and status affordances instead of emoji, ad hoc inline SVG fragments, or bespoke icon fonts.
+- Keep visible labels alongside icons in buttons, chips, cards, links, and modal actions; icons support the label and should not replace it by default.
+- When a pseudo-element icon is necessary, use the package-defined tokens such as `var(--fa-font-solid)` with the appropriate glyph content rather than hardcoded family names tied to a specific Font Awesome version.
+- If an icon requires spacing, alignment, or color treatment, handle that in the component stylesheet instead of inline styles or one-off markup attributes.
 
 ## Core Rules
 
@@ -34,6 +43,7 @@ Applies to the web client styles under `web/src/css/` and class names used in `w
 5. For hover, focus, active, muted, and surface variations, prefer `color-mix(...)` with existing tokens.
 6. Prefer nested CSS selectors within each component file to keep styles colocated and scoped.
 7. Keep interactions visually soft: subtle lift, border shifts, and shadow changes are preferred over aggressive transforms or high-contrast effects.
+8. Do not introduce alternate icon systems or version-specific Font Awesome font-family strings in component CSS.
 
 ## Token Usage
 
@@ -87,6 +97,7 @@ Example pattern:
 - Does each changed component map to a dedicated CSS file?
 - Does the change preserve the warm editorial theme instead of drifting back to a dark or neon look?
 - Are all colors, fonts, radii, and shadows tokenized via `var(--...)` where appropriate?
+- Do icon treatments follow the shared Font Awesome setup and avoid ad hoc glyph systems or stale font-family names?
 - Are tone variants created with `color-mix(...)`?
 - Are nested selectors used for component internals/states?
 - Are JS visual states represented by CSS classes (not inline styles)?

@@ -94,3 +94,10 @@ Para desenvolvimento com containers, use `docker compose -f compose.dev.yaml up 
 - `components/*`: blocos de UI reutilizáveis, como `EventList`, `FilterForm`, `QuickChips`, `AuthTabs`, `StatusAlert` e `EventForm`.
 - `helpers/*`: utilitários não-UI para request, template vars, query state, datas e ordenação.
 - `public/html/*.html`: fragmentos HTML estáticos consumidos por `Modal.loadContentFromFile(..., { args })`, úteis para corpos de modal reutilizáveis, pré-carregáveis e com substituição segura de placeholders `{{token}}`.
+
+## Ícones e assets visuais
+
+- Font Awesome é a biblioteca de ícones usada no web app e é carregada globalmente pelo bundle via `web/src/css/base.css`.
+- Botões, chips, cards, modais e ações do dashboard devem preservar texto visível em um `<span>` e usar o ícone apenas como apoio visual, para manter alinhamento e acessibilidade.
+- A dependência fica declarada em `web/package.json`, e o build da web gera também os arquivos de fonte em `web/public/assets/fonts/`.
+- Sempre que houver mudança no bundle da web ou em assets do Font Awesome, regenere os arquivos públicos com o mesmo fluxo do projeto, por exemplo: `docker compose -f compose.dev.yaml exec web ./node_modules/.bin/webpack --config webpack.config.js --stats errors-warnings`.

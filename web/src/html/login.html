@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🗓️ · Login</title>
+    <title>Login · Agenda Acadêmica</title>
     <link rel="stylesheet" href="/css/login.min.css">
     <script type="module" src="/js/login.min.js"></script>
 </head>
@@ -13,14 +13,14 @@
     <main>
         <section class="panel">
             <div class="tabs" role="tablist" aria-label="Alternar entre entrar e registrar">
-                <button class="tab tab--active" type="button" role="tab" data-tab="login" aria-controls="login-form" aria-selected="true">Entrar</button>
-                <button class="tab" type="button" role="tab" data-tab="register" aria-controls="register-form" aria-selected="false">Registrar</button>
+                <button class="tab tab--active" type="button" role="tab" data-tab="login" aria-controls="login-form" aria-selected="true"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i><span>Entrar</span></button>
+                <button class="tab" type="button" role="tab" data-tab="register" aria-controls="register-form" aria-selected="false"><i class="fa-solid fa-user-plus" aria-hidden="true"></i><span>Registrar</span></button>
             </div>
             <form id="login-form" class="form form--visible" aria-hidden="false">
                 <h2>Bem-vindo de volta!</h2>
                 <label>E-mail<input type="email" name="email" required></label>
                 <label>Senha<input type="password" name="password" required></label>
-                <button class="button button--primary" type="submit">Entrar</button>
+                <button class="button button--primary" type="submit"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i><span>Entrar</span></button>
             </form>
             <form id="register-form" class="form" aria-hidden="true">
                 <h2>Crie sua conta</h2>
@@ -28,7 +28,7 @@
                 <label>E-mail institucional<input type="email" name="email" required></label>
                 <label>Senha<input type="password" name="password" required></label>
                 <label>Confirmar senha<input type="password" name="confirmPassword" required></label>
-                <button class="button button--primary" type="submit">Criar conta</button>
+                <button class="button button--primary" type="submit"><i class="fa-solid fa-user-plus" aria-hidden="true"></i><span>Criar conta</span></button>
             </form>
         </section>
     </main>

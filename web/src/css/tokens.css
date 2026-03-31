@@ -2,6 +2,7 @@
     --font-body: 'Roboto', Helvetica, Arial, sans-serif;
     --font-display: 'Raleway', Helvetica, Arial, sans-serif;
     --font-mono: 'Source Code Pro', Consolas, 'Courier New', monospace;
+    --font-fa-solid: 'Font Awesome 7 Free', 'Font Awesome 6 Free', 'Font Awesome 5 Free', 'Font Awesome 4 Free', 'Font Awesome 4.7 Free', 'Font Awesome 4.6 Free', 'Font Awesome 4.5 Free', 'Font Awesome 4.4 Free', 'Font Awesome 4.3 Free', 'Font Awesome 4.2 Free', 'Font Awesome 4.1 Free', 'Font Awesome 4.0 Free';
 
     --color-background: #faf7f4;
     --color-background-inverse: #28322d;
@@ -19,7 +20,8 @@
     --color-error: #cd7c72;
     --color-shadow: color-mix(in srgb, var(--color-text), transparent 84%);
 
-    --radius: 12px;
+    --radius: 8px;
+    --radius-lg: 12px;
     --radius-sm: 4px;
     --radius-pill: 999px;
 }

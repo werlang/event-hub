@@ -46,6 +46,7 @@ export class DashboardSettingsModal {
         this.#modal.addAction({
             id: 'dashboard-settings-close',
             label: 'Entendi',
+            icon: 'check',
             tone: 'primary',
             closeOnClick: true,
             autofocus: true,

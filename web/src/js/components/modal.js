@@ -60,6 +60,41 @@ function readActionToneClass(tone) {
 }
 
 /**
+ * Expands an icon descriptor into the classes needed for Font Awesome rendering.
+ */
+function readActionIconClasses(icon) {
+    if (typeof icon !== 'string' || !icon.trim()) {
+        return [];
+    }
+
+    if (icon.includes(' ')) {
+        return icon.trim().split(/\s+/);
+    }
+
+    return ['fa-solid', `fa-${icon.trim()}`];
+}
+
+/**
+ * Writes one modal footer button label with optional icon markup.
+ */
+function setActionButtonContent(button, label, icon) {
+    const normalizedLabel = typeof label === 'string' && label.trim() ? label.trim() : 'Continuar';
+    button.replaceChildren();
+
+    const iconClasses = readActionIconClasses(icon);
+    if (iconClasses.length) {
+        const iconElement = document.createElement('i');
+        iconElement.classList.add(...iconClasses);
+        iconElement.setAttribute('aria-hidden', 'true');
+        button.appendChild(iconElement);
+    }
+
+    const labelElement = document.createElement('span');
+    labelElement.textContent = normalizedLabel;
+    button.appendChild(labelElement);
+}
+
+/**
  * Schedules focus after the browser has had one frame to mount the dialog.
  */
 function scheduleFocus(callback) {
@@ -232,7 +267,7 @@ export class Modal extends BaseComponent {
         closeButton.className = 'modal__close';
         closeButton.type = 'button';
         closeButton.setAttribute('aria-label', 'Fechar janela');
-        closeButton.innerHTML = '<span aria-hidden="true">&times;</span>';
+        closeButton.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
         closeButton.classList.toggle(MODAL_HIDDEN_CLASS, !showCloseButton);
 
         header.append(headerCopy, closeButton);
@@ -476,6 +511,7 @@ export class Modal extends BaseComponent {
     addAction({
         id,
         label,
+        icon,
         callback,
         tone = 'ghost',
         type = 'button',
@@ -487,7 +523,7 @@ export class Modal extends BaseComponent {
         const button = document.createElement('button');
         button.type = type;
         button.className = `button ${readActionToneClass(tone)}`;
-        button.textContent = typeof label === 'string' && label.trim() ? label.trim() : 'Continuar';
+        setActionButtonContent(button, label, icon);
         button.disabled = Boolean(disabled);
 
         if (typeof id === 'string' && id.trim()) {

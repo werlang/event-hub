@@ -21,7 +21,7 @@ body.modal-open {
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
     border: 1px solid color-mix(in srgb, var(--color-main), transparent 76%);
-    border-radius: calc(var(--radius) + 6px);
+    border-radius: var(--radius-lg);
     background: linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 20%) 0%, color-mix(in srgb, var(--color-background), var(--color-text) 2%) 100%);
     box-shadow: 0 28px 64px color-mix(in srgb, var(--color-text), transparent 82%);
     overflow: hidden;
@@ -103,10 +103,8 @@ body.modal-open {
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-main), transparent 86%);
 }
 
-.modal__close span {
-    font-size: 2.2rem;
-    line-height: 1;
-    transform: translateY(-1px);
+.modal__close i {
+    font-size: 1.4rem;
 }
 
 .modal__body {

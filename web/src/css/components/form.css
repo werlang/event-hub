@@ -73,10 +73,27 @@
         padding-right: 48px;
         cursor: pointer;
         appearance: none;
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23474c54' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right 16px center;
-        background-size: 16px;
+        background-image: none;
+    }
+
+    & label.select-field {
+        position: relative;
+    }
+
+    & label.select-field::after {
+        content: '\f078';
+        position: absolute;
+        right: 18px;
+        bottom: 20px;
+        font: var(--fa-font-solid);
+        font-size: 0.9rem;
+        color: color-mix(in srgb, var(--color-main), var(--color-text) 22%);
+        pointer-events: none;
+        transition: color 0.2s ease;
+    }
+
+    & label.select-field:focus-within::after {
+        color: var(--color-main);
     }
 
     & textarea {

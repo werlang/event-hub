@@ -13,6 +13,7 @@
   "author": "Pablo Werlang",
   "license": "MIT",
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.2.0",
     "css-loader": "^7.1.4",
     "css-minimizer-webpack-plugin": "^7.0.4",
     "express": "^5.2.1",

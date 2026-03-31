@@ -66,26 +66,31 @@ function createQuickChips() {
         {
             id: 'this-week',
             label: 'Esta semana',
+            icon: 'calendar-week',
             buildFilters: () => getCurrentWeekRangeLocal(),
         },
         {
             id: 'next-seven-days',
             label: 'Próximos 7 dias',
+            icon: 'calendar-day',
             buildFilters: () => getNextDaysRangeLocal(7),
         },
         {
             id: 'category-community',
             label: 'Comunidade',
+            icon: 'people-group',
             buildFilters: () => ({ category: 'Comunidade' }),
         },
         {
             id: 'category-research',
             label: 'Pesquisa',
+            icon: 'flask',
             buildFilters: () => ({ category: 'Pesquisa' }),
         },
         {
             id: 'category-extension',
             label: 'Extensão',
+            icon: 'hands-holding-circle',
             buildFilters: () => ({ category: 'Extensão' }),
         },
     ];

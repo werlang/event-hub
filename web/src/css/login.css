@@ -44,6 +44,10 @@ main > .panel {
     overflow: hidden;
 
     & .tab {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
         background: transparent;
         color: var(--color-text-secondary);
         border: none;

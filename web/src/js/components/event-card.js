@@ -14,6 +14,25 @@ function readText(value, fallback) {
 	return normalized || fallback;
 }
 
+/**
+ * Creates one Font Awesome icon element for card metadata.
+ */
+function createCardIcon(icon) {
+	const iconElement = document.createElement('i');
+	iconElement.classList.add('fa-solid', `fa-${icon}`);
+	iconElement.setAttribute('aria-hidden', 'true');
+	return iconElement;
+}
+
+/**
+ * Creates one metadata pill for an event card.
+ */
+function createMetaItem(icon, text) {
+	const item = document.createElement('span');
+	item.append(createCardIcon(icon), document.createTextNode(text));
+	return item;
+}
+
 export class EventCard extends BaseComponent {
 	#event = {};
 
@@ -61,7 +80,7 @@ export class EventCard extends BaseComponent {
 		if (pastEvent) {
 			const state = document.createElement('span');
 			state.className = 'card__state';
-			state.textContent = 'Evento passado';
+			state.append(createCardIcon('clock-rotate-left'), document.createTextNode('Evento passado'));
 			fragment.appendChild(state);
 		}
 
@@ -78,13 +97,11 @@ export class EventCard extends BaseComponent {
 		meta.className = 'card__meta';
 
 		[
-			readText(this.#event?.category, 'Geral'),
-			readText(this.#event?.location, 'A definir'),
-			formatDateTimePtBr(this.#event?.date),
-		].forEach((value) => {
-			const item = document.createElement('span');
-			item.textContent = value;
-			meta.appendChild(item);
+			{ icon: 'tag', text: readText(this.#event?.category, 'Geral') },
+			{ icon: 'location-dot', text: readText(this.#event?.location, 'A definir') },
+			{ icon: 'calendar-days', text: formatDateTimePtBr(this.#event?.date) },
+		].forEach(({ icon, text }) => {
+			meta.appendChild(createMetaItem(icon, text));
 		});
 
 		fragment.appendChild(meta);

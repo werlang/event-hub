@@ -6,6 +6,9 @@
 }
 
 .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     border: 1px solid color-mix(in srgb, var(--color-main), transparent 74%);
     background: color-mix(in srgb, var(--color-background), var(--color-main) 7%);
     color: var(--color-text);
@@ -21,5 +24,9 @@
         border-color: color-mix(in srgb, var(--color-main), transparent 56%);
         color: var(--color-main);
         transform: translateY(-1px);
+    }
+
+    & i {
+        font-size: 0.9em;
     }
 }

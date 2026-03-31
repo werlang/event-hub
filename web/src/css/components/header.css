@@ -107,7 +107,7 @@ header {
             display: none;
 
             &.active {
-                display: block;
+                display: inline-flex;
             }
         }
     }
