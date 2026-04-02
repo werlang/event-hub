@@ -268,6 +268,7 @@ export class Mysql {
      * Expands raw SQL fragments before mysql2 executes the statement.
      */
     static formatRaw(sql, data) {
+        const originalSql = sql;
         const pieces = sql.split('?');
 
         if (pieces.length > 1){
@@ -283,13 +284,16 @@ export class Mysql {
                     }
                     join += pieces.shift();
                 });
+
+                sql = join;
             }
             catch(error) {
-                // console.log(data)
+                sql = originalSql;
             }
-    
-            sql = join;
-            data = data.filter(e => !e || !e.toSqlString);
+
+                data = Array.isArray(data)
+                    ? data.filter(e => !e || !e.toSqlString)
+                    : data;
         }
         
         return { sql, data };

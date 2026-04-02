@@ -4,6 +4,7 @@
   "description": "API para autenticação e cadastro de eventos acadêmicos.",
   "type": "module",
   "scripts": {
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --config ./jest.unit.config.mjs --runInBand --coverage",
     "production": "node app.js",
     "development": "node --watch app.js"
   },
@@ -17,5 +18,8 @@
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.18.0",
     "mysqldump": "^3.2.0"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0"
   }
 }
