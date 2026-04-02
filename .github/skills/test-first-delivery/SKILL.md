@@ -26,6 +26,7 @@ Use this skill whenever a task changes behavior in `api/` or `web/`.
 - The verified API validation command is `docker compose -f compose.dev.yaml exec api npm test`.
 - The verified automated web validation path today is rebuilding the web bundle from the running Compose web service.
 - Manual validation is still the default for many API, auth, database, and SSR flows until a task introduces a stable local harness.
+- For frontend interaction changes, manual validation should include a real browser pass over the affected page, not only a compile or static DOM review.
 
 ## Workflow
 
@@ -34,8 +35,9 @@ Use this skill whenever a task changes behavior in `api/` or `web/`.
 3. Choose the validation path using [references/testing-decision-tree.md](references/testing-decision-tree.md).
 4. For API behavior changes, add or update Jest unit tests under `api/tests/unit` alongside the production code change.
 5. Run the relevant commands and checks from [references/validation-commands.md](references/validation-commands.md).
-6. Fix failures and rerun the validated scope until it passes with no failing tests.
-6. Finish with explicit reporting:
+6. For frontend interaction changes, open the affected page in a browser session and exercise the changed controls or flows.
+7. Fix failures and rerun the validated scope until it passes with no failing tests.
+8. Finish with explicit reporting:
    - tests or commands run
    - manual checks performed
    - remaining gaps or unvalidated risk
@@ -50,4 +52,5 @@ A behavior-changing task is complete only when:
 - API test execution finished with `100%` passing tests,
 - otherwise the manual validation checklist was executed for the touched flow,
 - any web asset change was rebuilt through the repo's real workflow,
+- frontend interaction changes were checked in a real browser session when the environment made that possible,
 - and the final report calls out remaining coverage or environment gaps plainly.

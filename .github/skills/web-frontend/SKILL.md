@@ -58,6 +58,15 @@ When changing API integration behavior, keep this precedence explicit.
 4. Keep home listing/filter logic in `index.js`; keep auth-tabs behavior in `login.js`.
 5. If you add publish-page behavior, wire a real bundle entry first instead of documenting a non-existent `publish.js` file.
 6. Maintain Portuguese-facing text consistency already present in forms and messages.
+7. For interaction-heavy UI work, do not stop at DOM inspection or bundle success alone; verify the rendered page in a browser and exercise the affected interaction states before considering the task done.
+
+## Validation Expectations
+
+- Rebuild the affected web bundle through the repository workflow.
+- Open the changed page in a browser session when the environment allows it.
+- Exercise the specific interaction that changed: tabs, modals, accordions, filters, form states, or redirects.
+- If authentication gates the page, obtain a real session through the UI or documented local flow before evaluating the change.
+- Report both the automated validation and the manual browser checks that were actually performed.
 
 ## Common Tasks
 
