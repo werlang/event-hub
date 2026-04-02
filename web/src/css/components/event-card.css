@@ -63,6 +63,8 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            min-width: 0;
+            max-width: min(100%, 24rem);
             padding: 7px 10px;
             border-radius: var(--radius-pill);
             border: 1px solid color-mix(in srgb, var(--color-main), transparent 82%);
@@ -73,6 +75,23 @@
 
         & i {
             font-size: 0.9em;
+        }
+
+        & .card__meta-link {
+            display: inline-block;
+            max-width: min(100%, 18rem);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: inherit;
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.16em;
+        }
+
+        & .card__meta-link:hover,
+        & .card__meta-link:focus-visible {
+            color: var(--color-main);
         }
 
         & span:first-child {

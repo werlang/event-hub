@@ -11,6 +11,7 @@ import { Tooltip } from './components/tooltip.js';
 import { requestApi } from './helpers/api.js';
 import { formatDateTimePtBr } from './helpers/date-format.js';
 import { isPastEvent, sortEventsByDateDescending } from './helpers/event-sort.js';
+import { createLocationContent } from './helpers/location-link.js';
 
 const DASHBOARD_STATUS_TOAST_GROUP = 'dashboard-status';
 const DASHBOARD_HIDDEN_CLASS = 'dashboard-empty-state--hidden';
@@ -161,7 +162,7 @@ function createSummaryCardElement(card) {
 /**
  * Creates a metadata pill used by dashboard event cards.
  */
-function createMetaPill(text, modifier = '') {
+function createMetaPill(content, modifier = '') {
     const pill = document.createElement('span');
     pill.className = modifier
         ? `dashboard-meta-pill dashboard-meta-pill--${modifier}`
@@ -182,7 +183,7 @@ function createMetaPill(text, modifier = '') {
         pill.appendChild(iconElement);
     }
 
-    pill.appendChild(document.createTextNode(text));
+    pill.appendChild(content);
     return pill;
 }
 
@@ -283,9 +284,12 @@ function createDashboardEventElement(event) {
     const meta = document.createElement('div');
     meta.className = 'dashboard-event__meta';
     meta.append(
-        createMetaPill(readText(event?.category, 'Geral'), 'category'),
-        createMetaPill(readText(event?.location, 'A definir'), 'location'),
-        createMetaPill(formatDateTimePtBr(event?.date), 'date'),
+        createMetaPill(document.createTextNode(readText(event?.category, 'Geral')), 'category'),
+        createMetaPill(createLocationContent(event?.location, {
+            fallback: 'A definir',
+            linkClass: 'dashboard-meta-pill__link',
+        }), 'location'),
+        createMetaPill(document.createTextNode(formatDateTimePtBr(event?.date)), 'date'),
     );
 
     const note = document.createElement('p');

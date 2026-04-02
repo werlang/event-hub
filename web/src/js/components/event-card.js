@@ -1,6 +1,7 @@
 import { BaseComponent } from './base-component.js';
 import { formatDateTimePtBr } from '../helpers/date-format.js';
 import { isPastEvent } from '../helpers/event-sort.js';
+import { createLocationContent } from '../helpers/location-link.js';
 
 /**
  * Normalizes card text content while preserving a fallback label.
@@ -27,9 +28,9 @@ function createCardIcon(icon) {
 /**
  * Creates one metadata pill for an event card.
  */
-function createMetaItem(icon, text) {
+function createMetaItem(icon, content) {
 	const item = document.createElement('span');
-	item.append(createCardIcon(icon), document.createTextNode(text));
+	item.append(createCardIcon(icon), content);
 	return item;
 }
 
@@ -96,13 +97,14 @@ export class EventCard extends BaseComponent {
 		const meta = document.createElement('div');
 		meta.className = 'card__meta';
 
-		[
-			{ icon: 'tag', text: readText(this.#event?.category, 'Geral') },
-			{ icon: 'location-dot', text: readText(this.#event?.location, 'A definir') },
-			{ icon: 'calendar-days', text: formatDateTimePtBr(this.#event?.date) },
-		].forEach(({ icon, text }) => {
-			meta.appendChild(createMetaItem(icon, text));
-		});
+		meta.append(
+			createMetaItem('tag', document.createTextNode(readText(this.#event?.category, 'Geral'))),
+			createMetaItem('location-dot', createLocationContent(this.#event?.location, {
+				fallback: 'A definir',
+				linkClass: 'card__meta-link',
+			})),
+			createMetaItem('calendar-days', document.createTextNode(formatDateTimePtBr(this.#event?.date))),
+		);
 
 		fragment.appendChild(meta);
 		element.replaceChildren(fragment);

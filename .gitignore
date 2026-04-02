@@ -5,6 +5,9 @@
 .env
 node_modules
 
+# Jest coverage outputs
+**/tests/coverage
+
 # webpack build outputs
 web/public/js
 web/public/css
