@@ -61,8 +61,8 @@ function ensureOwnerCanManageEvent(event, user) {
         throw new HttpError(403, 'Você não tem permissão para gerenciar este evento.');
     }
 
-    if (Event.isPublishedStatus(event.status)) {
-        throw new HttpError(403, 'Eventos publicados não podem ser editados ou excluídos.');
+    if (!Event.canOwnerManageStatus(event.status)) {
+        throw new HttpError(403, 'Somente eventos pendentes ou rejeitados podem ser editados ou excluídos.');
     }
 }
 
@@ -199,7 +199,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
 });
 
 /**
- * Updates an unpublished event owned by the authenticated user.
+ * Updates an event still pending moderation or already rejected.
  */
 router.patch('/:id', authMiddleware, async (req, res, next) => {
     try {
@@ -221,7 +221,7 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
 });
 
 /**
- * Deletes an unpublished event owned by the authenticated user.
+ * Deletes an event still pending moderation or already rejected.
  */
 router.delete('/:id', authMiddleware, async (req, res, next) => {
     try {

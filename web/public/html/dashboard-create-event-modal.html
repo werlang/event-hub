@@ -1,6 +1,6 @@
 <div class="dashboard-modal dashboard-modal--create">
     <p class="dashboard-modal__intro">
-        Preencha os campos abaixo para enviar um novo evento para moderação sem sair da sua área.
+        Preencha os campos abaixo para enviar um novo evento para moderação.
     </p>
 
     <form class="form form--visible" id="dashboard-modal-create-form">
@@ -8,7 +8,7 @@
             <label for="dashboard-modal-event-title">
                 Título
                 <input id="dashboard-modal-event-title" name="title" type="text" maxlength="160"
-                    placeholder="Ex.: Semana Acadêmica de Sistemas" required>
+                    placeholder="Ex.: Reunião Docente" required>
             </label>
 
             <label for="dashboard-modal-event-date">
@@ -20,7 +20,7 @@
         <label for="dashboard-modal-event-description">
             Descrição
             <textarea id="dashboard-modal-event-description" name="description"
-                placeholder="Resumo do evento, tema central e público esperado."
+                placeholder="Resumo do evento"
                 required></textarea>
         </label>
 
@@ -28,12 +28,11 @@
             <label class="select-field" for="dashboard-modal-event-category">
                 Categoria
                 <select id="dashboard-modal-event-category" name="category">
-                    <option value="Geral">Geral</option>
-                    <option value="Pesquisa">Pesquisa</option>
-                    <option value="Extensão">Extensão</option>
-                    <option value="Comunidade">Comunidade</option>
-                    <option value="Ensino">Ensino</option>
-                    <option value="Cultura">Cultura</option>
+                    <option value="reuniao">Reunião Interna</option>
+                    <option value="academico">Evento Acadêmico</option>
+                    <option value="extensao">Extensão e Parceria</option>
+                    <option value="representacao">Representação Institucional</option>
+                    <option value="outro">Outro</option>
                 </select>
             </label>
 

@@ -373,9 +373,48 @@ main {
     color: color-mix(in srgb, var(--color-main-alt), var(--color-text) 24%);
 }
 
+.dashboard-meta-pill--location {
+    background: color-mix(in srgb, var(--color-text-secondary), transparent 90%);
+    color: var(--color-text-secondary);
+}
+
 .dashboard-event__note {
     color: var(--color-text-secondary);
     line-height: 1.6;
+}
+
+.dashboard-event__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.dashboard-event__action-hint {
+    margin: 0;
+    flex: 1 1 260px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.dashboard-event__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.dashboard-event__action-button {
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: 0.82rem;
+    box-shadow: none;
+}
+
+.dashboard-event__action-button--danger {
+    border-color: color-mix(in srgb, var(--color-error), transparent 58%);
+    background: color-mix(in srgb, var(--color-error), transparent 92%);
+    color: color-mix(in srgb, var(--color-error), var(--color-text) 16%);
 }
 
 .dashboard-actions-grid {
@@ -448,6 +487,18 @@ main {
     .dashboard-event,
     .dashboard-summary-card {
         padding: 18px;
+    }
+
+    .dashboard-event__footer {
+        display: grid;
+    }
+
+    .dashboard-event__actions {
+        width: 100%;
+    }
+
+    .dashboard-event__action-button {
+        flex: 1 1 160px;
     }
 
     .dashboard-modal__actions {

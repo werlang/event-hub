@@ -84,6 +84,14 @@ export class Event extends Model {
     }
 
     /**
+     * Checks whether an owner may still edit or delete an event.
+     */
+    static canOwnerManageStatus(status) {
+        const normalizedStatus = Event.normalizeStatus(status);
+        return [Event.STATUS_PENDING, Event.STATUS_REJECTED].includes(normalizedStatus);
+    }
+
+    /**
      * Ensures the moderation column exists before event queries run.
      */
     static async ensureSchema() {

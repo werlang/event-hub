@@ -2,7 +2,9 @@ import '../css/dashboard.css';
 
 import { BaseComponent } from './components/base-component.js';
 import { Header } from './components/header.js';
-import { DashboardCreateEventModal } from './dashboard/create-event-modal.js';
+import { DashboardEventFormModal } from './dashboard/create-event-modal.js';
+import { DashboardDeleteEventModal } from './dashboard/delete-event-modal.js';
+import { canManageOwnEvent } from './dashboard/event-management.js';
 import { DashboardSettingsModal } from './dashboard/settings-modal.js';
 import { Toast } from './components/toast.js';
 import { requestApi } from './helpers/api.js';
@@ -184,12 +186,38 @@ function createMetaPill(text, modifier = '') {
 }
 
 /**
+ * Creates one dashboard action button for manageable event cards.
+ */
+function createEventActionButton({ action, label, icon, modifier = '' } = {}) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.dashboardAction = readText(action, '');
+    button.className = modifier
+        ? `button button--ghost dashboard-event__action-button dashboard-event__action-button--${modifier}`
+        : 'button button--ghost dashboard-event__action-button';
+
+    if (typeof icon === 'string' && icon.trim()) {
+        const iconElement = document.createElement('i');
+        iconElement.classList.add('fa-solid', `fa-${icon.trim()}`);
+        iconElement.setAttribute('aria-hidden', 'true');
+        button.appendChild(iconElement);
+    }
+
+    const labelElement = document.createElement('span');
+    labelElement.textContent = readText(label, 'Continuar');
+    button.appendChild(labelElement);
+    return button;
+}
+
+/**
  * Creates a rendered event card tailored for the dashboard list.
  */
 function createDashboardEventElement(event) {
     const statusMeta = readStatusMeta(event?.status);
+    const isManageable = canManageOwnEvent(event);
     const article = document.createElement('article');
     article.className = `dashboard-event dashboard-event--${statusMeta.tone}`;
+    article.dataset.eventId = readText(event?.id, '');
 
     if (isPastEvent(event)) {
         article.classList.add('dashboard-event--past');
@@ -234,13 +262,46 @@ function createDashboardEventElement(event) {
     note.textContent = statusMeta.note;
 
     article.append(header, description, meta, note);
+
+    if (isManageable) {
+        const footer = document.createElement('div');
+        footer.className = 'dashboard-event__footer';
+
+        const hint = document.createElement('p');
+        hint.className = 'dashboard-event__action-hint';
+        hint.textContent = statusMeta.tone === 'warning'
+            ? 'Faça os ajustes necessários e reenvie o evento para moderação, ou exclua este envio se preferir começar de novo.'
+            : 'Enquanto este envio não for publicado, você ainda pode editar ou excluir os dados.';
+
+        const actions = document.createElement('div');
+        actions.className = 'dashboard-event__actions';
+        actions.append(
+            createEventActionButton({
+                action: 'edit',
+                label: 'Editar',
+                icon: 'pen-to-square',
+                modifier: 'edit',
+            }),
+            createEventActionButton({
+                action: 'delete',
+                label: 'Excluir',
+                icon: 'trash',
+                modifier: 'danger',
+            }),
+        );
+
+        footer.append(hint, actions);
+        article.appendChild(footer);
+    }
+
     return article;
 }
 
 class DashboardPage extends BaseComponent {
     #elements;
     #events = [];
-    #createEventModal;
+    #eventFormModal;
+    #deleteEventModal;
     #session = null;
     #settingsModal;
 
@@ -250,14 +311,22 @@ class DashboardPage extends BaseComponent {
     constructor() {
         super(document.querySelector('#dashboard-root'));
         this.#elements = this.#collectElements();
-        this.#createEventModal = new DashboardCreateEventModal({
+        this.#eventFormModal = new DashboardEventFormModal({
             trigger: this.#elements.createToggle,
         });
-        this.#createEventModal.onCreateSuccess(async ({ createdEvent }) => {
-            await this.#syncEventsAfterCreate(createdEvent);
+        this.#eventFormModal.onSubmitSuccess(async ({ event, mode, previousEventId }) => {
+            await this.#syncEventsAfterSubmit({ event, mode, previousEventId });
+        });
+        this.#deleteEventModal = new DashboardDeleteEventModal();
+        this.#deleteEventModal.onDeleteSuccess(async ({ eventId }) => {
+            await this.#syncEventsAfterDelete(eventId);
         });
         this.#settingsModal = new DashboardSettingsModal({
             trigger: this.#elements.settingsButton,
+        });
+
+        this.on(this.#elements.eventsList, 'click', event => {
+            void this.#handleEventListClick(event);
         });
 
         this.#elements.eventsEmpty?.classList.add(DASHBOARD_HIDDEN_CLASS);
@@ -289,7 +358,8 @@ class DashboardPage extends BaseComponent {
         }
 
         this.#session = session;
-        this.#createEventModal.setSession(session);
+    this.#eventFormModal.setSession(session);
+    this.#deleteEventModal.setSession(session);
         this.#settingsModal.setUser(session.user);
         Toast.dismissGroup(DASHBOARD_STATUS_TOAST_GROUP);
         this.#renderHeader();
@@ -312,9 +382,7 @@ class DashboardPage extends BaseComponent {
 
         if (!response.ok) {
             this.#events = [];
-            this.#renderHeader();
-            this.#renderOverview();
-            this.#renderEventList();
+            this.#renderDashboardSections();
             this.#showToast(
                 response.message || 'Não foi possível carregar os seus eventos no momento.',
                 'error',
@@ -324,9 +392,7 @@ class DashboardPage extends BaseComponent {
         }
 
         this.#events = sortEventsByDateDescending(response.data?.events || []);
-        this.#renderHeader();
-        this.#renderOverview();
-        this.#renderEventList();
+        this.#renderDashboardSections();
     }
 
     /**
@@ -368,21 +434,111 @@ class DashboardPage extends BaseComponent {
     }
 
     /**
-     * Synchronizes dashboard sections after the create-event modal succeeds.
+     * Looks up one event by id inside the current dashboard state.
      */
-    async #syncEventsAfterCreate(createdEvent) {
-        if (createdEvent) {
-            this.#events = sortEventsByDateDescending([createdEvent, ...this.#events]);
-            this.#renderHeader();
-            this.#renderOverview();
-            this.#renderEventList();
-        } else {
+    #findEventById(eventId) {
+        const normalizedEventId = readText(eventId, '');
+        return this.#events.find(event => event.id === normalizedEventId) || null;
+    }
+
+    /**
+     * Synchronizes dashboard sections after the create or edit modal succeeds.
+     */
+    async #syncEventsAfterSubmit({ event, mode, previousEventId } = {}) {
+        if (!event?.id) {
             await this.refreshEvents();
+            return;
         }
+
+        const normalizedMode = readText(mode, 'create').toLowerCase();
+        const nextEvents = this.#events.filter((currentEvent) => {
+            if (normalizedMode === 'edit' && previousEventId) {
+                return currentEvent.id !== previousEventId;
+            }
+
+            return currentEvent.id !== event.id;
+        });
+
+        this.#events = sortEventsByDateDescending([event, ...nextEvents]);
+        this.#renderDashboardSections();
 
         if (this.#elements.eventsSection) {
             this.#elements.eventsSection.open = true;
         }
+    }
+
+    /**
+     * Synchronizes dashboard sections after a successful delete action.
+     */
+    async #syncEventsAfterDelete(eventId) {
+        const normalizedEventId = readText(eventId, '');
+        if (!normalizedEventId) {
+            await this.refreshEvents();
+            return;
+        }
+
+        this.#events = this.#events.filter(event => event.id !== normalizedEventId);
+        this.#renderDashboardSections();
+
+        if (this.#elements.eventsSection) {
+            this.#elements.eventsSection.open = true;
+        }
+    }
+
+    /**
+     * Handles edit and delete clicks dispatched from the event list.
+     */
+    async #handleEventListClick(domEvent) {
+        const actionButton = domEvent.target instanceof Element
+            ? domEvent.target.closest('[data-dashboard-action]')
+            : null;
+
+        if (!actionButton || !this.#elements.eventsList?.contains(actionButton)) {
+            return;
+        }
+
+        const requestedAction = readText(actionButton.dataset.dashboardAction, '');
+        const eventCard = actionButton.closest('[data-event-id]');
+        const managedEvent = this.#findEventById(eventCard?.dataset.eventId);
+
+        if (!managedEvent) {
+            return;
+        }
+
+        if (!canManageOwnEvent(managedEvent)) {
+            this.#showToast(
+                'Apenas eventos pendentes ou rejeitados podem ser gerenciados por aqui.',
+                'error',
+                { group: DASHBOARD_STATUS_TOAST_GROUP },
+            );
+            return;
+        }
+
+        try {
+            if (requestedAction === 'edit') {
+                await this.#eventFormModal.open({ event: managedEvent });
+                return;
+            }
+
+            if (requestedAction === 'delete') {
+                await this.#deleteEventModal.open({ event: managedEvent });
+            }
+        } catch {
+            this.#showToast(
+                'Não foi possível abrir essa ação agora.',
+                'error',
+                { group: DASHBOARD_STATUS_TOAST_GROUP },
+            );
+        }
+    }
+
+    /**
+     * Renders every dashboard section driven by the current state snapshot.
+     */
+    #renderDashboardSections() {
+        this.#renderHeader();
+        this.#renderOverview();
+        this.#renderEventList();
     }
 
     /**
