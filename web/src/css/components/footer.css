@@ -25,9 +25,14 @@ footer {
             color: rgb(from var(--color-text) r g b / 0.8);
             display: flex;
             align-items: center;
+            gap: 6px;
 
             @media (min-width: 600px) {
                 font-size: 1rem;
+            }
+
+            a#footer-email {
+                color: rgb(from var(--color-text) r g b / 0.8);
             }
 
             a {
