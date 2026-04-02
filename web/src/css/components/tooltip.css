@@ -7,14 +7,13 @@
 }
 
 .tooltip__trigger {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    border: 1px solid color-mix(in srgb, var(--color-main), transparent 66%);
+    padding: 0;
+    border: none;
     border-radius: 50%;
-    background: color-mix(in srgb, var(--color-background), #ffffff 24%);
+    background-color: transparent;
     color: color-mix(in srgb, var(--color-main-alt), var(--color-text) 18%);
     box-shadow: 0 10px 20px color-mix(in srgb, var(--color-text), transparent 92%);
     cursor: help;

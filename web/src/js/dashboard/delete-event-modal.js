@@ -40,15 +40,15 @@ function createDeleteConfirmationContent(event) {
 
     const intro = document.createElement('p');
     intro.className = 'dashboard-modal__intro';
-    intro.textContent = `Você está prestes a excluir o evento "${readText(event?.title, 'Sem título')}".`;
+    intro.innerHTML = `Você está prestes a excluir o evento "<strong>${readText(event?.title, 'Sem título')}</strong>".`;
 
     const statusNote = document.createElement('p');
     statusNote.className = 'dashboard-settings-note';
-    statusNote.textContent = `Status atual: ${readStatusLabel(event?.status)}.`;
+    statusNote.innerHTML = `Status atual: <strong>${readStatusLabel(event?.status)}</strong>.`;
 
     const consequenceNote = document.createElement('p');
     consequenceNote.className = 'dashboard-settings-note';
-    consequenceNote.textContent = 'Depois da exclusão, o envio sai do painel. Se quiser recuperar a publicação, será preciso criar um novo evento.';
+    consequenceNote.innerHTML = 'Essa ação é irreversível e removerá o evento do seu painel.';
 
     wrapper.append(intro, statusNote, consequenceNote);
     return wrapper;

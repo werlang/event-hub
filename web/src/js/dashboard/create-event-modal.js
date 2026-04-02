@@ -24,9 +24,9 @@ const DASHBOARD_EVENT_FORM_COPY = {
     },
     [DASHBOARD_EVENT_FORM_MODE_EDIT]: {
         eyebrow: 'Editar envio',
-        title: 'Atualizar evento para moderação',
-        description: 'Ajuste os dados com calma antes de reenviar o evento para avaliação.',
-        intro: 'Revise os campos abaixo e reenvie o evento para moderação quando tudo estiver certo.',
+        title: 'Atualizar evento',
+        description: 'Ajuste os dados antes de reenviar o evento para avaliação.',
+        intro: 'Revise os campos abaixo e reenvie o evento para moderação.',
         submitLabel: 'Salvar e reenviar',
         submitIcon: 'pen-to-square',
         invalidMessage: 'Preencha título, descrição e data antes de salvar as alterações.',

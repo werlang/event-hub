@@ -28,6 +28,7 @@ function readStatusMeta(status) {
             label: 'Publicado',
             tone: 'success',
             note: 'Este evento já está visível na agenda pública.',
+            icon: 'check',
         };
     }
 
@@ -36,6 +37,7 @@ function readStatusMeta(status) {
             label: 'Rejeitado',
             tone: 'warning',
             note: 'Este envio precisa de ajustes antes de voltar para aprovação.',
+            icon: 'exclamation',
         };
     }
 
@@ -43,6 +45,7 @@ function readStatusMeta(status) {
         label: 'Pendente',
         tone: 'pending',
         note: 'Este envio ainda está aguardando aprovação.',
+        icon: 'clock',
     };
 }
 
@@ -278,14 +281,26 @@ function createDashboardEventElement(event) {
     const statusGroup = document.createElement('div');
     statusGroup.className = 'dashboard-event__status-group';
 
+    const tooltipPending = new Tooltip({
+        content: statusMeta.note,
+        label: `Status: ${statusMeta.label}`,
+        icon: statusMeta.icon,
+    });
+
     const statusPill = document.createElement('span');
     statusPill.className = `dashboard-status-pill dashboard-status-pill--${statusMeta.tone}`;
-    statusPill.textContent = statusMeta.label;
+    statusPill.append(tooltipPending.get(), statusMeta.label);
     statusGroup.appendChild(statusPill);
+
+    const tooltipTimeline = new Tooltip({
+        content: isPastEvent(event) ? 'Este evento já ocorreu.' : 'Este evento ainda vai acontecer.',
+        label: `Timeline: ${isPastEvent(event) ? 'Passado' : 'Próximo'}`,
+        icon: isPastEvent(event) ? 'clock-rotate-left' : 'clock',
+    });
 
     const timelinePill = document.createElement('span');
     timelinePill.className = 'dashboard-status-pill dashboard-status-pill--neutral';
-    timelinePill.textContent = isPastEvent(event) ? 'Passado' : 'Em agenda';
+    timelinePill.append(tooltipTimeline.get(), isPastEvent(event) ? 'Passado' : 'Próximo');
     statusGroup.appendChild(timelinePill);
 
     header.append(title, statusGroup);
@@ -305,11 +320,7 @@ function createDashboardEventElement(event) {
         createMetaPill(document.createTextNode(formatDateTimePtBr(event?.date)), 'date'),
     );
 
-    const note = document.createElement('p');
-    note.className = 'dashboard-event__note';
-    note.textContent = statusMeta.note;
-
-    article.append(header, description, meta, note);
+    article.append(header, description, meta);
 
     if (isManageable) {
         const footer = document.createElement('div');
