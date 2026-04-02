@@ -59,7 +59,7 @@ describe('model/event', () => {
             status: 'INVALID',
         });
 
-        expect(event.category).toBe('Geral');
+        expect(event.category).toBe('outro');
         expect(event.location).toBe('A definir');
         expect(event.status).toBe('pending');
         expect(Event.isPublishedStatus('published')).toBe(true);
@@ -91,7 +91,11 @@ describe('model/event', () => {
             organizer_id: 'user-1',
             created_at: '2026-04-02T12:00:00.000Z',
         });
-        const serialized = Event.serialize(buildEvent({ status: 'PUBLISHED', organizerId: 'user-1' }));
+        const serialized = Event.serialize(buildEvent({
+            status: 'PUBLISHED',
+            organizerId: 'user-1',
+            category: 'Tecnologia',
+        }));
 
         expect(normalized).toEqual({
             id: 'event-1',
@@ -99,6 +103,7 @@ describe('model/event', () => {
             description: 'Palestras',
             date: '2026-05-20T18:00:00.000Z',
             category: 'Tecnologia',
+            categoryLabel: 'Tecnologia',
             location: 'Auditorio',
             status: 'published',
             organizerId: 'user-1',
@@ -134,6 +139,7 @@ describe('model/event', () => {
             description: 'Palestras',
             date: null,
             category: 'Tecnologia',
+            categoryLabel: 'Tecnologia',
             location: 'Auditorio',
             status: 'pending',
             organizerId: 'user-1',

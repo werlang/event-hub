@@ -148,7 +148,7 @@ describe('routes/events', () => {
             title: 'Semana Academica',
             description: 'Palestras para a comunidade.',
             date: '2026-06-01T10:00:00.000Z',
-            category: 'Geral',
+            category: 'outro',
             location: 'A definir',
             organizerId: 'user-1',
         });

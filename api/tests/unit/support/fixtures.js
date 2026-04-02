@@ -1,3 +1,5 @@
+import { normalizeEventCategoryId, readEventCategoryLabel } from '../../../helpers/event-category.js';
+
 /**
  * Builds a normalized user fixture for model and route tests.
  */
@@ -17,12 +19,14 @@ export function buildUser(overrides = {}) {
  * Builds a normalized event fixture for model and route tests.
  */
 export function buildEvent(overrides = {}) {
+    const category = normalizeEventCategoryId(overrides.category ?? 'academico', { fallback: 'outro' });
     return {
         id: 'event-1',
         title: 'Semana da Computacao',
         description: 'Palestras e oficinas para a comunidade academica.',
         date: '2026-05-20T18:00:00.000Z',
-        category: 'Tecnologia',
+        category,
+        categoryLabel: readEventCategoryLabel(overrides.category ?? category, { fallback: 'Outro' }),
         location: 'Auditorio Central',
         status: 'pending',
         organizerId: 'user-1',
