@@ -23,13 +23,18 @@
             <div class="dashboard-command-bar" aria-label="Ações principais da central">
                 <div class="dashboard-command-bar__copy">
                     <p class="dashboard-shell__welcome"> Bem-vindo de volta, <span class="dashboard-shell__user-name"></span>! </p>
-                    <p class="dashboard-shell__instruction">Use os botões abaixo para navegar entre seus envios, criar novos eventos ou revisar as configurações da sua conta.</p> 
+                    <p class="dashboard-shell__instruction" id="dashboard-shell-instruction">Use os botões abaixo para navegar entre seus envios, criar novos eventos ou revisar as configurações da sua conta.</p>
                 </div>
 
                 <div class="dashboard-command-bar__tabs" data-dashboard-action-tabs role="toolbar" aria-label="Ações rápidas da central">
                     <button class="dashboard-action-tab dashboard-action-tab--current" id="dashboard-action-tab-browse" type="button" data-dashboard-action-tab="browse">
                         <i class="fa-solid fa-binoculars" aria-hidden="true"></i>
                         <span>Seus envios</span>
+                    </button>
+
+                    <button class="dashboard-action-tab" id="dashboard-action-tab-moderation" type="button" data-dashboard-action-tab="moderation" hidden>
+                        <i class="fa-solid fa-clipboard-check" aria-hidden="true"></i>
+                        <span>Moderar envios</span>
                     </button>
 
                     <button class="dashboard-action-tab" id="dashboard-action-tab-create" type="button" data-dashboard-action-tab="create">
@@ -74,9 +79,9 @@
             <details class="dashboard-section" id="dashboard-events-section" open>
                 <summary class="dashboard-section__summary">
                     <div class="dashboard-section__summary-copy">
-                        <p class="dashboard-section__eyebrow">Eventos</p>
-                        <h2>Todos os seus eventos</h2>
-                        <p class="dashboard-section__description">
+                        <p class="dashboard-section__eyebrow" id="dashboard-events-eyebrow">Eventos</p>
+                        <h2 id="dashboard-events-heading">Todos os seus eventos</h2>
+                        <p class="dashboard-section__description" id="dashboard-events-description">
                             Consulte a lista completa dos eventos criados pela sua conta, com status, data, categoria e
                             local.
                         </p>
@@ -98,6 +103,14 @@
                     </p>
 
                     <div class="dashboard-events-list" id="dashboard-events-list"></div>
+
+                    <div class="dashboard-events-pagination" id="dashboard-events-pagination" hidden>
+                        <p class="dashboard-events-pagination__summary" id="dashboard-events-pagination-summary">
+                            Mostrando 0 de 0 eventos.
+                        </p>
+
+                        <nav class="dashboard-events-pagination__controls" id="dashboard-events-pagination-controls" aria-label="Paginação dos eventos"></nav>
+                    </div>
                 </div>
             </details>
         </div>

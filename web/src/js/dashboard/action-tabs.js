@@ -1,15 +1,18 @@
 import { BaseComponent } from '../components/base-component.js';
 
-const DASHBOARD_ACTION_TAB_BROWSE = 'browse';
-const DASHBOARD_ACTION_TAB_CREATE = 'create';
-const DASHBOARD_ACTION_TAB_SETTINGS = 'settings';
+/**
+ * Returns the configured tab name for one dashboard action button.
+ */
+function readTabName(button) {
+    return String(button?.dataset?.dashboardActionTab || '').trim().toLowerCase();
+}
 
 /**
  * Controls the horizontal action tabs shown as a dashboard subheader.
  */
 export class DashboardActionTabs extends BaseComponent {
     #tabs;
-    #activeTab = DASHBOARD_ACTION_TAB_BROWSE;
+    #activeTab = 'browse';
     #onAction;
 
     /**
@@ -26,7 +29,7 @@ export class DashboardActionTabs extends BaseComponent {
      */
     isReady() {
         return super.isReady()
-            && this.#tabs.length === 3;
+            && this.#readVisibleTabs().length >= 1;
     }
 
     /**
@@ -47,8 +50,8 @@ export class DashboardActionTabs extends BaseComponent {
      */
     async activate(tabName) {
         const normalizedTab = this.#normalizeTab(tabName);
-        this.setActive(DASHBOARD_ACTION_TAB_BROWSE);
-        await this.#onAction?.(normalizedTab);
+        const nextActiveTab = await this.#onAction?.(normalizedTab, this.#activeTab);
+        this.setActive(nextActiveTab || this.#activeTab);
         return this;
     }
 
@@ -94,11 +97,11 @@ export class DashboardActionTabs extends BaseComponent {
                 break;
             case 'Home':
                 event.preventDefault();
-                this.#tabs[0]?.focus();
+                this.#readVisibleTabs()[0]?.focus();
                 break;
             case 'End':
                 event.preventDefault();
-                this.#tabs.at(-1)?.focus();
+                this.#readVisibleTabs().at(-1)?.focus();
                 break;
             case 'Enter':
             case ' ':
@@ -118,24 +121,24 @@ export class DashboardActionTabs extends BaseComponent {
      * Normalizes a raw tab name into a supported dashboard action tab.
      */
     #normalizeTab(tabName) {
-        if (tabName === DASHBOARD_ACTION_TAB_CREATE) {
-            return DASHBOARD_ACTION_TAB_CREATE;
+        const normalizedTab = String(tabName || '').trim().toLowerCase();
+        const hasMatchingTab = this.#tabs.some(button => readTabName(button) === normalizedTab);
+
+        if (hasMatchingTab) {
+            return normalizedTab;
         }
 
-        if (tabName === DASHBOARD_ACTION_TAB_SETTINGS) {
-            return DASHBOARD_ACTION_TAB_SETTINGS;
-        }
-
-        return DASHBOARD_ACTION_TAB_BROWSE;
+        return readTabName(this.#readVisibleTabs()[0]) || readTabName(this.#tabs[0]);
     }
 
     /**
      * Moves focus relative to the current action tab.
      */
     #focusRelativeTab(currentButton, direction) {
-        const currentIndex = Math.max(this.#tabs.indexOf(currentButton), 0);
-        const nextIndex = (currentIndex + direction + this.#tabs.length) % this.#tabs.length;
-        this.#tabs[nextIndex]?.focus();
+        const visibleTabs = this.#readVisibleTabs();
+        const currentIndex = Math.max(visibleTabs.indexOf(currentButton), 0);
+        const nextIndex = (currentIndex + direction + visibleTabs.length) % visibleTabs.length;
+        visibleTabs[nextIndex]?.focus();
     }
 
     /**
@@ -143,9 +146,16 @@ export class DashboardActionTabs extends BaseComponent {
      */
     #syncTabs() {
         this.#tabs.forEach((button) => {
-            const isActive = this.#normalizeTab(button.dataset.dashboardActionTab) === this.#activeTab;
+            const isActive = this.#normalizeTab(readTabName(button)) === this.#activeTab;
             button.classList.toggle('dashboard-action-tab--current', isActive);
         });
+    }
+
+    /**
+     * Returns only the currently visible dashboard action tabs.
+     */
+    #readVisibleTabs() {
+        return this.#tabs.filter(button => !button.hidden);
     }
 }
 

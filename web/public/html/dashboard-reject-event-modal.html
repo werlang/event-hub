@@ -1,0 +1,27 @@
+<div class="dashboard-modal dashboard-modal--confirm">
+    <p class="dashboard-modal__intro">Você está rejeitando o evento <strong>{{eventTitle}}</strong>. Se quiser, descreva os ajustes esperados antes de devolver o envio ao organizador.</p>
+    <p class="dashboard-settings-note">
+        O campo abaixo é opcional, mas ajuda o autor a entender o que precisa ser ajustado antes de reenviar.
+    </p>
+
+    <form class="form form--visible" id="dashboard-modal-reject-form">
+        <label for="dashboard-modal-reject-reason">
+            Motivo da rejeição
+            <textarea id="dashboard-modal-reject-reason" name="rejectionReason"
+                maxlength="1200"
+                placeholder="Ex.: ajuste a descrição, confirme o local ou inclua mais contexto sobre o público do evento."></textarea>
+        </label>
+
+        <div class="dashboard-modal__actions">
+            <button class="button button--primary" id="dashboard-modal-reject-submit" type="submit">
+                <i class="fa-solid fa-ban" aria-hidden="true"></i>
+                <span>Rejeitar envio</span>
+            </button>
+
+            <button class="button button--ghost" id="dashboard-modal-reject-cancel" type="button">
+                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                <span>Voltar</span>
+            </button>
+        </div>
+    </form>
+</div>

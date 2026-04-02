@@ -200,12 +200,6 @@ export function initHomePage() {
 
     setEntrySurfacesVisibility(elements, agendaOnlyMode);
 
-    if (!agendaOnlyMode) {
-        eventList.clear();
-        showHomeToast('Use os filtros ou chips para carregar eventos.');
-        return;
-    }
-
     loadEvents(initialFilters);
 }
 

@@ -6,6 +6,7 @@ import { DashboardActionTabs } from './dashboard/action-tabs.js';
 import { DashboardEventFormModal } from './dashboard/create-event-modal.js';
 import { DashboardDeleteEventModal } from './dashboard/delete-event-modal.js';
 import { canManageOwnEvent } from './dashboard/event-management.js';
+import { DashboardRejectEventModal } from './dashboard/reject-event-modal.js';
 import { DashboardSettingsModal } from './dashboard/settings-modal.js';
 import { Toast } from './components/toast.js';
 import { Tooltip } from './components/tooltip.js';
@@ -16,7 +17,11 @@ import { readEventTagSummary } from './helpers/event-category.js';
 import { createLocationContent } from './helpers/location-link.js';
 
 const DASHBOARD_STATUS_TOAST_GROUP = 'dashboard-status';
+const DASHBOARD_ACTION_TOAST_GROUP = 'dashboard-action';
 const DASHBOARD_HIDDEN_CLASS = 'dashboard-empty-state--hidden';
+const DASHBOARD_EVENTS_PER_PAGE = 10;
+const DASHBOARD_VIEW_BROWSE = 'browse';
+const DASHBOARD_VIEW_MODERATION = 'moderation';
 
 /**
  * Returns the UI metadata associated with an event moderation status.
@@ -54,9 +59,16 @@ function readStatusMeta(status) {
  * Returns a localized label for the authenticated account role.
  */
 function readRoleLabel(role) {
-    return String(role || '').trim().toLowerCase() === 'admin'
+    return isAdminRole(role)
         ? 'Administrador'
         : 'Membro';
+}
+
+/**
+ * Reports whether one account role belongs to an administrator.
+ */
+function isAdminRole(role) {
+    return String(role || '').trim().toLowerCase() === 'admin';
 }
 
 /**
@@ -86,6 +98,44 @@ function formatPercentage(value, total) {
 }
 
 /**
+ * Returns the introductory dashboard copy associated with one account role.
+ */
+function readDashboardShellInstruction(role) {
+    return isAdminRole(role)
+        ? 'Use os botões abaixo para alternar entre seus envios, moderar a fila pendente, criar novos eventos ou revisar as configurações da conta.'
+        : 'Use os botões abaixo para navegar entre seus envios, criar novos eventos ou revisar as configurações da sua conta.';
+}
+
+/**
+ * Returns the copy used by the list section for the active dashboard view.
+ */
+function readEventSectionCopy(view) {
+    if (view === DASHBOARD_VIEW_MODERATION) {
+        return {
+            eyebrow: 'Moderação',
+            heading: 'Fila de revisão',
+            description: 'Revise os eventos pendentes enviados por outras contas e decida se cada um deve ser publicado ou devolvido para ajustes.',
+            badgeSingular: 'pendente',
+            badgePlural: 'pendentes',
+            populatedCaption: 'Abaixo ficam os envios ainda pendentes de avaliação administrativa, ordenados da data mais recente para a mais antiga.',
+            emptyCaption: 'Quando novos eventos aguardarem análise administrativa, eles aparecerão aqui para aprovação ou rejeição.',
+            emptyState: 'Nenhum evento pendente na fila de moderação agora.',
+        };
+    }
+
+    return {
+        eyebrow: 'Eventos',
+        heading: 'Todos os seus eventos',
+        description: 'Consulte a lista completa dos eventos criados pela sua conta, com status, data, categoria e local.',
+        badgeSingular: 'evento',
+        badgePlural: 'eventos',
+        populatedCaption: 'Abaixo ficam todos os seus eventos, ordenados da data mais recente para a mais antiga.',
+        emptyCaption: 'Quando novos envios forem criados, eles aparecerão aqui com o respectivo status de moderação.',
+        emptyState: 'Você ainda não enviou nenhum evento. Use o botão Novo Evento no topo para criar o primeiro.',
+    };
+}
+
+/**
  * Counts events matching a predicate without assuming a valid array input.
  */
 function countEvents(events, predicate) {
@@ -94,6 +144,13 @@ function countEvents(events, predicate) {
     }
 
     return events.filter(predicate).length;
+}
+
+/**
+ * Reports whether an event is still pending moderation.
+ */
+function isPendingModerationEvent(event) {
+    return String(event?.status || '').trim().toLowerCase() === 'pending';
 }
 
 /**
@@ -335,23 +392,23 @@ function createEventActionButton({ action, label, icon, modifier = '' } = {}) {
 /**
  * Returns the longer action guidance associated with one dashboard event card.
  */
-function readActionHintText(statusMeta) {
+function readOwnerActionHintText(statusMeta) {
     return statusMeta.tone === 'warning'
         ? 'Faça os ajustes necessários e reenvie o evento para moderação, ou exclua este envio se preferir começar de novo.'
         : 'Enquanto este envio não for publicado, você ainda pode editar ou excluir o evento.';
 }
 
 /**
- * Creates a compact help cue that reveals the longer event action guidance.
+ * Creates a compact help cue that reveals longer event action guidance.
  */
-function createEventActionGuide(statusMeta) {
+function createEventActionGuide({ content, label, customClass = '' } = {}) {
     const guide = document.createElement('div');
     guide.className = 'dashboard-event__action-guide';
 
     const tooltip = new Tooltip({
-        content: readActionHintText(statusMeta),
-        label: 'Ver orientações deste envio',
-        customClass: 'dashboard-event__action-tooltip',
+        content: readText(content, 'Ver orientações desta ação.'),
+        label: readText(label, 'Ver orientações desta ação'),
+        customClass: customClass || 'dashboard-event__action-tooltip',
     });
 
     guide.append(tooltip.get());
@@ -359,9 +416,9 @@ function createEventActionGuide(statusMeta) {
 }
 
 /**
- * Creates the contextual management toolbar attached to a manageable event card.
+ * Creates the owner-management toolbar attached to a manageable event card.
  */
-function createEventActionToolbar(statusMeta) {
+function createOwnerEventActionToolbar(statusMeta) {
     const toolbar = document.createElement('div');
     toolbar.className = 'dashboard-event__toolbar';
 
@@ -382,16 +439,72 @@ function createEventActionToolbar(statusMeta) {
         }),
     );
 
-    toolbar.append(createEventActionGuide(statusMeta), actions);
+    toolbar.append(createEventActionGuide({
+        content: readOwnerActionHintText(statusMeta),
+        label: 'Ver orientações deste envio',
+        customClass: 'dashboard-event__action-tooltip',
+    }), actions);
     return toolbar;
 }
 
 /**
- * Creates a rendered event card tailored for the dashboard list.
+ * Creates the moderation toolbar attached to one pending admin queue card.
  */
-function createDashboardEventElement(event) {
+function createModerationEventActionToolbar() {
+    const toolbar = document.createElement('div');
+    toolbar.className = 'dashboard-event__toolbar';
+
+    const actions = document.createElement('div');
+    actions.className = 'dashboard-event__actions';
+    actions.append(
+        createEventActionButton({
+            action: 'approve',
+            label: 'Aprovar',
+            icon: 'check',
+            modifier: 'approve',
+        }),
+        createEventActionButton({
+            action: 'reject',
+            label: 'Rejeitar',
+            icon: 'ban',
+            modifier: 'danger',
+        }),
+    );
+
+    toolbar.append(createEventActionGuide({
+        content: 'Aprove para publicar o evento imediatamente ou rejeite com uma justificativa opcional para o organizador.',
+        label: 'Ver orientações da moderação',
+        customClass: 'dashboard-event__action-tooltip',
+    }), actions);
+    return toolbar;
+}
+
+/**
+ * Creates a highlighted moderation-feedback block for rejected events.
+ */
+function createModerationFeedbackElement(event) {
+    const feedback = document.createElement('div');
+    feedback.className = 'dashboard-event__feedback';
+
+    const label = document.createElement('span');
+    label.className = 'dashboard-event__feedback-label';
+    label.textContent = 'Motivo da rejeição';
+
+    const text = document.createElement('p');
+    text.className = 'dashboard-event__feedback-text';
+    text.textContent = readText(event?.rejectionReason, 'O moderador devolveu este evento sem observações adicionais.');
+
+    feedback.append(label, text);
+    return feedback;
+}
+
+/**
+ * Creates a rendered event card tailored for the active dashboard list.
+ */
+function createDashboardEventElement(event, { mode = DASHBOARD_VIEW_BROWSE } = {}) {
     const statusMeta = readStatusMeta(event?.status);
-    const isManageable = canManageOwnEvent(event);
+    const isModerationView = mode === DASHBOARD_VIEW_MODERATION;
+    const isManageable = !isModerationView && canManageOwnEvent(event);
     const article = document.createElement('article');
     article.className = `dashboard-event dashboard-event--${statusMeta.tone}`;
     article.dataset.eventId = readText(event?.id, '');
@@ -438,8 +551,10 @@ function createDashboardEventElement(event) {
     headline.append(title, statusGroup);
     header.appendChild(headline);
 
-    if (isManageable) {
-        header.appendChild(createEventActionToolbar(statusMeta));
+    if (isModerationView && isPendingModerationEvent(event)) {
+        header.appendChild(createModerationEventActionToolbar());
+    } else if (isManageable) {
+        header.appendChild(createOwnerEventActionToolbar(statusMeta));
     }
 
     const description = document.createElement('p');
@@ -457,16 +572,143 @@ function createDashboardEventElement(event) {
         createMetaPill(document.createTextNode(formatDateTimePtBr(event?.date)), 'date'),
     );
 
-    article.append(header, description, meta);
+    article.append(header, description);
+
+    if (!isModerationView && statusMeta.tone === 'warning' && event?.rejectionReason) {
+        article.appendChild(createModerationFeedbackElement(event));
+    }
+
+    article.append(meta);
 
     return article;
+}
+
+/**
+ * Returns the number of event pages required for the current dashboard list.
+ */
+function readDashboardEventPageCount(events) {
+    const totalEvents = Array.isArray(events) ? events.length : 0;
+
+    if (totalEvents === 0) {
+        return 0;
+    }
+
+    return Math.ceil(totalEvents / DASHBOARD_EVENTS_PER_PAGE);
+}
+
+/**
+ * Clamps an arbitrary page number into the available dashboard page range.
+ */
+function clampDashboardEventPage(page, totalPages) {
+    const normalizedPage = Number.parseInt(page, 10);
+
+    if (!Number.isInteger(totalPages) || totalPages < 1) {
+        return 1;
+    }
+
+    if (!Number.isInteger(normalizedPage) || normalizedPage < 1) {
+        return 1;
+    }
+
+    return Math.min(normalizedPage, totalPages);
+}
+
+/**
+ * Returns the event slice that belongs to the requested dashboard page.
+ */
+function readDashboardEventPageItems(events, page) {
+    const normalizedEvents = Array.isArray(events) ? events : [];
+    const totalPages = readDashboardEventPageCount(normalizedEvents);
+
+    if (totalPages === 0) {
+        return [];
+    }
+
+    const currentPage = clampDashboardEventPage(page, totalPages);
+    const startIndex = (currentPage - 1) * DASHBOARD_EVENTS_PER_PAGE;
+    return normalizedEvents.slice(startIndex, startIndex + DASHBOARD_EVENTS_PER_PAGE);
+}
+
+/**
+ * Builds the compact page number sequence rendered by the dashboard pager.
+ */
+function readDashboardEventPageSequence(currentPage, totalPages) {
+    if (totalPages <= 7) {
+        return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    const visiblePages = new Set([1, totalPages, currentPage - 1, currentPage, currentPage + 1]);
+    const sortedPages = Array.from(visiblePages)
+        .filter(page => page >= 1 && page <= totalPages)
+        .sort((left, right) => left - right);
+
+    return sortedPages.reduce((sequence, page) => {
+        const previousPage = sequence.at(-1);
+
+        if (typeof previousPage === 'number' && page - previousPage === 2) {
+            sequence.push(previousPage + 1);
+        } else if (typeof previousPage === 'number' && page - previousPage > 2) {
+            sequence.push('ellipsis');
+        }
+
+        sequence.push(page);
+        return sequence;
+    }, []);
+}
+
+/**
+ * Creates one pager button used by the dashboard event list.
+ */
+function createDashboardPaginationButton({ label, page, icon, current = false, disabled = false } = {}) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = current
+        ? 'button button--ghost dashboard-pagination__button dashboard-pagination__button--current'
+        : 'button button--ghost dashboard-pagination__button';
+    button.disabled = Boolean(disabled);
+
+    if (current) {
+        button.setAttribute('aria-current', 'page');
+    }
+
+    if (!disabled && Number.isInteger(page)) {
+        button.dataset.dashboardPage = String(page);
+    }
+
+    if (typeof icon === 'string' && icon.trim()) {
+        const iconElement = document.createElement('i');
+        iconElement.classList.add('fa-solid', `fa-${icon.trim()}`);
+        iconElement.setAttribute('aria-hidden', 'true');
+        button.appendChild(iconElement);
+    }
+
+    const labelElement = document.createElement('span');
+    labelElement.textContent = readText(label, 'Página');
+    button.appendChild(labelElement);
+    return button;
+}
+
+/**
+ * Creates a non-interactive ellipsis element used inside the dashboard pager.
+ */
+function createDashboardPaginationGap() {
+    const gap = document.createElement('span');
+    gap.className = 'dashboard-pagination__gap';
+    gap.setAttribute('aria-hidden', 'true');
+    gap.textContent = '...';
+    return gap;
 }
 
 class DashboardPage extends BaseComponent {
     #elements;
     #events = [];
+    #moderationEvents = [];
     #eventFormModal;
     #deleteEventModal;
+    #rejectEventModal;
+    #currentEventPage = 1;
+    #currentModerationPage = 1;
+    #currentView = DASHBOARD_VIEW_BROWSE;
     #session = null;
     #settingsModal;
     #actionTabs;
@@ -487,6 +729,10 @@ class DashboardPage extends BaseComponent {
         this.#deleteEventModal.onDeleteSuccess(async ({ eventId }) => {
             await this.#syncEventsAfterDelete(eventId);
         });
+        this.#rejectEventModal = new DashboardRejectEventModal();
+        this.#rejectEventModal.onRejectSuccess(async ({ event }) => {
+            await this.#syncModerationAfterDecision(event);
+        });
         this.#settingsModal = new DashboardSettingsModal({
             trigger: null,
         });
@@ -494,7 +740,7 @@ class DashboardPage extends BaseComponent {
             tabList: this.#elements.actionTabList,
             tabs: this.#elements.actionTabs,
             onAction: async (tabName) => {
-                await this.#handleActionTab(tabName);
+                return this.#handleActionTab(tabName);
             },
         });
         this.#actionTabs.wire().setActive('browse');
@@ -502,8 +748,14 @@ class DashboardPage extends BaseComponent {
         this.on(this.#elements.eventsList, 'click', event => {
             void this.#handleEventListClick(event);
         });
+        this.on(this.#elements.eventsPaginationControls, 'click', event => {
+            this.#handleEventPaginationClick(event);
+        });
 
-        this.#elements.eventsEmpty?.classList.add(DASHBOARD_HIDDEN_CLASS);
+        if (this.#elements.eventsEmpty) {
+            this.#elements.eventsEmpty.hidden = false;
+            this.#elements.eventsEmpty.classList.add(DASHBOARD_HIDDEN_CLASS);
+        }
     }
 
     /**
@@ -534,6 +786,7 @@ class DashboardPage extends BaseComponent {
         this.#session = session;
         this.#eventFormModal.setSession(session);
         this.#deleteEventModal.setSession(session);
+        this.#rejectEventModal.setSession(session);
         this.#settingsModal.setUser(session.user);
         Toast.dismissGroup(DASHBOARD_STATUS_TOAST_GROUP);
         this.#renderHeader();
@@ -569,6 +822,7 @@ class DashboardPage extends BaseComponent {
         }
 
         this.#events = sortEventsByDateDescending(response.data?.events || []);
+        this.#currentEventPage = 1;
         this.#renderDashboardSections();
     }
 
@@ -582,17 +836,25 @@ class DashboardPage extends BaseComponent {
             root,
             roleChip: root?.querySelector('#dashboard-role-chip') || null,
             userName: root?.querySelector('.dashboard-shell__user-name') || null,
+            shellInstruction: root?.querySelector('#dashboard-shell-instruction') || null,
             actionTabList: root?.querySelector('[data-dashboard-action-tabs]') || null,
             actionTabs: Array.from(root?.querySelectorAll('[data-dashboard-action-tab]') || []),
+            moderationTab: root?.querySelector('#dashboard-action-tab-moderation') || null,
             overviewBadge: root?.querySelector('#dashboard-overview-badge') || null,
             overviewNote: root?.querySelector('#dashboard-overview-note') || null,
             summaryGrid: root?.querySelector('#dashboard-summary-grid') || null,
             overviewSection: root?.querySelector('#dashboard-overview-section') || null,
             eventsSection: root?.querySelector('#dashboard-events-section') || null,
+            eventsEyebrow: root?.querySelector('#dashboard-events-eyebrow') || null,
+            eventsHeading: root?.querySelector('#dashboard-events-heading') || null,
+            eventsDescription: root?.querySelector('#dashboard-events-description') || null,
             eventsBadge: root?.querySelector('#dashboard-events-badge') || null,
             eventsCaption: root?.querySelector('#dashboard-events-caption') || null,
             eventsList: root?.querySelector('#dashboard-events-list') || null,
             eventsEmpty: root?.querySelector('#dashboard-events-empty') || null,
+            eventsPagination: root?.querySelector('#dashboard-events-pagination') || null,
+            eventsPaginationSummary: root?.querySelector('#dashboard-events-pagination-summary') || null,
+            eventsPaginationControls: root?.querySelector('#dashboard-events-pagination-controls') || null,
             createToggle: root?.querySelector('#dashboard-create-toggle') || null,
             settingsButton: root?.querySelector('#dashboard-settings-button') || null,
         };
@@ -604,7 +866,7 @@ class DashboardPage extends BaseComponent {
     #isReady() {
         return Boolean(
             super.isReady()
-            && this.#elements.actionTabs.length === 3
+            && this.#elements.actionTabs.length >= 3
             && this.#elements.overviewSection
             && this.#elements.summaryGrid
             && this.#elements.eventsSection
@@ -616,9 +878,9 @@ class DashboardPage extends BaseComponent {
     /**
      * Looks up one event by id inside the current dashboard state.
      */
-    #findEventById(eventId) {
+    #findActiveEventById(eventId) {
         const normalizedEventId = readText(eventId, '');
-        return this.#events.find(event => event.id === normalizedEventId) || null;
+        return this.#readActiveEvents().find(event => event.id === normalizedEventId) || null;
     }
 
     /**
@@ -638,6 +900,18 @@ class DashboardPage extends BaseComponent {
      * Runs the direct action associated with one dashboard subheader tab.
      */
     async #handleActionTab(tabName) {
+        if (tabName === DASHBOARD_VIEW_MODERATION) {
+            if (!this.#isAdmin()) {
+                return this.#currentView;
+            }
+
+            this.#currentView = DASHBOARD_VIEW_MODERATION;
+            this.#renderDashboardSections();
+            await this.refreshModerationEvents({ showErrors: true });
+            this.#focusSection(this.#elements.eventsSection);
+            return this.#currentView;
+        }
+
         if (tabName === 'create') {
             try {
                 await this.#eventFormModal.open();
@@ -648,7 +922,7 @@ class DashboardPage extends BaseComponent {
                     { group: DASHBOARD_STATUS_TOAST_GROUP },
                 );
             }
-            return;
+            return this.#currentView;
         }
 
         if (tabName === 'settings') {
@@ -661,8 +935,11 @@ class DashboardPage extends BaseComponent {
                     { group: DASHBOARD_STATUS_TOAST_GROUP },
                 );
             }
-            return;
+            return this.#currentView;
         }
+
+        this.#currentView = DASHBOARD_VIEW_BROWSE;
+        this.#renderDashboardSections();
 
         if (this.#elements.overviewSection) {
             this.#elements.overviewSection.open = true;
@@ -673,6 +950,7 @@ class DashboardPage extends BaseComponent {
         }
 
         this.#focusSection(this.#elements.overviewSection);
+        return this.#currentView;
     }
 
     /**
@@ -694,8 +972,9 @@ class DashboardPage extends BaseComponent {
         });
 
         this.#events = sortEventsByDateDescending([event, ...nextEvents]);
+        this.#currentEventPage = 1;
         this.#renderDashboardSections();
-        this.#actionTabs.setActive('browse');
+        this.#actionTabs.setActive(this.#currentView);
     }
 
     /**
@@ -709,8 +988,51 @@ class DashboardPage extends BaseComponent {
         }
 
         this.#events = this.#events.filter(event => event.id !== normalizedEventId);
+        this.#syncBrowsePage();
         this.#renderDashboardSections();
-        this.#actionTabs.setActive('browse');
+        this.#actionTabs.setActive(this.#currentView);
+    }
+
+    /**
+     * Synchronizes the moderation queue after an approve or reject action succeeds.
+     */
+    async #syncModerationAfterDecision(event) {
+        const moderatedEventId = readText(event?.id, '');
+
+        if (!moderatedEventId) {
+            await this.refreshModerationEvents({ showErrors: false });
+            return;
+        }
+
+        this.#moderationEvents = this.#moderationEvents.filter(currentEvent => currentEvent.id !== moderatedEventId);
+        this.#syncModerationPage();
+        this.#renderDashboardSections();
+        this.#actionTabs.setActive(this.#currentView);
+    }
+
+    /**
+     * Handles clicks on one dashboard pagination control.
+     */
+    #handleEventPaginationClick(domEvent) {
+        const button = domEvent.target instanceof Element
+            ? domEvent.target.closest('[data-dashboard-page]')
+            : null;
+
+        if (!button || !this.#elements.eventsPaginationControls?.contains(button)) {
+            return;
+        }
+
+        const requestedPage = Number.parseInt(button.dataset.dashboardPage || '', 10);
+        const totalPages = readDashboardEventPageCount(this.#readActiveEvents());
+        const nextPage = clampDashboardEventPage(requestedPage, totalPages);
+
+        if (nextPage === this.#readCurrentListPage()) {
+            return;
+        }
+
+        this.#setCurrentListPage(nextPage);
+        this.#renderEventList();
+        this.#elements.eventsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     /**
@@ -727,9 +1049,14 @@ class DashboardPage extends BaseComponent {
 
         const requestedAction = readText(actionButton.dataset.dashboardAction, '');
         const eventCard = actionButton.closest('[data-event-id]');
-        const managedEvent = this.#findEventById(eventCard?.dataset.eventId);
+        const managedEvent = this.#findActiveEventById(eventCard?.dataset.eventId);
 
         if (!managedEvent) {
+            return;
+        }
+
+        if (this.#currentView === DASHBOARD_VIEW_MODERATION) {
+            await this.#handleModerationEventAction(requestedAction, managedEvent, eventCard);
             return;
         }
 
@@ -761,6 +1088,88 @@ class DashboardPage extends BaseComponent {
     }
 
     /**
+     * Handles approve and reject actions dispatched from the moderation queue.
+     */
+    async #handleModerationEventAction(requestedAction, managedEvent, eventCard) {
+        if (!this.#isAdmin()) {
+            this.#showToast(
+                'Acesso restrito à fila de moderação.',
+                'error',
+                { group: DASHBOARD_STATUS_TOAST_GROUP },
+            );
+            return;
+        }
+
+        if (!isPendingModerationEvent(managedEvent)) {
+            this.#showToast(
+                'Somente eventos pendentes podem ser moderados por aqui.',
+                'error',
+                { group: DASHBOARD_STATUS_TOAST_GROUP },
+            );
+            return;
+        }
+
+        try {
+            if (requestedAction === 'approve') {
+                await this.#approveEvent(managedEvent, eventCard);
+                return;
+            }
+
+            if (requestedAction === 'reject') {
+                await this.#rejectEventModal.open({ event: managedEvent });
+            }
+        } catch {
+            this.#showToast(
+                'Não foi possível abrir essa ação de moderação agora.',
+                'error',
+                { group: DASHBOARD_STATUS_TOAST_GROUP },
+            );
+        }
+    }
+
+    /**
+     * Publishes one pending event directly from the moderation queue.
+     */
+    async #approveEvent(event, eventCard) {
+        if (!this.#session?.token) {
+            this.#showToast(
+                'Não foi possível validar a sua sessão agora.',
+                'error',
+                { group: DASHBOARD_STATUS_TOAST_GROUP },
+            );
+            return;
+        }
+
+        this.#setEventCardActionsDisabled(eventCard, true);
+
+        try {
+            const response = await requestApi(`/events/${event.id}/moderation`, {
+                method: 'PATCH',
+                token: this.#session.token,
+                body: { status: 'published' },
+            });
+
+            if (!response.ok) {
+                this.#showToast(
+                    response.message || 'Não foi possível aprovar o evento agora.',
+                    'error',
+                    { group: DASHBOARD_STATUS_TOAST_GROUP },
+                );
+                return;
+            }
+
+            await this.#syncModerationAfterDecision(response.data?.event || event);
+            this.#showToast(
+                response.message || 'Evento aprovado e publicado.',
+                'success',
+                { group: DASHBOARD_ACTION_TOAST_GROUP },
+            );
+        } finally {
+            this.#setEventCardActionsDisabled(eventCard, false);
+        }
+    }
+
+    /**
      * Renders every dashboard section driven by the current state snapshot.
      */
     #renderDashboardSections() {
@@ -776,12 +1185,30 @@ class DashboardPage extends BaseComponent {
         if (this.#elements.roleChip) {
             this.#elements.roleChip.textContent = readRoleLabel(this.#session?.user?.role);
         }
+
+        if (this.#elements.shellInstruction) {
+            this.#elements.shellInstruction.textContent = readDashboardShellInstruction(this.#session?.user?.role);
+        }
+
+        if (this.#elements.moderationTab) {
+            this.#elements.moderationTab.hidden = !this.#isAdmin();
+        }
     }
 
     /**
      * Renders the overview cards and the section badge.
      */
     #renderOverview() {
+        const isModerationView = this.#currentView === DASHBOARD_VIEW_MODERATION;
+
+        if (this.#elements.overviewSection) {
+            this.#elements.overviewSection.hidden = isModerationView;
+        }
+
+        if (isModerationView) {
+            return;
+        }
+
         const cards = createSummaryCards(this.#events);
         const fragment = document.createDocumentFragment();
 
@@ -813,29 +1240,225 @@ class DashboardPage extends BaseComponent {
      * Renders the current user's event list and empty state.
      */
     #renderEventList() {
+        const activeEvents = this.#readActiveEvents();
+        const sectionCopy = readEventSectionCopy(this.#currentView);
+        this.#syncCurrentListPage();
+
+        if (this.#elements.eventsEyebrow) {
+            this.#elements.eventsEyebrow.textContent = sectionCopy.eyebrow;
+        }
+
+        if (this.#elements.eventsHeading) {
+            this.#elements.eventsHeading.textContent = sectionCopy.heading;
+        }
+
+        if (this.#elements.eventsDescription) {
+            this.#elements.eventsDescription.textContent = sectionCopy.description;
+        }
+
         if (this.#elements.eventsBadge) {
-            this.#elements.eventsBadge.textContent = formatCount(this.#events.length, 'evento', 'eventos');
+            this.#elements.eventsBadge.textContent = formatCount(
+                activeEvents.length,
+                sectionCopy.badgeSingular,
+                sectionCopy.badgePlural,
+            );
         }
 
         if (this.#elements.eventsCaption) {
-            this.#elements.eventsCaption.textContent = this.#events.length > 0
-                ? 'Abaixo ficam todos os seus eventos, ordenados da data mais recente para a mais antiga.'
-                : 'Quando novos envios forem criados, eles aparecerão aqui com o respectivo status de moderação.';
+            this.#elements.eventsCaption.textContent = activeEvents.length > 0
+                ? sectionCopy.populatedCaption
+                : sectionCopy.emptyCaption;
         }
 
-        if (this.#events.length === 0) {
+        if (this.#elements.eventsEmpty) {
+            this.#elements.eventsEmpty.textContent = sectionCopy.emptyState;
+        }
+
+        if (activeEvents.length === 0) {
             this.#elements.eventsList.replaceChildren();
+            this.#elements.eventsEmpty.hidden = false;
             this.#elements.eventsEmpty?.classList.remove(DASHBOARD_HIDDEN_CLASS);
+            this.#renderEventPagination();
             return;
         }
 
         const fragment = document.createDocumentFragment();
-        this.#events.forEach((event) => {
-            fragment.appendChild(createDashboardEventElement(event));
+        readDashboardEventPageItems(activeEvents, this.#readCurrentListPage()).forEach((event) => {
+            fragment.appendChild(createDashboardEventElement(event, { mode: this.#currentView }));
         });
 
         this.#elements.eventsList.replaceChildren(fragment);
+        this.#elements.eventsEmpty.hidden = true;
         this.#elements.eventsEmpty?.classList.add(DASHBOARD_HIDDEN_CLASS);
+        this.#renderEventPagination();
+    }
+
+    /**
+     * Keeps the current dashboard event page inside the valid range.
+     */
+    #syncCurrentListPage() {
+        if (this.#currentView === DASHBOARD_VIEW_MODERATION) {
+            this.#syncModerationPage();
+            return;
+        }
+
+        this.#syncBrowsePage();
+    }
+
+    /**
+     * Renders the pager summary and controls for the current event slice.
+     */
+    #renderEventPagination() {
+        if (!this.#elements.eventsPagination || !this.#elements.eventsPaginationSummary || !this.#elements.eventsPaginationControls) {
+            return;
+        }
+
+        const activeEvents = this.#readActiveEvents();
+        const totalEvents = activeEvents.length;
+        const totalPages = readDashboardEventPageCount(activeEvents);
+        const currentPage = this.#readCurrentListPage();
+
+        if (totalPages <= 1) {
+            this.#elements.eventsPagination.hidden = true;
+            this.#elements.eventsPaginationControls.replaceChildren();
+            this.#elements.eventsPaginationSummary.textContent = totalEvents === 0
+                ? 'Mostrando 0 de 0 eventos.'
+                : `Mostrando ${totalEvents} de ${totalEvents} eventos.`;
+            return;
+        }
+
+        const startIndex = ((currentPage - 1) * DASHBOARD_EVENTS_PER_PAGE) + 1;
+        const endIndex = Math.min(currentPage * DASHBOARD_EVENTS_PER_PAGE, totalEvents);
+        this.#elements.eventsPagination.hidden = false;
+        this.#elements.eventsPaginationSummary.textContent = `Mostrando ${startIndex} a ${endIndex} de ${totalEvents} eventos.`;
+
+        const controls = document.createDocumentFragment();
+        controls.appendChild(createDashboardPaginationButton({
+            label: 'Anterior',
+            page: currentPage - 1,
+            icon: 'arrow-left',
+            disabled: currentPage === 1,
+        }));
+
+        readDashboardEventPageSequence(currentPage, totalPages).forEach((item) => {
+            if (item === 'ellipsis') {
+                controls.appendChild(createDashboardPaginationGap());
+                return;
+            }
+
+            controls.appendChild(createDashboardPaginationButton({
+                label: String(item),
+                page: item,
+                current: item === currentPage,
+            }));
+        });
+
+        controls.appendChild(createDashboardPaginationButton({
+            label: 'Próxima',
+            page: currentPage + 1,
+            icon: 'arrow-right',
+            disabled: currentPage === totalPages,
+        }));
+
+        this.#elements.eventsPaginationControls.replaceChildren(controls);
+    }
+
+    /**
+     * Reloads the moderation queue visible to administrators.
+     */
+    async refreshModerationEvents({ showErrors = false } = {}) {
+        if (!this.#session?.token || !this.#isAdmin()) {
+            this.#moderationEvents = [];
+            this.#currentModerationPage = 1;
+            this.#renderDashboardSections();
+            return;
+        }
+
+        const response = await requestApi('/events/moderation?status=pending', {
+            token: this.#session.token,
+        });
+
+        if (!response.ok) {
+            this.#moderationEvents = [];
+            this.#currentModerationPage = 1;
+            this.#renderDashboardSections();
+
+            if (showErrors) {
+                this.#showToast(
+                    response.message || 'Não foi possível carregar a fila de moderação no momento.',
+                    'error',
+                    { group: DASHBOARD_STATUS_TOAST_GROUP },
+                );
+            }
+
+            return;
+        }
+
+        this.#moderationEvents = sortEventsByDateDescending(response.data?.events || []);
+        this.#currentModerationPage = 1;
+        this.#renderDashboardSections();
+    }
+
+    /**
+     * Reports whether the active session belongs to an administrator.
+     */
+    #isAdmin() {
+        return isAdminRole(this.#session?.user?.role);
+    }
+
+    /**
+     * Returns the list associated with the active dashboard view.
+     */
+    #readActiveEvents() {
+        return this.#currentView === DASHBOARD_VIEW_MODERATION
+            ? this.#moderationEvents
+            : this.#events;
+    }
+
+    /**
+     * Returns the current page for the active dashboard list.
+     */
+    #readCurrentListPage() {
+        return this.#currentView === DASHBOARD_VIEW_MODERATION
+            ? this.#currentModerationPage
+            : this.#currentEventPage;
+    }
+
+    /**
+     * Stores the current page for the active dashboard list.
+     */
+    #setCurrentListPage(page) {
+        if (this.#currentView === DASHBOARD_VIEW_MODERATION) {
+            this.#currentModerationPage = page;
+            return;
+        }
+
+        this.#currentEventPage = page;
+    }
+
+    /**
+     * Keeps the owner-event page inside the valid browse range.
+     */
+    #syncBrowsePage() {
+        const totalPages = readDashboardEventPageCount(this.#events);
+        this.#currentEventPage = clampDashboardEventPage(this.#currentEventPage, totalPages);
+    }
+
+    /**
+     * Keeps the moderation page inside the valid queue range.
+     */
+    #syncModerationPage() {
+        const totalPages = readDashboardEventPageCount(this.#moderationEvents);
+        this.#currentModerationPage = clampDashboardEventPage(this.#currentModerationPage, totalPages);
+    }
+
+    /**
+     * Enables or disables every action button rendered inside one event card.
+     */
+    #setEventCardActionsDisabled(eventCard, disabled) {
+        eventCard?.querySelectorAll('[data-dashboard-action]').forEach((button) => {
+            button.disabled = Boolean(disabled);
+        });
     }
 
     /**
