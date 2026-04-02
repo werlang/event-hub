@@ -45,13 +45,12 @@ function mountHomeTooltips(elements) {
         return;
     }
 
-    const filterTooltip = new Tooltip({
+    new Tooltip({
+        element: elements.filterTooltip,
         content: 'Use os filtros para encontrar eventos de seu interesse. Você pode combinar vários filtros para refinar sua busca.',
         label: 'Ver ajuda sobre os filtros',
         placement: 'bottom',
     });
-
-    elements.filterTooltip.replaceChildren(filterTooltip.get());
 }
 
 /**

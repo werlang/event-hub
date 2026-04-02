@@ -822,17 +822,29 @@ function readDashboardEventPageSequence(currentPage, totalPages) {
 /**
  * Creates one pager button used by the dashboard event list.
  */
-function createDashboardPaginationButton({ label, page, icon, current = false, disabled = false } = {}) {
+function createDashboardPaginationButton({ label, page, icon, current = false, disabled = false, navigation = false } = {}) {
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = current
-        ? 'button button--ghost dashboard-pagination__button dashboard-pagination__button--current'
-        : 'button button--ghost dashboard-pagination__button';
+    const buttonClasses = ['button', 'button--ghost', 'dashboard-pagination__button'];
+
+    if (current) {
+        buttonClasses.push('dashboard-pagination__button--current');
+    }
+
+    if (navigation) {
+        buttonClasses.push('dashboard-pagination__button--nav');
+    }
+
+    button.className = buttonClasses.join(' ');
     button.disabled = Boolean(disabled);
+
+    const resolvedLabel = readText(label, 'Página');
 
     if (current) {
         button.setAttribute('aria-current', 'page');
     }
+
+    button.setAttribute('aria-label', navigation ? resolvedLabel : `Ir para a página ${resolvedLabel}`);
 
     if (!disabled && Number.isInteger(page)) {
         button.dataset.dashboardPage = String(page);
@@ -846,7 +858,7 @@ function createDashboardPaginationButton({ label, page, icon, current = false, d
     }
 
     const labelElement = document.createElement('span');
-    labelElement.textContent = readText(label, 'Página');
+    labelElement.textContent = resolvedLabel;
     button.appendChild(labelElement);
     return button;
 }
@@ -866,6 +878,7 @@ class DashboardPage extends BaseComponent {
     #elements;
     #events = [];
     #moderationEvents = [];
+    #showPastFilterTooltip;
     #browseFilters = {
         status: DASHBOARD_FILTER_ALL,
         category: DASHBOARD_FILTER_ALL,
@@ -913,6 +926,14 @@ class DashboardPage extends BaseComponent {
             },
         });
         this.#actionTabs.wire().setActive('browse');
+        this.#showPastFilterTooltip = this.#elements.eventsFilterShowPastTooltip
+            ? new Tooltip({
+                element: this.#elements.eventsFilterShowPastTooltip,
+                label: 'Entenda o filtro de eventos passados',
+                icon: 'circle-info',
+                customClass: 'dashboard-events-filters__tooltip',
+            })
+            : null;
 
         this.on(this.#elements.eventsList, 'click', event => {
             void this.#handleEventListClick(event);
@@ -1030,6 +1051,7 @@ class DashboardPage extends BaseComponent {
             eventsFilterStatus: root?.querySelector('#dashboard-events-filter-status') || null,
             eventsFilterCategory: root?.querySelector('#dashboard-events-filter-category') || null,
             eventsFilterShowPast: root?.querySelector('#dashboard-events-filter-show-past') || null,
+            eventsFilterShowPastTooltip: root?.querySelector('.dashboard-events-filters__checkbox-field[title]') || null,
             eventsFilterOrder: root?.querySelector('#dashboard-events-filter-order') || null,
             eventsList: root?.querySelector('#dashboard-events-list') || null,
             eventsEmpty: root?.querySelector('#dashboard-events-empty') || null,
@@ -1630,6 +1652,7 @@ class DashboardPage extends BaseComponent {
             page: currentPage - 1,
             icon: 'arrow-left',
             disabled: currentPage === 1,
+            navigation: true,
         }));
 
         readDashboardEventPageSequence(currentPage, totalPages).forEach((item) => {
@@ -1650,6 +1673,7 @@ class DashboardPage extends BaseComponent {
             page: currentPage + 1,
             icon: 'arrow-right',
             disabled: currentPage === totalPages,
+            navigation: true,
         }));
 
         this.#elements.eventsPaginationControls.replaceChildren(controls);
