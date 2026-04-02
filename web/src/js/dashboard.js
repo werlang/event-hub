@@ -793,13 +793,13 @@ class DashboardPage extends BaseComponent {
         if (this.#elements.userName) {
             this.#elements.userName.textContent = session.user?.name || 'Usuário';
         }
-        await this.refreshEvents();
+        this.#renderDashboardSections();
     }
 
     /**
      * Reloads the current user's events and refreshes every dashboard section.
      */
-    async refreshEvents() {
+    async refreshEvents({ showErrors = false } = {}) {
         if (!this.#session?.token) {
             return;
         }
@@ -813,11 +813,15 @@ class DashboardPage extends BaseComponent {
         if (!response.ok) {
             this.#events = [];
             this.#renderDashboardSections();
-            this.#showToast(
-                response.message || 'Não foi possível carregar os seus eventos no momento.',
-                'error',
-                { group: DASHBOARD_STATUS_TOAST_GROUP },
-            );
+
+            if (showErrors) {
+                this.#showToast(
+                    response.message || 'Não foi possível carregar os seus eventos no momento.',
+                    'error',
+                    { group: DASHBOARD_STATUS_TOAST_GROUP },
+                );
+            }
+
             return;
         }
 
@@ -940,6 +944,7 @@ class DashboardPage extends BaseComponent {
 
         this.#currentView = DASHBOARD_VIEW_BROWSE;
         this.#renderDashboardSections();
+        await this.refreshEvents({ showErrors: true });
 
         if (this.#elements.overviewSection) {
             this.#elements.overviewSection.open = true;
