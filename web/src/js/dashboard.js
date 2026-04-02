@@ -74,6 +74,17 @@ function formatCount(total, singular, plural) {
 }
 
 /**
+ * Formats a rounded percentage used in dashboard summary support copy.
+ */
+function formatPercentage(value, total) {
+    if (!Number.isFinite(value) || !Number.isFinite(total) || total <= 0) {
+        return '0%';
+    }
+
+    return `${Math.round((value / total) * 100)}%`;
+}
+
+/**
  * Counts events matching a predicate without assuming a valid array input.
  */
 function countEvents(events, predicate) {
@@ -104,37 +115,77 @@ function createSummaryCards(events) {
     return [
         {
             id: 'submitted',
-            label: 'Enviados',
+            eyebrow: 'Panorama',
+            label: 'Visão geral',
             value: total,
-            note: 'Eventos já cadastrados pela sua conta.',
+            unit: total === 1 ? 'envio registrado' : 'envios registrados',
+            note: total === 0
+                ? 'Crie o primeiro evento pelo botão Novo Evento no topo para começar a acompanhar aprovação, publicação e agenda por aqui.'
+                : 'Este cartão concentra a leitura mais rápida do que já entrou no fluxo da sua conta.',
+            meta: total === 0
+                ? 'Ainda sem atividade'
+                : `${formatCount(upcoming, 'próximo', 'próximos')} na agenda`,
+            highlights: total === 0
+                ? ['Use o botão Novo Evento', 'Os indicadores aparecem aqui']
+                : [
+                    formatCount(published, 'publicado', 'publicados'),
+                    pending > 0 ? formatCount(pending, 'pendente', 'pendentes') : 'Sem pendências',
+                    formatCount(upcoming, 'próximo', 'próximos'),
+                ],
+            icon: 'chart-column',
             tone: 'main',
+            featured: true,
         },
         {
             id: 'pending',
+            eyebrow: 'Moderação',
             label: 'Pendentes',
             value: pending,
-            note: 'Aguardando validação da moderação.',
+            unit: 'aguardando análise',
+            note: pending === 0
+                ? 'Nenhum envio aguardando aprovação no momento.'
+                : `${formatCount(pending, 'envio está', 'envios estão')} na fila da moderação.`,
+            meta: total === 0 ? 'Sem base ainda' : `${formatPercentage(pending, total)} do total`,
+            icon: 'clock',
             tone: 'pending',
         },
         {
             id: 'published',
+            eyebrow: 'Publicação',
             label: 'Publicados',
             value: published,
-            note: 'Eventos já exibidos na agenda pública.',
+            unit: 'já estão visíveis',
+            note: published === 0
+                ? 'Nenhum evento publicado ainda na agenda pública.'
+                : `${formatCount(published, 'evento já aparece', 'eventos já aparecem')} na agenda pública.`,
+            meta: total === 0 ? 'Sem base ainda' : `${formatPercentage(published, total)} do total`,
+            icon: 'check',
             tone: 'success',
         },
         {
             id: 'rejected',
+            eyebrow: 'Revisão',
             label: 'Rejeitados',
             value: rejected,
-            note: 'Envios que pedem revisão antes de voltar.',
+            unit: 'pedem ajuste',
+            note: rejected === 0
+                ? 'Nenhum envio devolvido para ajustes agora.'
+                : `${formatCount(rejected, 'envio precisa', 'envios precisam')} de revisão antes de voltar para aprovação.`,
+            meta: total === 0 ? 'Sem base ainda' : `${formatPercentage(rejected, total)} do total`,
+            icon: 'triangle-exclamation',
             tone: 'warning',
         },
         {
             id: 'upcoming',
+            eyebrow: 'Agenda',
             label: 'Próximos',
             value: upcoming,
-            note: 'Eventos cuja data ainda não passou.',
+            unit: 'ainda vão acontecer',
+            note: upcoming === 0
+                ? 'Não há eventos futuros registrados neste momento.'
+                : `${formatCount(upcoming, 'evento ainda vai acontecer', 'eventos ainda vão acontecer')} na sua agenda.`,
+            meta: total === 0 ? 'Sem base ainda' : `${formatPercentage(upcoming, total)} do total`,
+            icon: 'calendar-days',
             tone: 'neutral',
         },
     ];
@@ -145,21 +196,69 @@ function createSummaryCards(events) {
  */
 function createSummaryCardElement(card) {
     const element = document.createElement('article');
-    element.className = `dashboard-summary-card dashboard-summary-card--${card.tone}`;
+    element.className = card.featured
+        ? `dashboard-summary-card dashboard-summary-card--${card.tone} dashboard-summary-card--featured`
+        : `dashboard-summary-card dashboard-summary-card--${card.tone}`;
 
-    const label = document.createElement('span');
+    const top = document.createElement('div');
+    top.className = 'dashboard-summary-card__top';
+
+    const eyebrow = document.createElement('span');
+    eyebrow.className = 'dashboard-summary-card__eyebrow';
+    eyebrow.textContent = readText(card.eyebrow, 'Resumo');
+
+    const icon = document.createElement('span');
+    icon.className = 'dashboard-summary-card__icon';
+
+    const iconElement = document.createElement('i');
+    iconElement.classList.add('fa-solid', `fa-${readText(card.icon, 'chart-column')}`);
+    iconElement.setAttribute('aria-hidden', 'true');
+    icon.appendChild(iconElement);
+
+    top.append(eyebrow, icon);
+
+    const label = document.createElement('h3');
     label.className = 'dashboard-summary-card__label';
     label.textContent = card.label;
+
+    const metric = document.createElement('div');
+    metric.className = 'dashboard-summary-card__metric';
 
     const value = document.createElement('strong');
     value.className = 'dashboard-summary-card__value';
     value.textContent = String(card.value);
 
+    const unit = document.createElement('span');
+    unit.className = 'dashboard-summary-card__unit';
+    unit.textContent = readText(card.unit, 'itens');
+
+    metric.append(value, unit);
+
+    const highlights = document.createElement('div');
+    highlights.className = 'dashboard-summary-card__highlights';
+
+    (Array.isArray(card.highlights) ? card.highlights : []).forEach((highlight) => {
+        const highlightElement = document.createElement('span');
+        highlightElement.className = 'dashboard-summary-card__highlight';
+        highlightElement.textContent = readText(highlight, '');
+        highlights.appendChild(highlightElement);
+    });
+
     const note = document.createElement('p');
     note.className = 'dashboard-summary-card__note';
     note.textContent = card.note;
 
-    element.append(label, value, note);
+    const meta = document.createElement('p');
+    meta.className = 'dashboard-summary-card__meta';
+    meta.textContent = readText(card.meta, '');
+
+    element.append(top, label, metric);
+
+    if (highlights.childElementCount > 0) {
+        element.appendChild(highlights);
+    }
+
+    element.append(note, meta);
     return element;
 }
 
@@ -214,6 +313,7 @@ function createEventActionButton({ action, label, icon, modifier = '' } = {}) {
     const button = document.createElement('button');
     button.type = 'button';
     button.dataset.dashboardAction = readText(action, '');
+    button.setAttribute('aria-label', readText(label, 'Continuar'));
     button.className = modifier
         ? `button button--ghost dashboard-event__action-button dashboard-event__action-button--${modifier}`
         : 'button button--ghost dashboard-event__action-button';
@@ -237,7 +337,7 @@ function createEventActionButton({ action, label, icon, modifier = '' } = {}) {
 function readActionHintText(statusMeta) {
     return statusMeta.tone === 'warning'
         ? 'Faça os ajustes necessários e reenvie o evento para moderação, ou exclua este envio se preferir começar de novo.'
-        : 'Enquanto este envio não for publicado, você ainda pode editar ou excluir os dados.';
+        : 'Enquanto este envio não for publicado, você ainda pode editar ou excluir o evento.';
 }
 
 /**
@@ -258,6 +358,34 @@ function createEventActionGuide(statusMeta) {
 }
 
 /**
+ * Creates the contextual management toolbar attached to a manageable event card.
+ */
+function createEventActionToolbar(statusMeta) {
+    const toolbar = document.createElement('div');
+    toolbar.className = 'dashboard-event__toolbar';
+
+    const actions = document.createElement('div');
+    actions.className = 'dashboard-event__actions';
+    actions.append(
+        createEventActionButton({
+            action: 'edit',
+            label: 'Editar',
+            icon: 'pen-to-square',
+            modifier: 'edit',
+        }),
+        createEventActionButton({
+            action: 'delete',
+            label: 'Excluir',
+            icon: 'trash',
+            modifier: 'danger',
+        }),
+    );
+
+    toolbar.append(createEventActionGuide(statusMeta), actions);
+    return toolbar;
+}
+
+/**
  * Creates a rendered event card tailored for the dashboard list.
  */
 function createDashboardEventElement(event) {
@@ -273,6 +401,9 @@ function createDashboardEventElement(event) {
 
     const header = document.createElement('div');
     header.className = 'dashboard-event__header';
+
+    const headline = document.createElement('div');
+    headline.className = 'dashboard-event__headline';
 
     const title = document.createElement('h3');
     title.className = 'dashboard-event__title';
@@ -303,7 +434,12 @@ function createDashboardEventElement(event) {
     timelinePill.append(tooltipTimeline.get(), isPastEvent(event) ? 'Passado' : 'Próximo');
     statusGroup.appendChild(timelinePill);
 
-    header.append(title, statusGroup);
+    headline.append(title, statusGroup);
+    header.appendChild(headline);
+
+    if (isManageable) {
+        header.appendChild(createEventActionToolbar(statusMeta));
+    }
 
     const description = document.createElement('p');
     description.className = 'dashboard-event__description';
@@ -321,31 +457,6 @@ function createDashboardEventElement(event) {
     );
 
     article.append(header, description, meta);
-
-    if (isManageable) {
-        const footer = document.createElement('div');
-        footer.className = 'dashboard-event__footer';
-
-        const actions = document.createElement('div');
-        actions.className = 'dashboard-event__actions';
-        actions.append(
-            createEventActionButton({
-                action: 'edit',
-                label: 'Editar',
-                icon: 'pen-to-square',
-                modifier: 'edit',
-            }),
-            createEventActionButton({
-                action: 'delete',
-                label: 'Excluir',
-                icon: 'trash',
-                modifier: 'danger',
-            }),
-        );
-
-        footer.append(createEventActionGuide(statusMeta), actions);
-        article.appendChild(footer);
-    }
 
     return article;
 }
@@ -411,8 +522,8 @@ class DashboardPage extends BaseComponent {
         }
 
         this.#session = session;
-    this.#eventFormModal.setSession(session);
-    this.#deleteEventModal.setSession(session);
+        this.#eventFormModal.setSession(session);
+        this.#deleteEventModal.setSession(session);
         this.#settingsModal.setUser(session.user);
         Toast.dismissGroup(DASHBOARD_STATUS_TOAST_GROUP);
         this.#renderHeader();
@@ -465,8 +576,6 @@ class DashboardPage extends BaseComponent {
             eventsCaption: root?.querySelector('#dashboard-events-caption') || null,
             eventsList: root?.querySelector('#dashboard-events-list') || null,
             eventsEmpty: root?.querySelector('#dashboard-events-empty') || null,
-            actionsSection: root?.querySelector('#dashboard-actions-section') || null,
-            actionsBadge: root?.querySelector('#dashboard-actions-badge') || null,
             createToggle: root?.querySelector('#dashboard-create-toggle') || null,
             settingsButton: root?.querySelector('#dashboard-settings-button') || null,
         };

@@ -19,6 +19,27 @@
                 <p class="dashboard-eyebrow">Área do usuário</p>
             </div>
             <h1 id="dashboard-heading">Central de eventos</h1>
+
+            <div class="dashboard-command-bar" aria-label="Ações principais da central">
+                <div class="dashboard-command-bar__copy">
+                    <p class="dashboard-shell__welcome">
+                        Crie um novo envio sem sair desta página e mantenha os ajustes da conta por perto. As ações de
+                        cada evento continuam dentro do respectivo cartão.
+                    </p>
+                </div>
+
+                <div class="dashboard-command-bar__actions">
+                    <button class="button button--primary" id="dashboard-create-toggle" type="button">
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                        <span>Novo Evento</span>
+                    </button>
+
+                    <button class="button button--ghost" id="dashboard-settings-button" type="button">
+                        <i class="fa-solid fa-gear" aria-hidden="true"></i>
+                        <span>Configurações da conta</span>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="dashboard-sections">
@@ -70,47 +91,10 @@
                     </p>
 
                     <p class="empty-state" id="dashboard-events-empty" hidden>
-                        Você ainda não enviou nenhum evento. Use a seção de ações para criar a primeira postagem.
+                        Você ainda não enviou nenhum evento. Use o botão Novo Evento no topo para criar o primeiro.
                     </p>
 
                     <div class="dashboard-events-list" id="dashboard-events-list"></div>
-                </div>
-            </details>
-
-            <details class="dashboard-section" id="dashboard-actions-section" open>
-                <summary class="dashboard-section__summary">
-                    <div class="dashboard-section__summary-copy">
-                        <p class="dashboard-section__eyebrow">Ações</p>
-                        <h2>Atalhos rápidos</h2>
-                        <p class="dashboard-section__description">
-                            Acesse rapidamente as ações mais comuns para criar e gerenciar seus eventos, sem precisar
-                            navegar por outras páginas.
-                        </p>
-                    </div>
-
-                    <div class="dashboard-section__summary-side">
-                        <span class="dashboard-section__badge" id="dashboard-actions-badge">2 atalhos</span>
-                        <span class="dashboard-section__toggle" aria-hidden="true"><i class="fa-solid fa-chevron-down"></i></span>
-                    </div>
-                </summary>
-
-                <div class="dashboard-section__content">
-                    <div class="dashboard-actions-grid">
-                        <button class="button button--primary" id="dashboard-create-toggle" type="button">
-                            <i class="fa-solid fa-plus" aria-hidden="true"></i>
-                            <span>Novo Evento</span>
-                        </button>
-
-                        <button class="button button--ghost" id="dashboard-settings-button" type="button">
-                            <i class="fa-solid fa-gear" aria-hidden="true"></i>
-                            <span>Configurações do usuário</span>
-                        </button>
-                    </div>
-
-                    <p class="dashboard-inline-note">
-                        Esses atalhos estão disponíveis para facilitar a sua navegação. Em breve, mais ações serão
-                        adicionadas aqui.
-                    </p>
                 </div>
             </details>
         </div>
