@@ -1,6 +1,8 @@
 import { BaseComponent } from './base-component.js';
 
 const TOOLTIP_VISIBLE_CLASS = 'tooltip--visible';
+const TOOLTIP_GAP = 14;
+const TOOLTIP_VIEWPORT_PADDING = 18;
 let tooltipTokenCounter = 0;
 
 /**
@@ -42,10 +44,10 @@ function normalizeIconClasses(icon) {
 /**
  * Resolves the placement modifier applied to the tooltip root.
  */
-function readPlacementClass(placement) {
+function readPlacement(placement) {
     return readText(placement, 'top').toLowerCase() === 'bottom'
-        ? 'tooltip--bottom'
-        : 'tooltip--top';
+        ? 'bottom'
+        : 'top';
 }
 
 /**
@@ -67,6 +69,7 @@ export class Tooltip extends BaseComponent {
     #trigger;
     #bubble;
     #content;
+    #placement;
     #visible = false;
     #hasContent = false;
 
@@ -101,17 +104,20 @@ export class Tooltip extends BaseComponent {
         contentElement.className = 'tooltip__content';
         bubble.appendChild(contentElement);
 
-        element.append(trigger, bubble);
+        element.append(trigger);
         super(element);
 
         this.#trigger = trigger;
         this.#bubble = bubble;
         this.#content = contentElement;
+        this.#placement = readPlacement(placement);
 
         normalizeClassList(customClass).forEach(className => {
             element.classList.add(className);
         });
-        element.classList.add(readPlacementClass(placement));
+
+        this.#mountBubble();
+        this.#applyBubblePlacementClass(this.#placement);
 
         this.setLabel(label);
         this.setContent(content);
@@ -135,6 +141,8 @@ export class Tooltip extends BaseComponent {
                 this.#trigger.focus();
             }
         });
+        this.on(window, 'resize', () => this.#syncPosition());
+        this.on(document, 'scroll', () => this.#syncPosition(), true);
     }
 
     /**
@@ -185,7 +193,10 @@ export class Tooltip extends BaseComponent {
         }
 
         this.#visible = true;
+        this.#mountBubble();
+        this.#syncPosition();
         this.get().classList.add(TOOLTIP_VISIBLE_CLASS);
+        this.#bubble.classList.add(TOOLTIP_VISIBLE_CLASS);
         return this;
     }
 
@@ -195,6 +206,7 @@ export class Tooltip extends BaseComponent {
     close() {
         this.#visible = false;
         this.get().classList.remove(TOOLTIP_VISIBLE_CLASS);
+        this.#bubble.classList.remove(TOOLTIP_VISIBLE_CLASS);
         return this;
     }
 
@@ -203,6 +215,65 @@ export class Tooltip extends BaseComponent {
      */
     destroy() {
         this.close();
+        this.#bubble.remove();
         return super.destroy();
+    }
+
+    /**
+     * Mounts the floating bubble at the document level to avoid clipping.
+     */
+    #mountBubble() {
+        if (!this.#bubble.isConnected) {
+            document.body.appendChild(this.#bubble);
+        }
+    }
+
+    /**
+     * Synchronizes the floating bubble position with the trigger geometry.
+     */
+    #syncPosition() {
+        if (!this.#visible || !this.#bubble.isConnected) {
+            return;
+        }
+
+        const triggerRect = this.#trigger.getBoundingClientRect();
+        const bubbleRect = this.#bubble.getBoundingClientRect();
+        const bubbleWidth = bubbleRect.width;
+        const bubbleHeight = bubbleRect.height;
+        const centerX = triggerRect.left + (triggerRect.width / 2);
+
+        const unclampedLeft = centerX - (bubbleWidth / 2);
+        const left = Math.min(
+            Math.max(unclampedLeft, TOOLTIP_VIEWPORT_PADDING),
+            window.innerWidth - TOOLTIP_VIEWPORT_PADDING - bubbleWidth,
+        );
+
+        const preferredPlacement = this.#placement;
+        const canShowAbove = triggerRect.top - bubbleHeight - TOOLTIP_GAP >= TOOLTIP_VIEWPORT_PADDING;
+        const canShowBelow = triggerRect.bottom + bubbleHeight + TOOLTIP_GAP <= window.innerHeight - TOOLTIP_VIEWPORT_PADDING;
+        const resolvedPlacement = preferredPlacement === 'top'
+            ? (canShowAbove || !canShowBelow ? 'top' : 'bottom')
+            : (canShowBelow || !canShowAbove ? 'bottom' : 'top');
+
+        const top = resolvedPlacement === 'top'
+            ? triggerRect.top - bubbleHeight - TOOLTIP_GAP
+            : triggerRect.bottom + TOOLTIP_GAP;
+        const arrowLeft = Math.min(
+            Math.max(centerX - left, 18),
+            bubbleWidth - 18,
+        );
+
+        this.#applyBubblePlacementClass(resolvedPlacement);
+        this.#bubble.style.left = `${Math.round(left)}px`;
+        this.#bubble.style.top = `${Math.round(top)}px`;
+        this.#bubble.style.setProperty('--tooltip-arrow-left', `${Math.round(arrowLeft)}px`);
+    }
+
+    /**
+     * Applies the active placement modifier to the floating bubble element.
+     */
+    #applyBubblePlacementClass(placement) {
+        this.#bubble.classList.toggle('tooltip__bubble--top', placement === 'top');
+        this.#bubble.classList.toggle('tooltip__bubble--bottom', placement === 'bottom');
     }
 }

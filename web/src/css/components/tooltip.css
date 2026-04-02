@@ -41,8 +41,9 @@
 }
 
 .tooltip__bubble {
-    position: absolute;
-    left: 50%;
+    position: fixed;
+    left: 0;
+    top: 0;
     width: min(320px, calc(100vw - 36px));
     padding: 14px 16px;
     border: 1px solid color-mix(in srgb, var(--color-main), transparent 72%);
@@ -55,52 +56,50 @@
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    z-index: 12;
+    z-index: 120;
     transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
 }
 
-.tooltip--top .tooltip__bubble {
-    bottom: calc(100% + 14px);
-    transform: translate(-50%, 8px);
+.tooltip__bubble--top {
+    transform: translateY(8px);
 }
 
-.tooltip--top .tooltip__bubble::after,
-.tooltip--bottom .tooltip__bubble::after {
+.tooltip__bubble--top::after,
+.tooltip__bubble--bottom::after {
     content: '';
     position: absolute;
-    left: 50%;
+    left: var(--tooltip-arrow-left, 50%);
     width: 12px;
     height: 12px;
     background: color-mix(in srgb, #ffffff, var(--color-background) 18%);
 }
 
-.tooltip--top .tooltip__bubble::after {
+.tooltip__bubble--top::after {
     bottom: -7px;
     transform: translateX(-50%) rotate(45deg);
     border-right: 1px solid color-mix(in srgb, var(--color-main), transparent 72%);
     border-bottom: 1px solid color-mix(in srgb, var(--color-main), transparent 72%);
 }
 
-.tooltip--bottom .tooltip__bubble {
-    top: calc(100% + 14px);
-    transform: translate(-50%, -8px);
+.tooltip__bubble--bottom {
+    transform: translateY(-8px);
 }
 
-.tooltip--bottom .tooltip__bubble::after {
+.tooltip__bubble--bottom::after {
     top: -7px;
     transform: translateX(-50%) rotate(45deg);
     border-left: 1px solid color-mix(in srgb, var(--color-main), transparent 72%);
     border-top: 1px solid color-mix(in srgb, var(--color-main), transparent 72%);
 }
 
-.tooltip--visible .tooltip__bubble {
+.tooltip__bubble.tooltip--visible {
     opacity: 1;
     visibility: visible;
 }
 
-.tooltip--top.tooltip--visible .tooltip__bubble,
-.tooltip--bottom.tooltip--visible .tooltip__bubble {
-    transform: translate(-50%, 0);
+.tooltip__bubble--top.tooltip--visible,
+.tooltip__bubble--bottom.tooltip--visible {
+    transform: translateY(0);
 }
 
 .tooltip__content {
