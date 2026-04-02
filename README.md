@@ -60,6 +60,9 @@ Para desenvolvimento com containers, use `docker compose -f compose.dev.yaml up 
 
 - O schema oficial do banco está em `api/data/schema.sql` (tabelas `users` e `events`).
 - O repositório não possui bootstrap automático nem seeds executados pela API atual; o banco precisa estar provisionado separadamente.
+- Mudanças de schema devem ser feitas nesses arquivos versionados antes do deploy. A aplicação não deve tentar atualizar tabelas em runtime nem carregar compatibilidade para versões antigas do banco durante as requisições.
+- Para demonstrar a paginação do dashboard com mais de 10 eventos em uma única conta, use `api/data/dashboard-pagination-sample.sql`.
+  Após importar o arquivo, entre com `membro.paginacao@example.com` e senha `senha123456` para ver 12 eventos no dashboard e acionar a paginação.
 - Para desenvolvimento via Docker Compose, use `compose.dev.yaml`, que sobe `api`, `web` e `mysql`.
 
 ## Roles

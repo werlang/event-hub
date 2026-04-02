@@ -67,6 +67,7 @@ Error middleware (`api/middleware/error.js`) derives `type` from HTTP status nam
 - Keep route handlers in `api/routes/*.js` with `try/catch` + `next(error)` orchestration.
 - Keep business/data operations in models/helpers and avoid writing SQL directly in route handlers.
 - Use the shared base `Model` class with the `Mysql` driver instead of introducing a datastore/service wrapper layer.
+- Treat checked-in schema files as the source of truth. Do not add runtime schema upgrade or legacy-compatibility code such as `ensureSchema`, request-time `ALTER TABLE`, `SHOW COLUMNS`, or lazy migration guards in production code.
 - Preserve the global envelope format for both success and errors.
 - After each API feature or behavior change, update the Jest unit suite in `api/tests/unit` and run `docker compose -f compose.dev.yaml exec api npm test` before considering the task complete.
 - Add tests for both common real-world flows and meaningful edge cases such as missing inputs, malformed identifiers, unauthorized actors, stale state, duplicate data, and fallback defaults.

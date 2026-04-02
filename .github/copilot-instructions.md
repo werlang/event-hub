@@ -22,6 +22,8 @@
 - Refactors should reduce coupling or file bloat, not merely relocate code without clarifying responsibilities.
 - Prefer extracting role-specific or concern-specific collaborators when flows start diverging instead of accumulating conditionals in a single class or module.
 - When the project already has a reusable UI or DOM interaction pattern, follow that pattern rather than introducing one-off implementations that are harder to maintain.
+- Runtime compatibility for old database schemas is not allowed in application code. When a feature needs schema changes, update the checked-in SQL/bootstrap artifacts and assume the running software is already on the current schema version.
+- Do not add runtime schema mutation or legacy upgrade logic such as `ensureSchema`, `SHOW COLUMNS`, `ALTER TABLE`, lazy migration flags, or request-time fallback migrations inside models, routes, helpers, or boot paths.
 
 ## API Overview
 - Base middleware in `api/app.js`: `cors()`, JSON/urlencoded parsing, readiness route (`GET /ready`), explicit 404 forwarding, and terminal error middleware.
