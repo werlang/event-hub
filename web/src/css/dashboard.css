@@ -8,6 +8,7 @@
 @import './components/form.css';
 @import './components/modal.css';
 @import './components/toast.css';
+@import './components/tooltip.css';
 
 body {
     min-height: 100vh;
@@ -391,11 +392,20 @@ main {
     gap: 14px;
 }
 
-.dashboard-event__action-hint {
-    margin: 0;
-    flex: 1 1 260px;
+.dashboard-event__action-guide {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1 1 180px;
     color: var(--color-text-secondary);
-    line-height: 1.6;
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.dashboard-event__action-tooltip .tooltip__trigger {
+    width: 32px;
+    height: 32px;
+    box-shadow: none;
 }
 
 .dashboard-event__actions {
@@ -491,6 +501,10 @@ main {
 
     .dashboard-event__footer {
         display: grid;
+    }
+
+    .dashboard-event__action-guide {
+        justify-content: space-between;
     }
 
     .dashboard-event__actions {

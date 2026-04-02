@@ -23,6 +23,21 @@
         margin-bottom: 10px;
     }
 
+    & .panel__heading {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    & .panel__heading h2 {
+        margin-bottom: 0;
+    }
+
+    & .panel__heading + .hint {
+        margin-top: 10px;
+    }
+
     & .hint {
         color: var(--color-text-secondary);
     }

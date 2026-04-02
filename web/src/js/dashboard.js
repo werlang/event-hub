@@ -7,6 +7,7 @@ import { DashboardDeleteEventModal } from './dashboard/delete-event-modal.js';
 import { canManageOwnEvent } from './dashboard/event-management.js';
 import { DashboardSettingsModal } from './dashboard/settings-modal.js';
 import { Toast } from './components/toast.js';
+import { Tooltip } from './components/tooltip.js';
 import { requestApi } from './helpers/api.js';
 import { formatDateTimePtBr } from './helpers/date-format.js';
 import { isPastEvent, sortEventsByDateDescending } from './helpers/event-sort.js';
@@ -210,6 +211,36 @@ function createEventActionButton({ action, label, icon, modifier = '' } = {}) {
 }
 
 /**
+ * Returns the longer action guidance associated with one dashboard event card.
+ */
+function readActionHintText(statusMeta) {
+    return statusMeta.tone === 'warning'
+        ? 'Faça os ajustes necessários e reenvie o evento para moderação, ou exclua este envio se preferir começar de novo.'
+        : 'Enquanto este envio não for publicado, você ainda pode editar ou excluir os dados.';
+}
+
+/**
+ * Creates a compact help cue that reveals the longer event action guidance.
+ */
+function createEventActionGuide(statusMeta) {
+    const guide = document.createElement('div');
+    guide.className = 'dashboard-event__action-guide';
+
+    const label = document.createElement('span');
+    label.className = 'dashboard-event__action-guide-label';
+    label.textContent = 'Ajuda';
+
+    const tooltip = new Tooltip({
+        content: readActionHintText(statusMeta),
+        label: 'Ver orientações deste envio',
+        customClass: 'dashboard-event__action-tooltip',
+    });
+
+    guide.append(label, tooltip.get());
+    return guide;
+}
+
+/**
  * Creates a rendered event card tailored for the dashboard list.
  */
 function createDashboardEventElement(event) {
@@ -267,12 +298,6 @@ function createDashboardEventElement(event) {
         const footer = document.createElement('div');
         footer.className = 'dashboard-event__footer';
 
-        const hint = document.createElement('p');
-        hint.className = 'dashboard-event__action-hint';
-        hint.textContent = statusMeta.tone === 'warning'
-            ? 'Faça os ajustes necessários e reenvie o evento para moderação, ou exclua este envio se preferir começar de novo.'
-            : 'Enquanto este envio não for publicado, você ainda pode editar ou excluir os dados.';
-
         const actions = document.createElement('div');
         actions.className = 'dashboard-event__actions';
         actions.append(
@@ -290,7 +315,7 @@ function createDashboardEventElement(event) {
             }),
         );
 
-        footer.append(hint, actions);
+        footer.append(createEventActionGuide(statusMeta), actions);
         article.appendChild(footer);
     }
 

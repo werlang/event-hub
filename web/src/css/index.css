@@ -10,6 +10,7 @@
 @import './components/event-card.css';
 @import './components/form.css';
 @import './components/toast.css';
+@import './components/tooltip.css';
 
 
 .filters {

@@ -11,6 +11,7 @@ import {
 import { EventList } from './components/event-list.js';
 import { FilterForm } from './components/filter-form.js';
 import { QuickChips } from './components/quick-chips.js';
+import { Tooltip } from './components/tooltip.js';
 import { getCurrentWeekRangeLocal, getNextDaysRangeLocal } from './helpers/week-range.js';
 import { Header } from './components/header.js';
 
@@ -25,6 +26,7 @@ function createElements() {
     return {
         entrySurface: document.querySelector('#home-entry-surface'),
         filterSurface: document.querySelector('#home-filter-surface'),
+        filterTooltip: document.querySelector('#home-filter-tooltip'),
         filterForm: document.querySelector('#filter-form'),
         quickChips: document.querySelector('#quick-chips'),
         grid: document.querySelector('#events-grid'),
@@ -33,6 +35,23 @@ function createElements() {
         filterFrom: document.querySelector('#filter-from'),
         filterTo: document.querySelector('#filter-to'),
     };
+}
+
+/**
+ * Mounts the longer filter guidance behind a compact tooltip cue.
+ */
+function mountHomeTooltips(elements) {
+    if (!elements.filterTooltip) {
+        return;
+    }
+
+    const filterTooltip = new Tooltip({
+        content: 'Use os filtros para encontrar eventos de seu interesse. Você pode combinar vários filtros para refinar sua busca.',
+        label: 'Ver ajuda sobre os filtros',
+        placement: 'bottom',
+    });
+
+    elements.filterTooltip.replaceChildren(filterTooltip.get());
 }
 
 /**
@@ -114,6 +133,8 @@ function setEntrySurfacesVisibility(elements, hidden) {
  */
 export function initHomePage() {
     const elements = createElements();
+    mountHomeTooltips(elements);
+
     const eventList = new EventList({
         grid: elements.grid,
     });
