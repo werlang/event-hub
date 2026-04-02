@@ -1,0 +1,41 @@
+.dashboard-modal {
+    display: grid;
+    gap: 18px;
+
+    & :is(.dashboard-modal__intro, .dashboard-settings-note) {
+        margin: 0;
+        color: var(--color-text-secondary);
+        line-height: 1.7;
+    }
+
+    & .form {
+        margin-top: 0;
+    }
+
+    & .dashboard-modal__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+    }
+
+    & .dashboard-modal__actions .button {
+        min-width: 210px;
+    }
+}
+
+.dashboard-settings-list {
+    margin-top: 0;
+}
+
+@media (max-width: 640px) {
+    .dashboard-modal {
+        & .dashboard-modal__actions {
+            display: grid;
+        }
+
+        & .dashboard-modal__actions .button {
+            width: 100%;
+        }
+    }
+}

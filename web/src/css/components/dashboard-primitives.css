@@ -1,0 +1,30 @@
+.dashboard-eyebrow,
+.dashboard-section__eyebrow {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--color-main-alt), var(--color-text) 22%);
+}
+
+:is(.dashboard-chip, .dashboard-section__badge, .dashboard-status-pill, .dashboard-meta-pill) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: fit-content;
+    min-height: 34px;
+    padding: 7px 12px;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.dashboard-empty-state--hidden {
+    display: none;
+}
