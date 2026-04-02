@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS events (
     category VARCHAR(64) DEFAULT 'outro',
     location VARCHAR(255) DEFAULT NULL,
     status VARCHAR(32) NOT NULL DEFAULT 'pending',
+    rejection_reason TEXT DEFAULT NULL,
     calendar_link VARCHAR(255) DEFAULT NULL,
     organizer_id CHAR(36),
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

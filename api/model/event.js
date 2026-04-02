@@ -13,6 +13,7 @@ export class Event extends Model {
         'category',
         'location',
         'status',
+        'rejection_reason',
         'organizer_id',
         'created_at',
     ];
@@ -20,9 +21,6 @@ export class Event extends Model {
     static STATUS_PUBLISHED = 'published';
     static STATUS_REJECTED = 'rejected';
     static ALLOWED_STATUSES = ['pending', 'published', 'rejected'];
-
-    static #schemaReady = false;
-    static #schemaPromise = null;
 
     /**
      * Creates an event entity with the project's default values.
@@ -35,6 +33,7 @@ export class Event extends Model {
         category,
         location,
         status,
+        rejectionReason,
         organizerId,
         createdAt,
     } = {}) {
@@ -46,6 +45,7 @@ export class Event extends Model {
         this.category = normalizeEventCategoryId(category, { fallback: 'outro' });
         this.location = location || 'A definir';
         this.status = Event.normalizeStatus(status);
+        this.rejectionReason = Event.normalizeRejectionReason(rejectionReason);
         this.organizerId = organizerId;
         this.createdAt = createdAt || new Date().toISOString();
     }
@@ -63,6 +63,7 @@ export class Event extends Model {
             categoryLabel: readEventCategoryLabel(this.category, { fallback: 'Outro' }),
             location: this.location,
             status: this.status,
+            rejectionReason: this.rejectionReason,
             organizerId: this.organizerId,
             createdAt: this.createdAt,
         };
@@ -76,6 +77,14 @@ export class Event extends Model {
         return Event.ALLOWED_STATUSES.includes(normalizedStatus)
             ? normalizedStatus
             : Event.STATUS_PENDING;
+    }
+
+    /**
+     * Normalizes optional moderation feedback stored for rejected events.
+     */
+    static normalizeRejectionReason(reason) {
+        const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
+        return normalizedReason || null;
     }
 
     /**
@@ -93,48 +102,6 @@ export class Event extends Model {
         return [Event.STATUS_PENDING, Event.STATUS_REJECTED].includes(normalizedStatus);
     }
 
-    /**
-     * Ensures the moderation column exists before event queries run.
-     */
-    static async ensureSchema() {
-        if (Event.#schemaReady) {
-            return;
-        }
-
-        if (!Event.#schemaPromise) {
-            Event.#schemaPromise = Event.#ensureStatusColumn();
-        }
-
-        try {
-            await Event.#schemaPromise;
-            Event.#schemaReady = true;
-        } catch (error) {
-            Event.#schemaPromise = null;
-            throw error;
-        }
-    }
-
-    /**
-     * Adds the moderation column for existing databases and preserves old public events.
-     */
-    static async #ensureStatusColumn() {
-        const statusColumns = await this.driver.query(
-            `SHOW COLUMNS FROM \`${this.table}\` LIKE 'status'`,
-        );
-
-        if (statusColumns.length > 0) {
-            return;
-        }
-
-        await this.driver.query(
-            `ALTER TABLE \`${this.table}\` ADD COLUMN \`status\` VARCHAR(32) NOT NULL DEFAULT '${this.STATUS_PENDING}' AFTER \`location\``,
-        );
-
-        await this.driver.query(
-            `UPDATE \`${this.table}\` SET \`status\` = ?`,
-            [this.STATUS_PUBLISHED],
-        );
-    }
 
     /**
      * Normalizes a raw database row into the public event shape.
@@ -151,6 +118,7 @@ export class Event extends Model {
             categoryLabel: readEventCategoryLabel(row.category, { fallback: 'Outro' }),
             location: row.location,
             status: Event.normalizeStatus(row.status),
+            rejectionReason: Event.normalizeRejectionReason(row.rejectionReason || row.rejection_reason),
             organizerId: row.organizerId || row.organizer_id,
             createdAt: row.createdAt || row.created_at
                 ? new Date(row.createdAt || row.created_at).toISOString()
@@ -171,6 +139,7 @@ export class Event extends Model {
             category: normalizeEventCategoryId(event.category, { fallback: 'outro' }),
             location: event.location,
             status: this.normalizeStatus(event.status),
+            rejection_reason: this.normalizeRejectionReason(event.rejectionReason),
             organizer_id: event.organizerId,
             created_at: this.driver.toDateTime(event.createdAt || Date.now()),
         };
@@ -180,7 +149,7 @@ export class Event extends Model {
      * Serializes editable event fields without overwriting immutable columns.
      */
     static serializeEditablePayload(payload = {}) {
-        return Object.fromEntries(Object.entries({
+        const serialized = Object.fromEntries(Object.entries({
             title: payload.title,
             description: payload.description,
             date: payload.date ? this.driver.toDateTime(payload.date) : undefined,
@@ -188,13 +157,18 @@ export class Event extends Model {
             location: payload.location,
             status: payload.status ? this.normalizeStatus(payload.status) : undefined,
         }).filter(([, value]) => value !== undefined));
+
+        if (Object.prototype.hasOwnProperty.call(payload, 'rejectionReason')) {
+            serialized.rejection_reason = this.normalizeRejectionReason(payload.rejectionReason);
+        }
+
+        return serialized;
     }
 
     /**
-     * Retrieves multiple events after making sure the schema is ready.
+     * Retrieves multiple events using the base model lookup.
      */
     static async find(options = {}) {
-        await this.ensureSchema();
         return super.find(options);
     }
 
@@ -202,7 +176,6 @@ export class Event extends Model {
      * Retrieves a single event using the base model lookup.
      */
     static async get(clause, { view = this.view } = {}) {
-        await this.ensureSchema();
         return super.get(clause, { view });
     }
 
@@ -226,7 +199,6 @@ export class Event extends Model {
      * Creates and returns a new persisted event.
      */
     static async create(payload) {
-        await this.ensureSchema();
         const event = payload instanceof Event ? payload.toJSON() : new Event(payload).toJSON();
         const serialized = await this.insert(event);
         return this.get(serialized.id);
@@ -315,7 +287,6 @@ export class Event extends Model {
             return null;
         }
 
-        await this.ensureSchema();
         const serialized = this.serializeEditablePayload(payload);
         await this.driver.update(this.table, serialized, id);
         return this.get(id);
@@ -324,14 +295,14 @@ export class Event extends Model {
     /**
      * Updates the moderation status for an event and returns the persisted event.
      */
-    static async updateStatus(id, status) {
+    static async updateStatus(id, status, { rejectionReason } = {}) {
         if (!id) {
             return null;
         }
 
-        await this.ensureSchema();
         await this.driver.update(this.table, {
             status: this.normalizeStatus(status),
+            rejection_reason: this.normalizeRejectionReason(rejectionReason),
         }, id);
         return this.get(id);
     }
@@ -344,7 +315,6 @@ export class Event extends Model {
             return;
         }
 
-        await this.ensureSchema();
         await super.delete(id, { limit: 1 });
     }
 }

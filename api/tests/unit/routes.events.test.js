@@ -200,6 +200,7 @@ describe('routes/events', () => {
                 category: 'Tecnologia',
                 location: 'Laboratorio',
                 status: 'pending',
+                rejectionReason: null,
             },
         });
 
@@ -257,17 +258,38 @@ describe('routes/events', () => {
     test('moderation decisions enforce admin rules, validate statuses, and wrap failures', async () => {
         const statusCalls = [];
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'user-2' }));
-        trackReplacement(restores, Event, 'updateStatus', async (id, status) => {
-            statusCalls.push({ id, status });
-            return buildEvent({ id, status, organizerId: 'user-2' });
+        trackReplacement(restores, Event, 'updateStatus', async (id, status, options) => {
+            statusCalls.push({ id, status, options });
+            return buildEvent({ id, status, organizerId: 'user-2', rejectionReason: options?.rejectionReason ?? null });
         });
 
         const publishRes = createResponseDouble();
         const publishNext = jest.fn();
         await moderationDecisionHandler(createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'published' } }), publishRes, publishNext);
         expect(publishNext).not.toHaveBeenCalled();
-        expect(statusCalls).toEqual([{ id: 'event-1', status: 'published' }]);
+        expect(statusCalls).toEqual([{ id: 'event-1', status: 'published', options: { rejectionReason: null } }]);
         expect(publishRes.body.message).toBe('Evento aprovado e publicado.');
+
+        trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'user-2' }));
+        trackReplacement(restores, Event, 'updateStatus', async (id, status, options) => {
+            statusCalls.push({ id, status, options });
+            return buildEvent({ id, status, organizerId: 'user-2', rejectionReason: options?.rejectionReason ?? null });
+        });
+
+        const rejectRes = createResponseDouble();
+        const rejectNext = jest.fn();
+        await moderationDecisionHandler(createRequest({
+            user: { id: 'admin-1', role: 'admin' },
+            params: { id: 'event-2' },
+            body: { status: 'rejected', rejectionReason: '  Ajuste a descrição do público-alvo. ' },
+        }), rejectRes, rejectNext);
+        expect(rejectNext).not.toHaveBeenCalled();
+        expect(statusCalls.at(-1)).toEqual({
+            id: 'event-2',
+            status: 'rejected',
+            options: { rejectionReason: 'Ajuste a descrição do público-alvo.' },
+        });
+        expect(rejectRes.body.message).toBe('Evento rejeitado.');
 
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'admin-1' }));
         const selfNext = jest.fn();

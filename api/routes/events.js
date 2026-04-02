@@ -115,6 +115,20 @@ function parseModerationDecisionStatus(value) {
 }
 
 /**
+ * Parses the moderation decision payload accepted by administrators.
+ */
+function parseModerationDecisionPayload(payload = {}) {
+    const status = parseModerationDecisionStatus(payload.status);
+
+    return {
+        status,
+        rejectionReason: status === Event.STATUS_REJECTED
+            ? Event.normalizeRejectionReason(payload.rejectionReason)
+            : null,
+    };
+}
+
+/**
  * Lists public events using the supported query-string filters.
  */
 router.get('/', async (req, res, next) => {
@@ -210,6 +224,7 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
         const updatedEvent = await Event.updateDetails(currentEvent.id, {
             ...parseEventPayload(req.body),
             status: Event.STATUS_PENDING,
+            rejectionReason: null,
         });
 
         return sendSuccess(res, {
@@ -249,9 +264,11 @@ router.patch('/:id/moderation', authMiddleware, async (req, res, next) => {
         const currentEvent = await Event.findById(req.params.id);
         ensureAdminCanModerateEvent(currentEvent, req.user);
 
-        const status = parseModerationDecisionStatus(req.body?.status);
-        const updatedEvent = await Event.updateStatus(currentEvent.id, status);
-        const message = status === Event.STATUS_PUBLISHED
+        const moderationDecision = parseModerationDecisionPayload(req.body);
+        const updatedEvent = await Event.updateStatus(currentEvent.id, moderationDecision.status, {
+            rejectionReason: moderationDecision.rejectionReason,
+        });
+        const message = moderationDecision.status === Event.STATUS_PUBLISHED
             ? 'Evento aprovado e publicado.'
             : 'Evento rejeitado.';
 

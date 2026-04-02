@@ -10,67 +10,30 @@ afterEach(() => {
 });
 
 describe('model/event', () => {
-    test('ensureSchema adds the moderation column and backfills existing rows once', async () => {
-        const calls = [];
-        trackReplacement(restores, Event, 'driver', {
-            async query(sql, data) {
-                calls.push({ sql, data });
-
-                if (sql.includes("SHOW COLUMNS")) {
-                    return [];
-                }
-
-                return { ok: true };
-            },
-        });
-
-        await Event.ensureSchema();
-
-        expect(calls).toHaveLength(3);
-        expect(calls[0].sql).toMatch(/SHOW COLUMNS FROM `events` LIKE 'status'/);
-        expect(calls[1].sql).toMatch(/ALTER TABLE `events` ADD COLUMN `status` VARCHAR\(32\) NOT NULL DEFAULT 'pending'/);
-        expect(calls[2]).toEqual({
-            sql: 'UPDATE `events` SET `status` = ?',
-            data: ['published'],
-        });
-    });
-
-    test('ensureSchema returns early when the status column already exists', async () => {
-        const calls = [];
-        const { Event: FreshEvent } = await import(`../../model/event.js?case=${Date.now()}-${Math.random()}`);
-
-        FreshEvent.driver = {
-            async query(sql) {
-                calls.push(sql);
-                return [{ Field: 'status' }];
-            },
-        };
-
-        await FreshEvent.ensureSchema();
-
-        expect(calls).toEqual(["SHOW COLUMNS FROM `events` LIKE 'status'"]);
-    });
-
-    test('constructor applies defaults and status normalization helpers', () => {
+    test('constructor applies defaults and moderation normalization helpers', () => {
         const event = new Event({
             title: 'Workshop',
             description: 'Hands-on session',
             date: '2026-05-20T18:00:00.000Z',
             status: 'INVALID',
+            rejectionReason: '   ',
         });
 
         expect(event.category).toBe('outro');
         expect(event.location).toBe('A definir');
         expect(event.status).toBe('pending');
+        expect(event.rejectionReason).toBeNull();
         expect(Event.isPublishedStatus('published')).toBe(true);
         expect(Event.canOwnerManageStatus('rejected')).toBe(true);
         expect(Event.canOwnerManageStatus('published')).toBe(false);
     });
 
-    test('normalizeStatus trims unknown values back to pending', () => {
+    test('normalizeStatus and normalizeRejectionReason trim moderation values', () => {
         expect(Event.normalizeStatus('  rejected  ')).toBe('rejected');
         expect(Event.normalizeStatus('archived')).toBe('pending');
         expect(Event.isPublishedStatus(' published ')).toBe(true);
+        expect(Event.normalizeRejectionReason('  Ajuste a data do evento.  ')).toBe('Ajuste a data do evento.');
+        expect(Event.normalizeRejectionReason('   ')).toBeNull();
     });
 
     test('normalize and serialize map database fields consistently', () => {
@@ -88,6 +51,7 @@ describe('model/event', () => {
             category: 'Tecnologia',
             location: 'Auditorio',
             status: 'PUBLISHED',
+            rejectionReason: 'Aprovado sem pendencias.',
             organizer_id: 'user-1',
             created_at: '2026-04-02T12:00:00.000Z',
         });
@@ -95,6 +59,7 @@ describe('model/event', () => {
             status: 'PUBLISHED',
             organizerId: 'user-1',
             category: 'Tecnologia',
+            rejectionReason: '  Falta anexar o cronograma.  ',
         }));
 
         expect(normalized).toEqual({
@@ -106,6 +71,7 @@ describe('model/event', () => {
             categoryLabel: 'Tecnologia',
             location: 'Auditorio',
             status: 'published',
+            rejectionReason: 'Aprovado sem pendencias.',
             organizerId: 'user-1',
             createdAt: '2026-04-02T12:00:00.000Z',
         });
@@ -117,6 +83,7 @@ describe('model/event', () => {
             category: 'Tecnologia',
             location: 'Auditorio Central',
             status: 'published',
+            rejection_reason: 'Falta anexar o cronograma.',
             organizer_id: 'user-1',
             created_at: 'mysql:2026-04-02T12:00:00.000Z',
         });
@@ -142,12 +109,13 @@ describe('model/event', () => {
             categoryLabel: 'Tecnologia',
             location: 'Auditorio',
             status: 'pending',
+            rejectionReason: null,
             organizerId: 'user-1',
             createdAt: undefined,
         });
     });
 
-    test('serializeEditablePayload omits undefined fields and normalizes status', () => {
+    test('serializeEditablePayload omits undefined fields and normalizes moderation metadata', () => {
         trackReplacement(restores, Event, 'driver', {
             toDateTime(value) {
                 return `mysql:${value}`;
@@ -158,12 +126,14 @@ describe('model/event', () => {
             title: 'Novo titulo',
             date: '2026-06-01T10:00:00.000Z',
             status: 'REJECTED',
+            rejectionReason: '  Ajustar local e público-alvo. ',
         });
 
         expect(serialized).toEqual({
             title: 'Novo titulo',
             date: 'mysql:2026-06-01T10:00:00.000Z',
             status: 'rejected',
+            rejection_reason: 'Ajustar local e público-alvo.',
         });
     });
 
@@ -289,7 +259,6 @@ describe('model/event', () => {
     test('create inserts the event and reloads it', async () => {
         const insertCalls = [];
         const getCalls = [];
-        trackReplacement(restores, Event, 'ensureSchema', async () => {});
         trackReplacement(restores, Event, 'insert', async payload => {
             insertCalls.push(payload);
             return { id: 'event-1' };
@@ -309,7 +278,6 @@ describe('model/event', () => {
     test('updateDetails, updateStatus, and remove delegate through the driver', async () => {
         const updateCalls = [];
         const deleteCalls = [];
-        trackReplacement(restores, Event, 'ensureSchema', async () => {});
         trackReplacement(restores, Event, 'serializeEditablePayload', payload => payload);
         trackReplacement(restores, Event, 'driver', {
             async update(table, payload, id) {
@@ -322,7 +290,9 @@ describe('model/event', () => {
         trackReplacement(restores, Event, 'get', async id => buildEvent({ id }));
 
         const updatedDetails = await Event.updateDetails('event-1', { title: 'Novo titulo' });
-        const updatedStatus = await Event.updateStatus('event-1', 'published');
+        const updatedStatus = await Event.updateStatus('event-1', 'published', {
+            rejectionReason: 'Nao deve permanecer salvo.',
+        });
         await Event.remove('event-1');
 
         expect(updateCalls).toEqual([
@@ -333,7 +303,10 @@ describe('model/event', () => {
             },
             {
                 table: 'events',
-                payload: { status: 'published' },
+                payload: {
+                    status: 'published',
+                    rejection_reason: 'Nao deve permanecer salvo.',
+                },
                 id: 'event-1',
             },
         ]);
@@ -343,14 +316,8 @@ describe('model/event', () => {
     });
 
     test('updateDetails, updateStatus, and remove short-circuit missing ids', async () => {
-        const calls = [];
-        trackReplacement(restores, Event, 'ensureSchema', async () => {
-            calls.push('ensureSchema');
-        });
-
         await expect(Event.updateDetails('', { title: 'Ignored' })).resolves.toBeNull();
         await expect(Event.updateStatus('', 'published')).resolves.toBeNull();
         await expect(Event.remove('')).resolves.toBeUndefined();
-        expect(calls).toEqual([]);
     });
 });
