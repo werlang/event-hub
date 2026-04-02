@@ -22,21 +22,24 @@
 
             <div class="dashboard-command-bar" aria-label="Ações principais da central">
                 <div class="dashboard-command-bar__copy">
-                    <p class="dashboard-shell__welcome">
-                        Crie um novo envio sem sair desta página e mantenha os ajustes da conta por perto. As ações de
-                        cada evento continuam dentro do respectivo cartão.
-                    </p>
+                    <p class="dashboard-shell__welcome"> Bem-vindo de volta, <span class="dashboard-shell__user-name"></span>! </p>
+                    <p class="dashboard-shell__instruction">Use os botões abaixo para navegar entre seus envios, criar novos eventos ou revisar as configurações da sua conta.</p> 
                 </div>
 
-                <div class="dashboard-command-bar__actions">
-                    <button class="button button--primary" id="dashboard-create-toggle" type="button">
-                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
-                        <span>Novo Evento</span>
+                <div class="dashboard-command-bar__tabs" data-dashboard-action-tabs role="toolbar" aria-label="Ações rápidas da central">
+                    <button class="dashboard-action-tab dashboard-action-tab--current" id="dashboard-action-tab-browse" type="button" data-dashboard-action-tab="browse">
+                        <i class="fa-solid fa-binoculars" aria-hidden="true"></i>
+                        <span>Seus envios</span>
                     </button>
 
-                    <button class="button button--ghost" id="dashboard-settings-button" type="button">
+                    <button class="dashboard-action-tab" id="dashboard-action-tab-create" type="button" data-dashboard-action-tab="create">
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                        <span>Novo evento</span>
+                    </button>
+
+                    <button class="dashboard-action-tab" id="dashboard-action-tab-settings" type="button" data-dashboard-action-tab="settings">
                         <i class="fa-solid fa-gear" aria-hidden="true"></i>
-                        <span>Configurações da conta</span>
+                        <span>Configurações</span>
                     </button>
                 </div>
             </div>

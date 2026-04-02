@@ -56,6 +56,29 @@ Optional engineering constraints such as module boundaries, abstractions to pres
 
 ## Active TODOs
 
+## [TODO-0001] Turn dashboard command area into accessible tabs
+- Status: done
+- Priority: P1
+- Type: feature
+- Scope: web
+- Source: tasks/TODOs.md#L11
+- Dependencies: none
+
+### Context
+The dashboard command area needed a clearer subheader-style interaction: the current events view should stay as the active dashboard surface, while the other horizontal tabs should perform direct actions for creating a new event and opening account settings.
+
+### Implementation Notes
+Keep the page content below intact and use a horizontal subheader-style tab row in the command area. The current-view tab should keep the dashboard/events content in focus, while the create and settings tabs should open their modals directly.
+
+### Acceptance Criteria
+- [x] The top dashboard command area exposes viewing, creation, and settings through a horizontal subheader-style tab row
+- [x] Clicking the current-view tab focuses the dashboard/events content directly
+- [x] Clicking the new-event tab opens the create-event modal directly
+- [x] Clicking the settings tab opens the settings modal directly
+- [x] Existing create, edit, delete, and settings flows still work from the dashboard
+- [x] Module/class responsibilities remain clear and no unrelated concerns are added to existing files
+- [x] Validation completed by rebuilding the web bundle
+
 ## [TODO-EVHUB-STYLE-ALIGN-01] Align API primitives and app pipeline
 - Status: done
 - Priority: P1

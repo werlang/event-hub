@@ -43,6 +43,10 @@ textarea {
     color: inherit;
 }
 
+[hidden] {
+    display: none !important;
+}
+
 i[class^='fa-'],
 i[class*=' fa-'] {
     line-height: 1;

@@ -2,6 +2,7 @@ import '../css/dashboard.css';
 
 import { BaseComponent } from './components/base-component.js';
 import { Header } from './components/header.js';
+import { DashboardActionTabs } from './dashboard/action-tabs.js';
 import { DashboardEventFormModal } from './dashboard/create-event-modal.js';
 import { DashboardDeleteEventModal } from './dashboard/delete-event-modal.js';
 import { canManageOwnEvent } from './dashboard/event-management.js';
@@ -468,6 +469,7 @@ class DashboardPage extends BaseComponent {
     #deleteEventModal;
     #session = null;
     #settingsModal;
+    #actionTabs;
 
     /**
      * Creates the dashboard page controller around the page root.
@@ -476,7 +478,7 @@ class DashboardPage extends BaseComponent {
         super(document.querySelector('#dashboard-root'));
         this.#elements = this.#collectElements();
         this.#eventFormModal = new DashboardEventFormModal({
-            trigger: this.#elements.createToggle,
+            trigger: null,
         });
         this.#eventFormModal.onSubmitSuccess(async ({ event, mode, previousEventId }) => {
             await this.#syncEventsAfterSubmit({ event, mode, previousEventId });
@@ -486,8 +488,16 @@ class DashboardPage extends BaseComponent {
             await this.#syncEventsAfterDelete(eventId);
         });
         this.#settingsModal = new DashboardSettingsModal({
-            trigger: this.#elements.settingsButton,
+            trigger: null,
         });
+        this.#actionTabs = new DashboardActionTabs({
+            tabList: this.#elements.actionTabList,
+            tabs: this.#elements.actionTabs,
+            onAction: async (tabName) => {
+                await this.#handleActionTab(tabName);
+            },
+        });
+        this.#actionTabs.wire().setActive('browse');
 
         this.on(this.#elements.eventsList, 'click', event => {
             void this.#handleEventListClick(event);
@@ -527,6 +537,9 @@ class DashboardPage extends BaseComponent {
         this.#settingsModal.setUser(session.user);
         Toast.dismissGroup(DASHBOARD_STATUS_TOAST_GROUP);
         this.#renderHeader();
+        if (this.#elements.userName) {
+            this.#elements.userName.textContent = session.user?.name || 'Usuário';
+        }
         await this.refreshEvents();
     }
 
@@ -568,9 +581,13 @@ class DashboardPage extends BaseComponent {
         return {
             root,
             roleChip: root?.querySelector('#dashboard-role-chip') || null,
+            userName: root?.querySelector('.dashboard-shell__user-name') || null,
+            actionTabList: root?.querySelector('[data-dashboard-action-tabs]') || null,
+            actionTabs: Array.from(root?.querySelectorAll('[data-dashboard-action-tab]') || []),
             overviewBadge: root?.querySelector('#dashboard-overview-badge') || null,
             overviewNote: root?.querySelector('#dashboard-overview-note') || null,
             summaryGrid: root?.querySelector('#dashboard-summary-grid') || null,
+            overviewSection: root?.querySelector('#dashboard-overview-section') || null,
             eventsSection: root?.querySelector('#dashboard-events-section') || null,
             eventsBadge: root?.querySelector('#dashboard-events-badge') || null,
             eventsCaption: root?.querySelector('#dashboard-events-caption') || null,
@@ -587,11 +604,12 @@ class DashboardPage extends BaseComponent {
     #isReady() {
         return Boolean(
             super.isReady()
+            && this.#elements.actionTabs.length === 3
+            && this.#elements.overviewSection
             && this.#elements.summaryGrid
+            && this.#elements.eventsSection
             && this.#elements.eventsList
             && this.#elements.eventsEmpty
-            && this.#elements.createToggle
-            && this.#elements.settingsButton,
         );
     }
 
@@ -601,6 +619,60 @@ class DashboardPage extends BaseComponent {
     #findEventById(eventId) {
         const normalizedEventId = readText(eventId, '');
         return this.#events.find(event => event.id === normalizedEventId) || null;
+    }
+
+    /**
+     * Scrolls one dashboard section into view and focuses its summary.
+     */
+    #focusSection(section) {
+        if (!section) {
+            return;
+        }
+
+        section.open = true;
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        section.querySelector('.dashboard-section__summary')?.focus();
+    }
+
+    /**
+     * Runs the direct action associated with one dashboard subheader tab.
+     */
+    async #handleActionTab(tabName) {
+        if (tabName === 'create') {
+            try {
+                await this.#eventFormModal.open();
+            } catch {
+                this.#showToast(
+                    'Não foi possível abrir o formulário do evento agora.',
+                    'error',
+                    { group: DASHBOARD_STATUS_TOAST_GROUP },
+                );
+            }
+            return;
+        }
+
+        if (tabName === 'settings') {
+            try {
+                await this.#settingsModal.open();
+            } catch {
+                this.#showToast(
+                    'Não foi possível abrir as configurações agora.',
+                    'error',
+                    { group: DASHBOARD_STATUS_TOAST_GROUP },
+                );
+            }
+            return;
+        }
+
+        if (this.#elements.overviewSection) {
+            this.#elements.overviewSection.open = true;
+        }
+
+        if (this.#elements.eventsSection) {
+            this.#elements.eventsSection.open = true;
+        }
+
+        this.#focusSection(this.#elements.overviewSection);
     }
 
     /**
@@ -623,10 +695,7 @@ class DashboardPage extends BaseComponent {
 
         this.#events = sortEventsByDateDescending([event, ...nextEvents]);
         this.#renderDashboardSections();
-
-        if (this.#elements.eventsSection) {
-            this.#elements.eventsSection.open = true;
-        }
+        this.#actionTabs.setActive('browse');
     }
 
     /**
@@ -641,10 +710,7 @@ class DashboardPage extends BaseComponent {
 
         this.#events = this.#events.filter(event => event.id !== normalizedEventId);
         this.#renderDashboardSections();
-
-        if (this.#elements.eventsSection) {
-            this.#elements.eventsSection.open = true;
-        }
+        this.#actionTabs.setActive('browse');
     }
 
     /**
