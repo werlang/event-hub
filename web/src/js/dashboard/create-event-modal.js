@@ -265,7 +265,7 @@ export class DashboardEventFormModal {
             title: readText(formData.title, ''),
             description: readText(formData.description, ''),
             date: readText(formData.date, ''),
-            category: readText(formData.category, 'Geral'),
+            category: readText(formData.category, 'outro'),
             location: readText(formData.location, 'A definir'),
         };
     }
@@ -386,7 +386,7 @@ export class DashboardEventFormModal {
             descriptionField.value = readText(this.#activeEvent.description, '');
         }
 
-        syncSelectValue(categoryField, this.#activeEvent.category, 'Geral');
+        syncSelectValue(categoryField, this.#activeEvent.category, 'outro');
 
         if (locationField) {
             locationField.value = readText(this.#activeEvent.location, '');

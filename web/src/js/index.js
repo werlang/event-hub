@@ -95,22 +95,22 @@ function createQuickChips() {
             buildFilters: () => getNextDaysRangeLocal(7),
         },
         {
-            id: 'category-community',
-            label: 'Comunidade',
-            icon: 'people-group',
-            buildFilters: () => ({ category: 'Comunidade' }),
-        },
-        {
-            id: 'category-research',
-            label: 'Pesquisa',
-            icon: 'flask',
-            buildFilters: () => ({ category: 'Pesquisa' }),
+            id: 'category-academic',
+            label: 'Acadêmicos',
+            icon: 'graduation-cap',
+            buildFilters: () => ({ category: 'academico' }),
         },
         {
             id: 'category-extension',
             label: 'Extensão',
             icon: 'hands-holding-circle',
-            buildFilters: () => ({ category: 'Extensão' }),
+            buildFilters: () => ({ category: 'extensao' }),
+        },
+        {
+            id: 'category-representation',
+            label: 'Institucionais',
+            icon: 'building-columns',
+            buildFilters: () => ({ category: 'representacao' }),
         },
     ];
 }

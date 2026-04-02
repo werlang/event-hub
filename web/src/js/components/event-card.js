@@ -1,6 +1,7 @@
 import { BaseComponent } from './base-component.js';
 import { formatDateTimePtBr } from '../helpers/date-format.js';
 import { isPastEvent } from '../helpers/event-sort.js';
+import { readEventTagSummary } from '../helpers/event-category.js';
 import { createLocationContent } from '../helpers/location-link.js';
 
 /**
@@ -32,6 +33,40 @@ function createMetaItem(icon, content) {
 	const item = document.createElement('span');
 	item.append(createCardIcon(icon), content);
 	return item;
+}
+
+/**
+	* Creates one compact tag chip for the event card.
+	*/
+function createTagChip(label, modifier = '') {
+	const chip = document.createElement('span');
+	chip.className = modifier ? `card__tag card__tag--${modifier}` : 'card__tag';
+	chip.textContent = readText(label, 'Outro');
+	return chip;
+}
+
+/**
+	* Creates the tag row rendered above the metadata pills.
+	*/
+function createTagList(event) {
+	const summary = readEventTagSummary(event, { visibleCount: 2 });
+	if (summary.tags.length === 0) {
+		return null;
+	}
+
+	const list = document.createElement('div');
+	list.className = 'card__tags';
+	summary.visibleTags.forEach((tag) => {
+		list.appendChild(createTagChip(tag.label));
+	});
+
+	if (summary.hiddenCount > 0) {
+		const overflowChip = createTagChip(`+${summary.hiddenCount}`, 'more');
+		overflowChip.title = summary.hiddenTags.map(tag => tag.label).join(', ');
+		list.appendChild(overflowChip);
+	}
+
+	return list;
 }
 
 export class EventCard extends BaseComponent {
@@ -94,11 +129,15 @@ export class EventCard extends BaseComponent {
 		description.textContent = readText(this.#event?.description, 'Sem descrição.');
 		fragment.appendChild(description);
 
+		const tags = createTagList(this.#event);
+		if (tags) {
+			fragment.appendChild(tags);
+		}
+
 		const meta = document.createElement('div');
 		meta.className = 'card__meta';
 
 		meta.append(
-			createMetaItem('tag', document.createTextNode(readText(this.#event?.category, 'Geral'))),
 			createMetaItem('location-dot', createLocationContent(this.#event?.location, {
 				fallback: 'A definir',
 				linkClass: 'card__meta-link',

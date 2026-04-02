@@ -11,6 +11,7 @@ import { Tooltip } from './components/tooltip.js';
 import { requestApi } from './helpers/api.js';
 import { formatDateTimePtBr } from './helpers/date-format.js';
 import { isPastEvent, sortEventsByDateDescending } from './helpers/event-sort.js';
+import { readEventTagSummary } from './helpers/event-category.js';
 import { createLocationContent } from './helpers/location-link.js';
 
 const DASHBOARD_STATUS_TOAST_GROUP = 'dashboard-status';
@@ -188,6 +189,22 @@ function createMetaPill(content, modifier = '') {
 }
 
 /**
+ * Creates the compact category summary shown in dashboard event metadata.
+ */
+function createCategoryMetaContent(event) {
+    const summary = readEventTagSummary(event, { visibleCount: 1 });
+    const label = summary.visibleTags[0]?.label || 'Outro';
+    const content = document.createElement('span');
+    content.textContent = summary.hiddenCount > 0 ? `${label} +${summary.hiddenCount}` : label;
+
+    if (summary.hiddenCount > 0) {
+        content.title = summary.hiddenTags.map(tag => tag.label).join(', ');
+    }
+
+    return content;
+}
+
+/**
  * Creates one dashboard action button for manageable event cards.
  */
 function createEventActionButton({ action, label, icon, modifier = '' } = {}) {
@@ -227,17 +244,13 @@ function createEventActionGuide(statusMeta) {
     const guide = document.createElement('div');
     guide.className = 'dashboard-event__action-guide';
 
-    const label = document.createElement('span');
-    label.className = 'dashboard-event__action-guide-label';
-    label.textContent = 'Ajuda';
-
     const tooltip = new Tooltip({
         content: readActionHintText(statusMeta),
         label: 'Ver orientações deste envio',
         customClass: 'dashboard-event__action-tooltip',
     });
 
-    guide.append(label, tooltip.get());
+    guide.append(tooltip.get());
     return guide;
 }
 
@@ -284,7 +297,7 @@ function createDashboardEventElement(event) {
     const meta = document.createElement('div');
     meta.className = 'dashboard-event__meta';
     meta.append(
-        createMetaPill(document.createTextNode(readText(event?.category, 'Geral')), 'category'),
+        createMetaPill(createCategoryMetaContent(event), 'category'),
         createMetaPill(createLocationContent(event?.location, {
             fallback: 'A definir',
             linkClass: 'dashboard-meta-pill__link',

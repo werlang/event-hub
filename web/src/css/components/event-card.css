@@ -31,6 +31,32 @@
         line-height: 1.6;
     }
 
+    & .card__tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    & .card__tag {
+        display: inline-flex;
+        align-items: center;
+        min-width: 0;
+        padding: 5px 10px;
+        border-radius: var(--radius-pill);
+        background: color-mix(in srgb, var(--color-main), transparent 88%);
+        border: 1px solid color-mix(in srgb, var(--color-main), transparent 74%);
+        color: var(--color-main);
+        font-size: 0.78rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    & .card__tag--more {
+        background: color-mix(in srgb, var(--color-text), var(--color-background) 12%);
+        border-color: color-mix(in srgb, var(--color-main), transparent 82%);
+        color: var(--color-text-secondary);
+    }
+
     & .card__title {
         font-family: var(--font-display);
         font-weight: 700;
@@ -92,13 +118,6 @@
         & .card__meta-link:hover,
         & .card__meta-link:focus-visible {
             color: var(--color-main);
-        }
-
-        & span:first-child {
-            background: color-mix(in srgb, var(--color-main), transparent 88%);
-            border-color: color-mix(in srgb, var(--color-main), transparent 74%);
-            color: var(--color-main);
-            font-weight: 700;
         }
 
         & span:last-child {
