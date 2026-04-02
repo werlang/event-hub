@@ -70,6 +70,7 @@ export class Tooltip extends BaseComponent {
     #bubble;
     #content;
     #placement;
+    #standalone = false;
     #visible = false;
     #hasContent = false;
 
@@ -77,14 +78,28 @@ export class Tooltip extends BaseComponent {
      * Creates a reusable tooltip cue with hover and focus behavior.
      */
     constructor({
+        element = null,
         content = '',
         label = 'Mostrar ajuda',
-        icon = 'circle-question',
+        icon = 'circle-info',
         placement = 'top',
         customClass,
     } = {}) {
-        const element = document.createElement('span');
-        element.className = 'tooltip';
+        const hasExistingElement = element instanceof HTMLElement;
+
+        if (element instanceof HTMLElement && element.hasAttribute('title')) {
+            content = readText(element.getAttribute('title'), '');
+            element.removeAttribute('title');
+        }
+
+        const rootElement = hasExistingElement
+            ? element
+            : document.createElement('span');
+
+        super(rootElement);
+        this.#standalone = !hasExistingElement;
+
+        rootElement.classList.add('tooltip');
 
         const trigger = document.createElement('button');
         trigger.type = 'button';
@@ -104,16 +119,15 @@ export class Tooltip extends BaseComponent {
         contentElement.className = 'tooltip__content';
         bubble.appendChild(contentElement);
 
-        element.append(trigger);
-        super(element);
+        rootElement.appendChild(trigger);
 
         this.#trigger = trigger;
         this.#bubble = bubble;
         this.#content = contentElement;
         this.#placement = readPlacement(placement);
 
-        normalizeClassList(customClass).forEach(className => {
-            element.classList.add(className);
+        normalizeClassList(customClass).forEach((className) => {
+            rootElement.classList.add(className);
         });
 
         this.#mountBubble();
@@ -122,19 +136,19 @@ export class Tooltip extends BaseComponent {
         this.setLabel(label);
         this.setContent(content);
 
-        this.on(element, 'mouseenter', () => this.open());
-        this.on(element, 'mouseleave', () => {
-            if (!element.matches(':focus-within')) {
+        this.on(trigger, 'mouseenter', () => this.open());
+        this.on(trigger, 'mouseleave', () => {
+            if (!trigger.matches(':focus-visible')) {
                 this.close();
             }
         });
-        this.on(element, 'focusin', () => this.open());
-        this.on(element, 'focusout', (event) => {
-            if (!isWithinTooltip(element, event.relatedTarget) && !element.matches(':hover')) {
+        this.on(trigger, 'focus', () => this.open());
+        this.on(trigger, 'blur', (event) => {
+            if (!isWithinTooltip(trigger, event.relatedTarget)) {
                 this.close();
             }
         });
-        this.on(element, 'keydown', (event) => {
+        this.on(trigger, 'keydown', (event) => {
             if (event.key === 'Escape') {
                 event.preventDefault();
                 this.close();
@@ -159,7 +173,11 @@ export class Tooltip extends BaseComponent {
         const normalizedContent = readText(content);
         this.#hasContent = Boolean(normalizedContent);
         this.#content.textContent = normalizedContent;
-        this.get().hidden = !this.#hasContent;
+        this.#trigger.hidden = !this.#hasContent;
+
+        if (this.#standalone) {
+            this.get().hidden = !this.#hasContent;
+        }
 
         if (!this.#hasContent) {
             this.close();
@@ -215,6 +233,7 @@ export class Tooltip extends BaseComponent {
      */
     destroy() {
         this.close();
+        this.#trigger.remove();
         this.#bubble.remove();
         return super.destroy();
     }
