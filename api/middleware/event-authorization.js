@@ -21,12 +21,12 @@ export function assertOwnerCanManageEvent(event, user) {
 /**
  * Ensures the authenticated administrator can moderate the target event.
  */
-export function assertAdminCanModerateEvent(event, user) {
+export function assertAdminCanModerateEvent(event, user, { allowSelfModeration = false } = {}) {
     if (!event) {
         throw new HttpError(404, 'Evento não encontrado.');
     }
 
-    if (event.organizerId === user?.id) {
+    if (event.organizerId === user?.id && !allowSelfModeration) {
         throw new HttpError(403, 'Administradores não podem moderar os próprios eventos.');
     }
 

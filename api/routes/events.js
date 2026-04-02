@@ -221,7 +221,7 @@ router.patch('/:id/moderation',
     async (req, res, next) => {
     try {
         const currentEvent = await Event.findById(req.params.id);
-        assertAdminCanModerateEvent(currentEvent, req.user);
+        assertAdminCanModerateEvent(currentEvent, req.user, { allowSelfModeration: ALLOW_SELF_MODERATION });
 
         const moderationDecision = parseModerationDecisionPayload(req.body);
         const updatedEvent = await Event.updateStatus(currentEvent.id, moderationDecision.status, {
