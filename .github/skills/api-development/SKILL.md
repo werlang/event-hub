@@ -68,6 +68,9 @@ Error middleware (`api/middleware/error.js`) derives `type` from HTTP status nam
 - Keep business/data operations in models/helpers and avoid writing SQL directly in route handlers.
 - Use the shared base `Model` class with the `Mysql` driver instead of introducing a datastore/service wrapper layer.
 - Preserve the global envelope format for both success and errors.
+- After each API feature or behavior change, update the Jest unit suite in `api/tests/unit` and run `docker compose -f compose.dev.yaml exec api npm test` before considering the task complete.
+- Add tests for both common real-world flows and meaningful edge cases such as missing inputs, malformed identifiers, unauthorized actors, stale state, duplicate data, and fallback defaults.
+- Keep API test work branch-aware: prefer assertions that cover validation failures, authorization checks, normalization, defaults, and unexpected-error wrapping, not only success paths.
 - Reuse established HTTP status codes:
    - `201` for created resources
    - `400` for validation errors
