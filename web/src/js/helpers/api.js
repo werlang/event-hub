@@ -206,8 +206,6 @@ export class ApiClient {
             return this.#request.get(endpoint, requestOptions);
         case 'POST':
             return this.#request.post(endpoint, body, requestOptions);
-        case 'PATCH':
-            return this.#request.patch(endpoint, body, requestOptions);
         case 'PUT':
             return this.#request.put(endpoint, body, requestOptions);
         case 'DELETE':

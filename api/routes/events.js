@@ -170,7 +170,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
 /**
  * Updates an event still pending moderation or already rejected.
  */
-router.patch('/:id', 
+router.put('/:id', 
     authMiddleware, 
     async (req, res, next) => {
     try {
@@ -215,7 +215,7 @@ router.delete('/:id',
 /**
  * Approves or rejects an unpublished event from another organizer.
  */
-router.patch('/:id/moderation', 
+router.put('/:id/moderation', 
     authMiddleware, 
     requireAdminUser,
     async (req, res, next) => {

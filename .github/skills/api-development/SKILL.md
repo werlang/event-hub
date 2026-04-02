@@ -19,9 +19,17 @@ Routes:
 - `POST /auth/register`
 - `POST /auth/login`
 - `GET /auth/me` (requires `Authorization: Bearer <token>`)
+- `PUT /auth/password` (requires `Authorization: Bearer <token>`)
+- `GET /auth/users` (requires admin bearer token)
+- `PUT /auth/users/:id/promote` (requires admin bearer token)
 - `GET /events`
+- `GET /events/mine` (requires `Authorization: Bearer <token>`)
+- `GET /events/moderation` (requires admin bearer token)
 - `GET /events/:id`
 - `POST /events` (requires auth)
+- `PUT /events/:id` (requires auth)
+- `DELETE /events/:id` (requires auth)
+- `PUT /events/:id/moderation` (requires admin bearer token)
 
 ## Data and Domain Rules
 
@@ -65,6 +73,7 @@ Error middleware (`api/middleware/error.js`) derives `type` from HTTP status nam
 
 - Keep route handlers in `api/routes/*.js`.
 - Keep route handlers in `api/routes/*.js` with `try/catch` + `next(error)` orchestration.
+- Keep the HTTP surface limited to `GET`, `POST`, `PUT`, and `DELETE`; model partial-update flows with `PUT` rather than introducing `PATCH`.
 - Keep route-specific resource loading in the route flow itself so each endpoint makes its entity fetch and missing-resource handling explicit.
 - Keep reusable auth, role, and ownership guards as Express middleware checks rather than ad hoc helper branches scattered across route handlers.
 - Keep business/data operations in models/helpers and avoid writing SQL directly in route handlers.
@@ -91,9 +100,22 @@ Error middleware (`api/middleware/error.js`) derives `type` from HTTP status nam
 - requires `email`, `password`
 - validates credentials
 
+`PUT /auth/password`:
+- requires `currentPassword`, `newPassword`
+- rejects when the new password matches the current password
+
 `POST /events`:
 - requires `title`, `description`, `date`
 - validates parsable date
+
+`PUT /events/:id`:
+- requires `title`, `description`, `date`
+- only the organizer can update pending or rejected events
+- resets the event to `pending` and clears `rejectionReason`
+
+`PUT /events/:id/moderation`:
+- accepts moderation status `published` or `rejected`
+- `rejected` may include `rejectionReason`
 
 ## References
 

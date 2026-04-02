@@ -28,9 +28,9 @@ describe('routes/events', () => {
     const moderationListHandlers = getRouteHandlers(eventsRouter, 'get', '/moderation').slice(1);
     const getByIdHandlers = getRouteHandlers(eventsRouter, 'get', '/:id');
     const createHandlers = getRouteHandlers(eventsRouter, 'post', '/').slice(1);
-    const updateHandlers = getRouteHandlers(eventsRouter, 'patch', '/:id').slice(1);
+    const updateHandlers = getRouteHandlers(eventsRouter, 'put', '/:id').slice(1);
     const deleteHandlers = getRouteHandlers(eventsRouter, 'delete', '/:id').slice(1);
-    const moderationDecisionHandlers = getRouteHandlers(eventsRouter, 'patch', '/:id/moderation').slice(1);
+    const moderationDecisionHandlers = getRouteHandlers(eventsRouter, 'put', '/:id/moderation').slice(1);
 
     test('list passes supported filters to Event.list and returns the envelope', async () => {
         const calls = [];
@@ -292,9 +292,16 @@ describe('routes/events', () => {
         expect(rejectRes.body.message).toBe('Evento rejeitado.');
 
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'admin-1' }));
-        const selfNext = jest.fn();
-        await runRouteHandlers(moderationDecisionHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'published' } }), createResponseDouble(), selfNext);
-        expect(selfNext.mock.calls[0][0].status).toBe(403);
+        const selfModerationRes = createResponseDouble();
+        const selfModerationNext = jest.fn();
+        await runRouteHandlers(
+            moderationDecisionHandlers,
+            createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'published' } }),
+            selfModerationRes,
+            selfModerationNext,
+        );
+        expect(selfModerationNext).not.toHaveBeenCalled();
+        expect(selfModerationRes.body.message).toBe('Evento aprovado e publicado.');
 
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'published', organizerId: 'user-2' }));
         const publishedNext = jest.fn();

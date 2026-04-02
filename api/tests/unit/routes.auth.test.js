@@ -26,9 +26,9 @@ describe('routes/auth', () => {
     const registerHandlers = getRouteHandlers(authRouter, 'post', '/register');
     const loginHandlers = getRouteHandlers(authRouter, 'post', '/login');
     const meHandlers = getRouteHandlers(authRouter, 'get', '/me').slice(1);
-    const passwordHandlers = getRouteHandlers(authRouter, 'patch', '/password').slice(1);
+    const passwordHandlers = getRouteHandlers(authRouter, 'put', '/password').slice(1);
     const usersHandlers = getRouteHandlers(authRouter, 'get', '/users').slice(1);
-    const promoteHandlers = getRouteHandlers(authRouter, 'patch', '/users/:id/promote').slice(1);
+    const promoteHandlers = getRouteHandlers(authRouter, 'put', '/users/:id/promote').slice(1);
 
     test('register creates an account and returns a session payload', async () => {
         trackReplacement(restores, User, 'findByEmail', async () => null);

@@ -144,7 +144,7 @@ router.get('/me', authMiddleware, async (req, res, next) => {
 /**
  * Changes the authenticated user's password after validating the current password.
  */
-router.patch('/password',
+router.put('/password',
     authMiddleware,
     async (req, res, next) => {
     try {
@@ -187,7 +187,7 @@ router.get('/users',
 /**
  * Promotes a member account to administrator.
  */
-router.patch('/users/:id/promote', 
+router.put('/users/:id/promote', 
     authMiddleware, 
     requireAdminUser,
     async (req, res, next) => {

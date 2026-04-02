@@ -47,6 +47,8 @@ Response handling:
 
 - Envelope-aware via `requestApi()`, which normalizes both enveloped and non-enveloped payloads.
 - Error UI should read `response.message` from normalized API results.
+- The shared browser API client is intentionally limited to `GET`, `POST`, `PUT`, and `DELETE`.
+- Dashboard edit and moderation flows should call `PUT /events/:id` and `PUT /events/:id/moderation`.
 
 When changing API integration behavior, keep this precedence explicit.
 

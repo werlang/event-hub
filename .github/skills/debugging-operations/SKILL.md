@@ -64,6 +64,24 @@ curl -X POST http://localhost:3000/events \
   -d '{"title":"Workshop","description":"Descrição","date":"2026-03-10T19:00:00.000Z"}'
 ```
 
+Update event:
+
+```bash
+curl -X PUT http://localhost:3000/events/<event-id> \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Workshop revisado","description":"Descrição revisada","date":"2026-03-10T19:00:00.000Z","category":"outro","location":"A definir"}'
+```
+
+Moderate event:
+
+```bash
+curl -X PUT http://localhost:3000/events/<event-id>/moderation \
+  -H "Authorization: Bearer <admin-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"status":"published"}'
+```
+
 Filter events:
 
 ```bash
@@ -76,6 +94,7 @@ curl "http://localhost:3000/events?search=workshop&category=Geral"
 - Missing `JWT_SECRET` prevents the API from starting at import time.
 - Missing `Authorization: Bearer` prefix returns `401`.
 - Invalid `date` payload in `POST /events` returns `400`.
+- This repository intentionally limits API routes to `GET`, `POST`, `PUT`, and `DELETE`; a `PATCH` request reaching the frontend helper indicates stale client code or stale built assets.
 - Frontend API base URL may be empty if template `apiUrl` or `<meta name="api-url">` is not set.
 - Open registration uses the same `/auth/register` endpoint as the login page bundle, so failures there are usually validation, duplicate-email, or connectivity problems.
 

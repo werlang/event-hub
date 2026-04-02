@@ -6,6 +6,7 @@
 - **Model classes**: domain logic is implemented in classes under `api/model/`.
 - **Routes as functions**: route handlers live in `api/routes/*.js`.
 - **API route guards as middleware**: auth, ownership, and role checks for API endpoints should be implemented as Express middleware in `api/middleware/` or companion middleware modules. Resource loading should stay in the route flow so each endpoint owns how it fetches and handles its entities.
+- **HTTP methods**: keep the API contract limited to `GET`, `POST`, `PUT`, and `DELETE`. Do not introduce `PATCH` routes.
 - **In-code documentation**: every named function, method, getter/setter, and reusable local helper must have a JSDoc block. Short anonymous callbacks may stay undocumented when they are clearly local implementation details, but inline route or middleware handlers must be documented directly above the registration call.
 - **Private class fields**: prefer `#field` / `#method` where state should be encapsulated.
 - **Single responsibility first**: keep files, classes, and helpers focused on one primary job. When a file exists to export a class, move reusable standalone helpers into companion modules instead of mixing multiple responsibilities in the same file.
@@ -41,11 +42,19 @@
 - `POST /auth/register` → create user and return JWT; no invite token is required.
 - `POST /auth/login` → validate credentials and return JWT.
 - `GET /auth/me` → requires Bearer token via `authMiddleware`.
+- `PUT /auth/password` → authenticated password change.
+- `GET /auth/users` → authenticated admin-only user list.
+- `PUT /auth/users/:id/promote` → authenticated admin-only promotion flow.
 
 ### Event routes (`api/routes/events.js`)
 - `GET /events` → public list with filters: `search|q`, `category`, `from`, `to`.
+- `GET /events/mine` → authenticated organizer event list.
+- `GET /events/moderation` → authenticated admin moderation queue, with optional `status=pending|rejected`.
 - `GET /events/:id` → public event detail.
 - `POST /events` → authenticated event creation.
+- `PUT /events/:id` → organizer-only update for pending or rejected events.
+- `DELETE /events/:id` → organizer-only deletion for pending or rejected events.
+- `PUT /events/:id/moderation` → admin-only moderation decision for pending events.
 
 ## Auth and Security
 - JWT helpers are in `api/helpers/token.js`.

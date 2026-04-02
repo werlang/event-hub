@@ -406,7 +406,7 @@ export class DashboardEventFormModal {
      * Returns the HTTP method used by the active form mode.
      */
     #readRequestMethod() {
-        return this.#activeMode === DASHBOARD_EVENT_FORM_MODE_EDIT ? 'PATCH' : 'POST';
+        return this.#activeMode === DASHBOARD_EVENT_FORM_MODE_EDIT ? 'PUT' : 'POST';
     }
 
     /**

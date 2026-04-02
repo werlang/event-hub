@@ -148,7 +148,7 @@ export class DashboardRejectEventModal {
 
         try {
             const response = await requestApi(`/events/${this.#activeEvent.id}/moderation`, {
-                method: 'PATCH',
+                method: 'PUT',
                 token: this.#sessionToken,
                 body: payload,
             });

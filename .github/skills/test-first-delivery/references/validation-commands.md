@@ -50,7 +50,8 @@ Use this when the task depends on the repo's normal multi-service development en
 
 - Check `GET /ready`.
 - Exercise affected auth routes: `POST /auth/register`, `POST /auth/login`, `GET /auth/me` when relevant.
-- Exercise affected event routes: `GET /events`, `GET /events/:id`, `POST /events` when relevant.
+- Exercise affected `PUT` routes such as `PUT /auth/password`, `PUT /auth/users/:id/promote`, `PUT /events/:id`, and `PUT /events/:id/moderation` when relevant.
+- Exercise affected event routes: `GET /events`, `GET /events/:id`, `POST /events`, `DELETE /events/:id` when relevant.
 - Confirm response envelopes still match the repo contract.
 - If the change depends on MySQL state, mention what data or setup was required.
 
