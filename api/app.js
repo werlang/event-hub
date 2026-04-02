@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { router as auth } from './routes/auth.js';
 import { router as events } from './routes/events.js';
-import { CustomError } from './helpers/error.js';
+import { HttpError } from './helpers/error.js';
 import { sendSuccess } from './helpers/response.js';
 import { errorMiddleware } from './middleware/error.js';
 
@@ -32,7 +32,7 @@ app.get('/ready', (req, res) => {
  * Forwards unmatched API requests to the terminal error middleware.
  */
 app.use((req, res, next) => {
-    next(new CustomError(404, 'I am sorry, but I think you are lost.'));
+    next(new HttpError(404, 'I am sorry, but I think you are lost.'));
 });
 
 app.use(errorMiddleware);

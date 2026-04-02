@@ -1,23 +1,10 @@
 import express from 'express';
 import { Event } from '../model/event.js';
 import { authMiddleware } from '../middleware/auth.js';
-import { CustomError } from '../helpers/error.js';
+import { HttpError } from '../helpers/error.js';
 import { sendCreated, sendSuccess } from '../helpers/response.js';
 
 export const router = express.Router();
-
-/**
- * Re-throws unexpected route failures as API-friendly errors.
- */
-function rethrowAsApiError(error, fallbackMessage) {
-    if (error instanceof CustomError || Number.isInteger(error?.status)) {
-        throw error;
-    }
-
-    throw new CustomError(500, fallbackMessage, {
-        detail: error?.message || String(error),
-    }, error);
-}
 
 /**
  * Validates and normalizes the editable event fields required by create and update flows.
@@ -29,12 +16,12 @@ function parseEventPayload(payload = {}) {
     const location = String(payload.location || '').trim() || 'A definir';
 
     if (!title || !description || !payload.date) {
-        throw new CustomError(400, 'Título, descrição e data são obrigatórios.');
+        throw new HttpError(400, 'Título, descrição e data são obrigatórios.');
     }
 
     const parsedDate = new Date(payload.date);
     if (Number.isNaN(parsedDate.getTime())) {
-        throw new CustomError(400, 'Data inválida.');
+        throw new HttpError(400, 'Data inválida.');
     }
 
     return {
@@ -51,7 +38,7 @@ function parseEventPayload(payload = {}) {
  */
 function requireAdminUser(user) {
     if (user?.role !== 'admin') {
-        throw new CustomError(403, 'Acesso restrito a administradores.');
+        throw new HttpError(403, 'Acesso restrito a administradores.');
     }
 }
 
@@ -60,7 +47,7 @@ function requireAdminUser(user) {
  */
 function ensureEventExists(event) {
     if (!event) {
-        throw new CustomError(404, 'Evento não encontrado.');
+        throw new HttpError(404, 'Evento não encontrado.');
     }
 }
 
@@ -71,11 +58,11 @@ function ensureOwnerCanManageEvent(event, user) {
     ensureEventExists(event);
 
     if (event.organizerId !== user?.id) {
-        throw new CustomError(403, 'Você não tem permissão para gerenciar este evento.');
+        throw new HttpError(403, 'Você não tem permissão para gerenciar este evento.');
     }
 
     if (Event.isPublishedStatus(event.status)) {
-        throw new CustomError(403, 'Eventos publicados não podem ser editados ou excluídos.');
+        throw new HttpError(403, 'Eventos publicados não podem ser editados ou excluídos.');
     }
 }
 
@@ -86,11 +73,11 @@ function ensureAdminCanModerateEvent(event, user) {
     ensureEventExists(event);
 
     if (event.organizerId === user?.id) {
-        throw new CustomError(403, 'Administradores não podem moderar os próprios eventos.');
+        throw new HttpError(403, 'Administradores não podem moderar os próprios eventos.');
     }
 
     if (Event.isPublishedStatus(event.status)) {
-        throw new CustomError(400, 'Somente eventos não publicados podem ser moderados.');
+        throw new HttpError(400, 'Somente eventos não publicados podem ser moderados.');
     }
 }
 
@@ -106,7 +93,7 @@ function parseModerationQueueStatus(value) {
     const isSupportedStatus = Event.ALLOWED_STATUSES.includes(normalizedStatus);
 
     if (!isSupportedStatus || normalizedStatus === Event.STATUS_PUBLISHED) {
-        throw new CustomError(400, 'Use apenas os status pending ou rejected para filtrar a moderação.');
+        throw new HttpError(400, 'Use apenas os status pending ou rejected para filtrar a moderação.');
     }
 
     return normalizedStatus;
@@ -120,7 +107,7 @@ function parseModerationDecisionStatus(value) {
     const allowedStatuses = [Event.STATUS_PUBLISHED, Event.STATUS_REJECTED];
 
     if (!allowedStatuses.includes(normalizedStatus)) {
-        throw new CustomError(400, 'Informe um status de moderação válido: published ou rejected.');
+        throw new HttpError(400, 'Informe um status de moderação válido: published ou rejected.');
     }
 
     return normalizedStatus;
@@ -141,11 +128,7 @@ router.get('/', async (req, res, next) => {
         const events = await Event.list(filters);
         return sendSuccess(res, { data: { events } });
     } catch (err) {
-        try {
-            rethrowAsApiError(err, 'Não foi possível carregar os eventos.');
-        } catch (error) {
-            return next(error);
-        }
+        return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível carregar os eventos.', err));
     }
 });
 
@@ -157,11 +140,7 @@ router.get('/mine', authMiddleware, async (req, res, next) => {
         const events = await Event.listByOrganizer(req.user.id);
         return sendSuccess(res, { data: { events } });
     } catch (err) {
-        try {
-            rethrowAsApiError(err, 'Não foi possível carregar os seus eventos.');
-        } catch (error) {
-            return next(error);
-        }
+        return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível carregar os seus eventos.', err));
     }
 });
 
@@ -179,11 +158,7 @@ router.get('/moderation', authMiddleware, async (req, res, next) => {
 
         return sendSuccess(res, { data: { events } });
     } catch (err) {
-        try {
-            rethrowAsApiError(err, 'Não foi possível carregar a fila de moderação.');
-        } catch (error) {
-            return next(error);
-        }
+        return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível carregar a fila de moderação.', err));
     }
 });
 
@@ -194,16 +169,12 @@ router.get('/:id', async (req, res, next) => {
     try {
         const event = await Event.findPublicById(req.params.id);
         if (!event) {
-            throw new CustomError(404, 'Evento não encontrado.');
+            throw new HttpError(404, 'Evento não encontrado.');
         }
 
         return sendSuccess(res, { data: { event } });
     } catch (err) {
-        try {
-            rethrowAsApiError(err, 'Não foi possível carregar o evento.');
-        } catch (error) {
-            return next(error);
-        }
+        return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível carregar o evento.', err));
     }
 });
 
@@ -223,11 +194,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
             data: { event: createdEvent },
         });
     } catch (err) {
-        try {
-            rethrowAsApiError(err, 'Não foi possível salvar o evento.');
-        } catch (error) {
-            return next(error);
-        }
+        return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível salvar o evento.', err));
     }
 });
 
@@ -249,11 +216,7 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
             message: 'Evento atualizado e enviado para moderação.',
         });
     } catch (err) {
-        try {
-            rethrowAsApiError(err, 'Não foi possível atualizar o evento.');
-        } catch (error) {
-            return next(error);
-        }
+        return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível atualizar o evento.', err));
     }
 });
 
@@ -271,11 +234,7 @@ router.delete('/:id', authMiddleware, async (req, res, next) => {
             message: 'Evento excluído.',
         });
     } catch (err) {
-        try {
-            rethrowAsApiError(err, 'Não foi possível excluir o evento.');
-        } catch (error) {
-            return next(error);
-        }
+        return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível excluir o evento.', err));
     }
 });
 
@@ -300,10 +259,6 @@ router.patch('/:id/moderation', authMiddleware, async (req, res, next) => {
             message,
         });
     } catch (err) {
-        try {
-            rethrowAsApiError(err, 'Não foi possível moderar o evento.');
-        } catch (error) {
-            return next(error);
-        }
+        return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível moderar o evento.', err));
     }
 });

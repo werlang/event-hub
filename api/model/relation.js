@@ -37,7 +37,7 @@ export class Relation {
     async insert(fieldValue, { ignoreDuplicates = false } = {}) {
         if (await this.check(fieldValue)) {
             if (ignoreDuplicates) return null;
-            throw new CustomError(400, 'Relation already exists.');
+            throw new CustomError('Relation already exists.');
         }
 
         return this.driver.insert(this.tableName, {
@@ -84,7 +84,7 @@ export class Relation {
      * Deletes a single related value from the relation table.
      */
     async delete(fieldValue) {
-        if (!await this.check(fieldValue)) throw new CustomError(404, 'Relation does not exist.');
+        if (!await this.check(fieldValue)) throw new CustomError('Relation does not exist.');
         return this.driver.delete(this.tableName, {
             ...this.nativeObject,
             [this.relatedField]: fieldValue,
@@ -95,7 +95,7 @@ export class Relation {
      * Updates extra columns for an existing relation row.
      */
     async update(fieldValue, data) {
-        if (!await this.check(fieldValue)) throw new CustomError(404, 'Relation does not exist.');
+        if (!await this.check(fieldValue)) throw new CustomError('Relation does not exist.');
         const toChange = {};
         for (const key of Object.keys(data)) {
             if (data[key] !== undefined) {

@@ -34,17 +34,13 @@ export function errorMiddleware(err, req, res, next) {
         error: true,
         status: safeStatus,
         type: err.type || ERROR_TYPES[safeStatus],
-        message: safeStatus === 500
-            ? (err.expose ? err.message : 'Internal Server Error')
-            : (err.message || ERROR_TYPES[safeStatus]),
+        message: err.message || ERROR_TYPES[safeStatus] || 'Internal Server Error',
     };
 
-    if (err.data !== undefined && err.data !== null) {
-        payload.data = err.data;
-    }
-
-    if (safeStatus === 500 && process.env.NODE_ENV !== 'production') {
-        payload.data = payload.data || { detail: err.message };
+    if (process.env.NODE_ENV !== 'production') {
+        if (err.data !== undefined && err.data !== null) {
+            payload.data = err.data;
+        }
     }
 
     res.status(safeStatus).json(payload);

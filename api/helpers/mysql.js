@@ -55,7 +55,11 @@ export class Mysql {
             return result;
         }
         catch (error) {
-            throw new CustomError(500, error.message, error);
+            throw new CustomError(error.message, {
+                sql: raw.sql,
+                data: raw.data,
+                error,
+            });
         }
     }
 
@@ -64,7 +68,7 @@ export class Mysql {
      */
     static async insert(table, data) {
         if (!data) {
-            throw new CustomError(400, 'Invalid data for insert operation.');
+            throw new CustomError('Invalid data for insert operation.');
         }
         if (!Array.isArray(data)) data = [ data ];
 
@@ -81,10 +85,10 @@ export class Mysql {
      */
     static async update(table, data, id) {
         if (!id) {
-            throw new CustomError(400, 'No identifier provided for update.');
+            throw new CustomError('No identifier provided for update.');
         }
         if (!Object.keys(data).length) {
-            throw new CustomError(400, 'No data to update.');
+            throw new CustomError('No data to update.');
         }
 
         // remove undefined values
@@ -102,7 +106,7 @@ export class Mysql {
                     return `\`${k}\` = ${k} - ?`;
                 }
                 else {
-                    throw new CustomError(400, 'Invalid update operation.');
+                    throw new CustomError('Invalid update operation.');
                 }
             }
 
@@ -130,7 +134,7 @@ export class Mysql {
      */
     static async delete(table, clause, opt={}) {
         if (!clause) {
-            throw new CustomError(400, 'Invalid clause for delete operation.');
+            throw new CustomError('Invalid clause for delete operation.');
         }
 
         const limit = opt.limit ? `LIMIT ${ opt.limit }` : '';
@@ -225,7 +229,7 @@ export class Mysql {
 
         // filter not an object
         if (typeof filter !== 'object') {
-            throw new CustomError(400, 'Invalid filter for find operation.');
+            throw new CustomError('Invalid filter for find operation.');
         }
 
         const filterNames = Object.keys(filter);
@@ -296,7 +300,7 @@ export class Mysql {
      */
     static format(sql, data) {
         if (!Mysql.connection) {
-            throw new CustomError(500, 'Database not connected.');
+            throw new CustomError('Database not connected.');
         }
         return Mysql.connection.format(sql, data);
     }
