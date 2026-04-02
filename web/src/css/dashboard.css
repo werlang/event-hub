@@ -12,6 +12,7 @@
 
 @import './components/dashboard-primitives.css';
 @import './components/dashboard-shell.css';
+@import './components/dashboard-filters.css';
 @import './components/dashboard-section.css';
 @import './components/dashboard-summary-card.css';
 @import './components/dashboard-event.css';

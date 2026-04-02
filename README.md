@@ -2,6 +2,8 @@
 
 Aplicação com dois serviços independentes, ambos em Express 5 e ES Modules, para autenticação, e publicação de eventos acadêmicos com visualização pública e filtros.
 
+O contrato HTTP da API deste repositório usa apenas `GET`, `POST`, `PUT` e `DELETE`.
+
 ## Serviços
 
 - **API** (`api/`, porta padrão `3000`): autenticação, cadastro e listagem filtrada de eventos.
@@ -35,12 +37,20 @@ Para desenvolvimento com containers, use `docker compose -f compose.dev.yaml up 
   - `POST /auth/register` exige `name`, `email` e `password`, e retorna token JWT (12h) + usuário.
   - `POST /auth/login` retorna token JWT (12h) + usuário.
   - `GET /auth/me` retorna sessão atual (incluindo `role`).
+  - `PUT /auth/password` atualiza a senha da conta autenticada.
+  - `GET /auth/users` lista usuários para ferramentas administrativas.
+  - `PUT /auth/users/:id/promote` promove uma conta `member` para `admin`.
 - **Login/Register (`/login`)**: a interface alterna entre abas, sincroniza `#register` na URL, envia login/registro ao backend, persiste o token localmente e redireciona após autenticar.
 - **Publicação (`/publish`)**: a página SSR já contém o formulário e o toggle de horário, mas o repositório ainda não possui um bundle dedicado para validar sessão e enviar o formulário.
 - **Eventos (API)**:
   - `POST /events` (Bearer token) — cria evento com `title`, `description`, `date`, `category`, `location`.
   - `GET /events` — lista pública com filtros `search|q`, `category`, `from`, `to`.
   - `GET /events/:id` — detalhe público.
+  - `GET /events/mine` (Bearer token) — lista os eventos da conta autenticada.
+  - `PUT /events/:id` (Bearer token) — atualiza um evento pendente ou rejeitado e o reenfileira para moderação.
+  - `DELETE /events/:id` (Bearer token) — exclui um evento pendente ou rejeitado.
+  - `GET /events/moderation` (Bearer token admin) — lista a fila administrativa com filtro opcional `status=pending|rejected`.
+  - `PUT /events/:id/moderation` (Bearer token admin) — aprova ou rejeita um evento pendente.
 
 ## Exemplos de links compartilháveis
 

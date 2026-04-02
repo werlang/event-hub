@@ -12,8 +12,8 @@ import { Toast } from './components/toast.js';
 import { Tooltip } from './components/tooltip.js';
 import { requestApi } from './helpers/api.js';
 import { formatDateTimePtBr } from './helpers/date-format.js';
-import { isPastEvent, sortEventsByDateDescending } from './helpers/event-sort.js';
-import { readEventTagSummary } from './helpers/event-category.js';
+import { isPastEvent, sortEventsByDate, sortEventsByDateDescending } from './helpers/event-sort.js';
+import { readEventCategoryMeta, readEventTagSummary } from './helpers/event-category.js';
 import { createLocationContent } from './helpers/location-link.js';
 
 const DASHBOARD_STATUS_TOAST_GROUP = 'dashboard-status';
@@ -22,6 +22,9 @@ const DASHBOARD_HIDDEN_CLASS = 'dashboard-empty-state--hidden';
 const DASHBOARD_EVENTS_PER_PAGE = 10;
 const DASHBOARD_VIEW_BROWSE = 'browse';
 const DASHBOARD_VIEW_MODERATION = 'moderation';
+const DASHBOARD_FILTER_ALL = 'all';
+const DASHBOARD_FILTER_ASC = 'asc';
+const DASHBOARD_FILTER_DESC = 'desc';
 
 /**
  * Returns the UI metadata associated with an event moderation status.
@@ -318,6 +321,166 @@ function createSummaryCardElement(card) {
 
     element.append(note, meta);
     return element;
+}
+
+/**
+ * Normalizes one browse-list status filter value.
+ */
+function normalizeDashboardStatusFilter(value) {
+    const normalizedValue = String(value || DASHBOARD_FILTER_ALL).trim().toLowerCase();
+    const allowedValues = [DASHBOARD_FILTER_ALL, 'pending', 'rejected', 'published'];
+
+    return allowedValues.includes(normalizedValue)
+        ? normalizedValue
+        : DASHBOARD_FILTER_ALL;
+}
+
+/**
+ * Normalizes one browse-list ordering value.
+ */
+function normalizeDashboardSortOrder(value) {
+    return String(value || DASHBOARD_FILTER_DESC).trim().toLowerCase() === DASHBOARD_FILTER_ASC
+        ? DASHBOARD_FILTER_ASC
+        : DASHBOARD_FILTER_DESC;
+}
+
+/**
+ * Returns the canonical category metadata for one dashboard event.
+ */
+function readDashboardEventCategory(event) {
+    return readEventCategoryMeta(event?.category || event?.categoryLabel);
+}
+
+/**
+ * Returns the category options available for the loaded owner events.
+ */
+function readDashboardEventCategoryOptions(events) {
+    const options = [];
+    const seenCategories = new Set();
+
+    (Array.isArray(events) ? events : []).forEach((event) => {
+        const category = readDashboardEventCategory(event);
+        const optionValue = String(category?.id || '').trim().toLowerCase();
+
+        if (!optionValue || seenCategories.has(optionValue)) {
+            return;
+        }
+
+        seenCategories.add(optionValue);
+        options.push({
+            value: optionValue,
+            label: readText(category?.label, 'Outro'),
+        });
+    });
+
+    return options.sort((left, right) => left.label.localeCompare(right.label, 'pt-BR'));
+}
+
+/**
+ * Reports whether the browse list currently deviates from the default criteria.
+ */
+function hasActiveDashboardBrowseFilters(filters) {
+    return normalizeDashboardStatusFilter(filters?.status) !== DASHBOARD_FILTER_ALL
+        || readText(filters?.category, DASHBOARD_FILTER_ALL).toLowerCase() !== DASHBOARD_FILTER_ALL
+        || Boolean(filters?.includePast)
+        || normalizeDashboardSortOrder(filters?.order) !== DASHBOARD_FILTER_DESC;
+}
+
+/**
+ * Returns the owner-event list after applying the current browse filters.
+ */
+function filterDashboardBrowseEvents(events, filters) {
+    const normalizedStatus = normalizeDashboardStatusFilter(filters?.status);
+    const normalizedCategory = readText(filters?.category, DASHBOARD_FILTER_ALL).toLowerCase();
+    const includePast = Boolean(filters?.includePast);
+    const normalizedOrder = normalizeDashboardSortOrder(filters?.order);
+
+    const filteredEvents = (Array.isArray(events) ? events : []).filter((event) => {
+        const eventStatus = String(event?.status || '').trim().toLowerCase();
+        const eventCategory = readDashboardEventCategory(event).id;
+
+        if (normalizedStatus !== DASHBOARD_FILTER_ALL && eventStatus !== normalizedStatus) {
+            return false;
+        }
+
+        if (normalizedCategory !== DASHBOARD_FILTER_ALL && eventCategory !== normalizedCategory) {
+            return false;
+        }
+
+        if (!includePast && isPastEvent(event)) {
+            return false;
+        }
+
+        return true;
+    });
+
+    return normalizedOrder === DASHBOARD_FILTER_ASC
+        ? sortEventsByDate(filteredEvents)
+        : sortEventsByDateDescending(filteredEvents);
+}
+
+/**
+ * Formats the event-section badge for filtered owner lists.
+ */
+function formatDashboardBrowseBadge(filteredCount, totalCount) {
+    if (filteredCount === totalCount) {
+        return formatCount(filteredCount, 'evento', 'eventos');
+    }
+
+    return `${filteredCount} de ${totalCount} eventos`;
+}
+
+/**
+ * Returns the explanatory caption for the owner-event section.
+ */
+function readDashboardBrowseCaption(filteredCount, totalCount, filters, sectionCopy) {
+    const isShowingOnlyUpcomingEvents = !Boolean(filters?.includePast) && filteredCount !== totalCount;
+
+    if (!hasActiveDashboardBrowseFilters(filters)) {
+        if (isShowingOnlyUpcomingEvents) {
+            return `Mostrando ${filteredCount} de ${totalCount} eventos. Marque a opção para incluir os que já aconteceram.`;
+        }
+
+        return filteredCount > 0
+            ? sectionCopy.populatedCaption
+            : sectionCopy.emptyCaption;
+    }
+
+    if (filteredCount === 0) {
+        return 'Nenhum evento corresponde aos filtros selecionados no momento.';
+    }
+
+    return `Mostrando ${filteredCount} de ${totalCount} eventos conforme os filtros selecionados.`;
+}
+
+/**
+ * Returns the empty-state copy for the owner-event section.
+ */
+function readDashboardBrowseEmptyState(filteredCount, totalCount, filters, sectionCopy) {
+    if (totalCount === 0) {
+        return sectionCopy.emptyState;
+    }
+
+    if (filteredCount === 0 && !Boolean(filters?.includePast) && !hasActiveDashboardBrowseFilters(filters)) {
+        return 'Todos os eventos carregados já aconteceram. Marque a opção para incluir os eventos passados.';
+    }
+
+    if (filteredCount === 0 && hasActiveDashboardBrowseFilters(filters)) {
+        return 'Nenhum evento corresponde aos filtros atuais. Ajuste os critérios para ampliar a lista.';
+    }
+
+    return sectionCopy.emptyState;
+}
+
+/**
+ * Creates one option element for a dashboard select input.
+ */
+function createDashboardSelectOption({ value, label, selected = false } = {}) {
+    const option = document.createElement('option');
+    option.value = readText(value, DASHBOARD_FILTER_ALL);
+    option.textContent = readText(label, 'Opção');
+    option.selected = Boolean(selected);
+    return option;
 }
 
 /**
@@ -703,6 +866,12 @@ class DashboardPage extends BaseComponent {
     #elements;
     #events = [];
     #moderationEvents = [];
+    #browseFilters = {
+        status: DASHBOARD_FILTER_ALL,
+        category: DASHBOARD_FILTER_ALL,
+        includePast: false,
+        order: DASHBOARD_FILTER_DESC,
+    };
     #eventFormModal;
     #deleteEventModal;
     #rejectEventModal;
@@ -747,6 +916,9 @@ class DashboardPage extends BaseComponent {
 
         this.on(this.#elements.eventsList, 'click', event => {
             void this.#handleEventListClick(event);
+        });
+        this.on(this.#elements.eventsFilters, 'change', event => {
+            this.#handleBrowseFilterChange(event);
         });
         this.on(this.#elements.eventsPaginationControls, 'click', event => {
             this.#handleEventPaginationClick(event);
@@ -793,7 +965,7 @@ class DashboardPage extends BaseComponent {
         if (this.#elements.userName) {
             this.#elements.userName.textContent = session.user?.name || 'Usuário';
         }
-        this.#renderDashboardSections();
+        this.refreshEvents({ showErrors: true });
     }
 
     /**
@@ -854,6 +1026,11 @@ class DashboardPage extends BaseComponent {
             eventsDescription: root?.querySelector('#dashboard-events-description') || null,
             eventsBadge: root?.querySelector('#dashboard-events-badge') || null,
             eventsCaption: root?.querySelector('#dashboard-events-caption') || null,
+            eventsFilters: root?.querySelector('#dashboard-events-filters') || null,
+            eventsFilterStatus: root?.querySelector('#dashboard-events-filter-status') || null,
+            eventsFilterCategory: root?.querySelector('#dashboard-events-filter-category') || null,
+            eventsFilterShowPast: root?.querySelector('#dashboard-events-filter-show-past') || null,
+            eventsFilterOrder: root?.querySelector('#dashboard-events-filter-order') || null,
             eventsList: root?.querySelector('#dashboard-events-list') || null,
             eventsEmpty: root?.querySelector('#dashboard-events-empty') || null,
             eventsPagination: root?.querySelector('#dashboard-events-pagination') || null,
@@ -1093,6 +1270,28 @@ class DashboardPage extends BaseComponent {
     }
 
     /**
+     * Updates the browse-list filter state after one control changes.
+     */
+    #handleBrowseFilterChange(domEvent) {
+        const target = domEvent.target instanceof HTMLInputElement || domEvent.target instanceof HTMLSelectElement
+            ? domEvent.target
+            : null;
+
+        if (!target || !this.#elements.eventsFilters?.contains(target)) {
+            return;
+        }
+
+        this.#browseFilters = {
+            status: normalizeDashboardStatusFilter(this.#elements.eventsFilterStatus?.value),
+            category: readText(this.#elements.eventsFilterCategory?.value, DASHBOARD_FILTER_ALL).toLowerCase(),
+            includePast: Boolean(this.#elements.eventsFilterShowPast?.checked),
+            order: normalizeDashboardSortOrder(this.#elements.eventsFilterOrder?.value),
+        };
+        this.#currentEventPage = 1;
+        this.#renderEventList();
+    }
+
+    /**
      * Handles approve and reject actions dispatched from the moderation queue.
      */
     async #handleModerationEventAction(requestedAction, managedEvent, eventCard) {
@@ -1149,7 +1348,7 @@ class DashboardPage extends BaseComponent {
 
         try {
             const response = await requestApi(`/events/${event.id}/moderation`, {
-                method: 'PATCH',
+                method: 'PUT',
                 token: this.#session.token,
                 body: { status: 'published' },
             });
@@ -1245,9 +1444,11 @@ class DashboardPage extends BaseComponent {
      * Renders the current user's event list and empty state.
      */
     #renderEventList() {
-        const activeEvents = this.#readActiveEvents();
         const sectionCopy = readEventSectionCopy(this.#currentView);
+        const activeEvents = this.#readActiveEvents();
+        const isBrowseView = this.#currentView === DASHBOARD_VIEW_BROWSE;
         this.#syncCurrentListPage();
+        this.#renderBrowseFilters();
 
         if (this.#elements.eventsEyebrow) {
             this.#elements.eventsEyebrow.textContent = sectionCopy.eyebrow;
@@ -1262,21 +1463,27 @@ class DashboardPage extends BaseComponent {
         }
 
         if (this.#elements.eventsBadge) {
-            this.#elements.eventsBadge.textContent = formatCount(
-                activeEvents.length,
-                sectionCopy.badgeSingular,
-                sectionCopy.badgePlural,
-            );
+            this.#elements.eventsBadge.textContent = isBrowseView
+                ? formatDashboardBrowseBadge(activeEvents.length, this.#events.length)
+                : formatCount(
+                    activeEvents.length,
+                    sectionCopy.badgeSingular,
+                    sectionCopy.badgePlural,
+                );
         }
 
         if (this.#elements.eventsCaption) {
-            this.#elements.eventsCaption.textContent = activeEvents.length > 0
-                ? sectionCopy.populatedCaption
-                : sectionCopy.emptyCaption;
+            this.#elements.eventsCaption.textContent = isBrowseView
+                ? readDashboardBrowseCaption(activeEvents.length, this.#events.length, this.#browseFilters, sectionCopy)
+                : (activeEvents.length > 0
+                    ? sectionCopy.populatedCaption
+                    : sectionCopy.emptyCaption);
         }
 
         if (this.#elements.eventsEmpty) {
-            this.#elements.eventsEmpty.textContent = sectionCopy.emptyState;
+            this.#elements.eventsEmpty.textContent = isBrowseView
+                ? readDashboardBrowseEmptyState(activeEvents.length, this.#events.length, this.#browseFilters, sectionCopy)
+                : sectionCopy.emptyState;
         }
 
         if (activeEvents.length === 0) {
@@ -1296,6 +1503,86 @@ class DashboardPage extends BaseComponent {
         this.#elements.eventsEmpty.hidden = true;
         this.#elements.eventsEmpty?.classList.add(DASHBOARD_HIDDEN_CLASS);
         this.#renderEventPagination();
+    }
+
+    /**
+     * Shows or hides the owner-event filters and synchronizes their values.
+     */
+    #renderBrowseFilters() {
+        if (!this.#elements.eventsFilters) {
+            return;
+        }
+
+        const isBrowseView = this.#currentView === DASHBOARD_VIEW_BROWSE;
+        this.#elements.eventsFilters.hidden = !isBrowseView;
+
+        if (!isBrowseView) {
+            return;
+        }
+
+        this.#syncBrowseFilterState();
+        this.#syncBrowseCategoryOptions();
+
+        if (this.#elements.eventsFilterStatus) {
+            this.#elements.eventsFilterStatus.value = this.#browseFilters.status;
+        }
+
+        if (this.#elements.eventsFilterCategory) {
+            this.#elements.eventsFilterCategory.value = this.#browseFilters.category;
+        }
+
+        if (this.#elements.eventsFilterShowPast) {
+            this.#elements.eventsFilterShowPast.checked = this.#browseFilters.includePast;
+        }
+
+        if (this.#elements.eventsFilterOrder) {
+            this.#elements.eventsFilterOrder.value = this.#browseFilters.order;
+        }
+    }
+
+    /**
+     * Resets the category filter when the selected option is no longer available.
+     */
+    #syncBrowseFilterState() {
+        const categoryOptions = readDashboardEventCategoryOptions(this.#events);
+        const selectedCategory = readText(this.#browseFilters.category, DASHBOARD_FILTER_ALL).toLowerCase();
+        const hasSelectedCategory = selectedCategory === DASHBOARD_FILTER_ALL
+            || categoryOptions.some(option => option.value === selectedCategory);
+
+        if (!hasSelectedCategory) {
+            this.#browseFilters.category = DASHBOARD_FILTER_ALL;
+        }
+
+        this.#browseFilters.status = normalizeDashboardStatusFilter(this.#browseFilters.status);
+        this.#browseFilters.order = normalizeDashboardSortOrder(this.#browseFilters.order);
+        this.#browseFilters.includePast = Boolean(this.#browseFilters.includePast);
+    }
+
+    /**
+     * Rebuilds the browse-category select from the loaded owner events.
+     */
+    #syncBrowseCategoryOptions() {
+        if (!this.#elements.eventsFilterCategory) {
+            return;
+        }
+
+        const categoryOptions = readDashboardEventCategoryOptions(this.#events);
+        const fragment = document.createDocumentFragment();
+        fragment.appendChild(createDashboardSelectOption({
+            value: DASHBOARD_FILTER_ALL,
+            label: 'Todas as categorias',
+            selected: this.#browseFilters.category === DASHBOARD_FILTER_ALL,
+        }));
+
+        categoryOptions.forEach((option) => {
+            fragment.appendChild(createDashboardSelectOption({
+                value: option.value,
+                label: option.label,
+                selected: option.value === this.#browseFilters.category,
+            }));
+        });
+
+        this.#elements.eventsFilterCategory.replaceChildren(fragment);
     }
 
     /**
@@ -1417,7 +1704,7 @@ class DashboardPage extends BaseComponent {
     #readActiveEvents() {
         return this.#currentView === DASHBOARD_VIEW_MODERATION
             ? this.#moderationEvents
-            : this.#events;
+            : filterDashboardBrowseEvents(this.#events, this.#browseFilters);
     }
 
     /**
@@ -1445,7 +1732,7 @@ class DashboardPage extends BaseComponent {
      * Keeps the owner-event page inside the valid browse range.
      */
     #syncBrowsePage() {
-        const totalPages = readDashboardEventPageCount(this.#events);
+        const totalPages = readDashboardEventPageCount(filterDashboardBrowseEvents(this.#events, this.#browseFilters));
         this.#currentEventPage = clampDashboardEventPage(this.#currentEventPage, totalPages);
     }
 

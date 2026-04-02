@@ -1,0 +1,114 @@
+.dashboard-events-filters {
+    display: grid;
+    gap: 16px;
+    padding: 18px;
+    border: 1px solid color-mix(in srgb, var(--color-main), transparent 84%);
+    border-radius: calc(var(--radius) - 2px);
+    background: linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 20%) 0%, color-mix(in srgb, var(--color-background), var(--color-main) 4%) 100%);
+
+    & .dashboard-events-filters__grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        align-items: end;
+    }
+
+    & label {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        color: var(--color-text-secondary);
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    & label.select-field {
+        position: relative;
+    }
+
+    & label.select-field::after {
+        content: '\f078';
+        position: absolute;
+        right: 18px;
+        bottom: 20px;
+        font: var(--fa-font-solid);
+        font-size: 0.9rem;
+        color: color-mix(in srgb, var(--color-main), var(--color-text) 22%);
+        pointer-events: none;
+        transition: color 0.2s ease;
+    }
+
+    & label.select-field:focus-within::after {
+        color: var(--color-main);
+    }
+
+    & :is(select, input[type='checkbox']) {
+        accent-color: var(--color-main);
+    }
+
+    & select {
+        width: 100%;
+        padding: 16px 18px;
+        padding-right: 48px;
+        border-radius: var(--radius-sm);
+        border: 2px solid color-mix(in srgb, var(--color-main), transparent 78%);
+        background: var(--color-background);
+        color: var(--color-text);
+        font-size: 1rem;
+        line-height: 1.4;
+        box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text), transparent 92%);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        cursor: pointer;
+        appearance: none;
+        background-image: none;
+
+        &:hover {
+            border-color: color-mix(in srgb, var(--color-main), transparent 58%);
+            box-shadow: 0 6px 14px color-mix(in srgb, var(--color-text), transparent 92%);
+        }
+
+        &:focus {
+            outline: none;
+            border-color: var(--color-main);
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-main), transparent 88%), 0 10px 20px color-mix(in srgb, var(--color-text), transparent 92%);
+        }
+    }
+
+    & .dashboard-events-filters__checkbox {
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+        min-height: 56px;
+        padding: 0 6px 0 0;
+        color: var(--color-text);
+    }
+
+    & .dashboard-events-filters__checkbox input {
+        width: 20px;
+        height: 20px;
+        margin: 0;
+        flex-shrink: 0;
+    }
+
+    & .dashboard-events-filters__checkbox-copy {
+        display: grid;
+        gap: 4px;
+    }
+
+    & .dashboard-events-filters__checkbox-hint {
+        color: var(--color-text-secondary);
+        font-size: 0.82rem;
+        font-weight: 500;
+        line-height: 1.5;
+    }
+}
+
+@media (max-width: 720px) {
+    .dashboard-events-filters {
+        padding: 16px;
+
+        & .dashboard-events-filters__grid {
+            grid-template-columns: 1fr;
+        }
+    }
+}
