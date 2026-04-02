@@ -5,6 +5,7 @@
 - **Express 5**: API and Web both run on Express `^5.2.1`.
 - **Model classes**: domain logic is implemented in classes under `api/model/`.
 - **Routes as functions**: route handlers live in `api/routes/*.js`.
+- **API route guards as middleware**: auth, ownership, and role checks for API endpoints should be implemented as Express middleware in `api/middleware/` or companion middleware modules. Resource loading should stay in the route flow so each endpoint owns how it fetches and handles its entities.
 - **In-code documentation**: every named function, method, getter/setter, and reusable local helper must have a JSDoc block. Short anonymous callbacks may stay undocumented when they are clearly local implementation details, but inline route or middleware handlers must be documented directly above the registration call.
 - **Private class fields**: prefer `#field` / `#method` where state should be encapsulated.
 - **Single responsibility first**: keep files, classes, and helpers focused on one primary job. When a file exists to export a class, move reusable standalone helpers into companion modules instead of mixing multiple responsibilities in the same file.
@@ -21,6 +22,7 @@
 - Future tasks should preserve or improve maintainability, scalability, and ease of understanding.
 - Refactors should reduce coupling or file bloat, not merely relocate code without clarifying responsibilities.
 - Prefer extracting role-specific or concern-specific collaborators when flows start diverging instead of accumulating conditionals in a single class or module.
+- In the API layer, keep route modules clear about data flow: load route-specific entities inside the route logic, then apply reusable middleware-style checks for authorization and ownership.
 - When the project already has a reusable UI or DOM interaction pattern, follow that pattern rather than introducing one-off implementations that are harder to maintain.
 - Runtime compatibility for old database schemas is not allowed in application code. When a feature needs schema changes, update the checked-in SQL/bootstrap artifacts and assume the running software is already on the current schema version.
 - Do not add runtime schema mutation or legacy upgrade logic such as `ensureSchema`, `SHOW COLUMNS`, `ALTER TABLE`, lazy migration flags, or request-time fallback migrations inside models, routes, helpers, or boot paths.

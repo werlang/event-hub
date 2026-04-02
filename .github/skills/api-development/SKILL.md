@@ -65,6 +65,8 @@ Error middleware (`api/middleware/error.js`) derives `type` from HTTP status nam
 
 - Keep route handlers in `api/routes/*.js`.
 - Keep route handlers in `api/routes/*.js` with `try/catch` + `next(error)` orchestration.
+- Keep route-specific resource loading in the route flow itself so each endpoint makes its entity fetch and missing-resource handling explicit.
+- Keep reusable auth, role, and ownership guards as Express middleware checks rather than ad hoc helper branches scattered across route handlers.
 - Keep business/data operations in models/helpers and avoid writing SQL directly in route handlers.
 - Use the shared base `Model` class with the `Mysql` driver instead of introducing a datastore/service wrapper layer.
 - Treat checked-in schema files as the source of truth. Do not add runtime schema upgrade or legacy-compatibility code such as `ensureSchema`, request-time `ALTER TABLE`, `SHOW COLUMNS`, or lazy migration guards in production code.

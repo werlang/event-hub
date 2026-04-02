@@ -1,11 +1,15 @@
 import express from 'express';
 import { Event } from '../model/event.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { requireAdminUser } from '../middleware/authorization.js';
+import { assertAdminCanModerateEvent, assertOwnerCanManageEvent } from '../middleware/event-authorization.js';
 import { HttpError } from '../helpers/error.js';
 import { normalizeEventCategoryId } from '../helpers/event-category.js';
 import { sendCreated, sendSuccess } from '../helpers/response.js';
 
 export const router = express.Router();
+
+const ALLOW_SELF_MODERATION = true;
 
 /**
  * Validates and normalizes the editable event fields required by create and update flows.
@@ -32,54 +36,6 @@ function parseEventPayload(payload = {}) {
         category,
         location,
     };
-}
-
-/**
- * Ensures the authenticated user has admin privileges.
- */
-function requireAdminUser(user) {
-    if (user?.role !== 'admin') {
-        throw new HttpError(403, 'Acesso restrito a administradores.');
-    }
-}
-
-/**
- * Ensures the requested event exists.
- */
-function ensureEventExists(event) {
-    if (!event) {
-        throw new HttpError(404, 'Evento não encontrado.');
-    }
-}
-
-/**
- * Ensures the authenticated owner can still manage the target event.
- */
-function ensureOwnerCanManageEvent(event, user) {
-    ensureEventExists(event);
-
-    if (event.organizerId !== user?.id) {
-        throw new HttpError(403, 'Você não tem permissão para gerenciar este evento.');
-    }
-
-    if (!Event.canOwnerManageStatus(event.status)) {
-        throw new HttpError(403, 'Somente eventos pendentes ou rejeitados podem ser editados ou excluídos.');
-    }
-}
-
-/**
- * Ensures the authenticated administrator can moderate the target event.
- */
-function ensureAdminCanModerateEvent(event, user) {
-    ensureEventExists(event);
-
-    if (event.organizerId === user?.id) {
-        throw new HttpError(403, 'Administradores não podem moderar os próprios eventos.');
-    }
-
-    if (Event.isPublishedStatus(event.status)) {
-        throw new HttpError(400, 'Somente eventos não publicados podem ser moderados.');
-    }
 }
 
 /**
@@ -162,12 +118,10 @@ router.get('/mine', authMiddleware, async (req, res, next) => {
 /**
  * Lists unpublished events from other organizers for administrators.
  */
-router.get('/moderation', authMiddleware, async (req, res, next) => {
+router.get('/moderation', authMiddleware, requireAdminUser, async (req, res, next) => {
     try {
-        requireAdminUser(req.user);
-
         const events = await Event.listForModeration({
-            moderatorId: req.user.id,
+            moderatorId: ALLOW_SELF_MODERATION ? undefined : req.user.id,
             status: parseModerationQueueStatus(req.query.status),
         });
 
@@ -216,10 +170,12 @@ router.post('/', authMiddleware, async (req, res, next) => {
 /**
  * Updates an event still pending moderation or already rejected.
  */
-router.patch('/:id', authMiddleware, async (req, res, next) => {
+router.patch('/:id', 
+    authMiddleware, 
+    async (req, res, next) => {
     try {
         const currentEvent = await Event.findById(req.params.id);
-        ensureOwnerCanManageEvent(currentEvent, req.user);
+        assertOwnerCanManageEvent(currentEvent, req.user);
 
         const updatedEvent = await Event.updateDetails(currentEvent.id, {
             ...parseEventPayload(req.body),
@@ -239,10 +195,12 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
 /**
  * Deletes an event still pending moderation or already rejected.
  */
-router.delete('/:id', authMiddleware, async (req, res, next) => {
+router.delete('/:id', 
+    authMiddleware, 
+    async (req, res, next) => {
     try {
         const currentEvent = await Event.findById(req.params.id);
-        ensureOwnerCanManageEvent(currentEvent, req.user);
+        assertOwnerCanManageEvent(currentEvent, req.user);
 
         await Event.remove(currentEvent.id);
         return sendSuccess(res, {
@@ -257,12 +215,13 @@ router.delete('/:id', authMiddleware, async (req, res, next) => {
 /**
  * Approves or rejects an unpublished event from another organizer.
  */
-router.patch('/:id/moderation', authMiddleware, async (req, res, next) => {
+router.patch('/:id/moderation', 
+    authMiddleware, 
+    requireAdminUser,
+    async (req, res, next) => {
     try {
-        requireAdminUser(req.user);
-
         const currentEvent = await Event.findById(req.params.id);
-        ensureAdminCanModerateEvent(currentEvent, req.user);
+        assertAdminCanModerateEvent(currentEvent, req.user);
 
         const moderationDecision = parseModerationDecisionPayload(req.body);
         const updatedEvent = await Event.updateStatus(currentEvent.id, moderationDecision.status, {

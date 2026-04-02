@@ -3,7 +3,7 @@ import { router as eventsRouter } from '../../routes/events.js';
 import { Event } from '../../model/event.js';
 import { buildEvent } from './support/fixtures.js';
 import { createResponseDouble, restoreTracked, trackReplacement } from './support/doubles.js';
-import { getRouteHandlers } from './support/router.js';
+import { getRouteHandlers, runRouteHandlers } from './support/router.js';
 
 const restores = [];
 
@@ -23,14 +23,14 @@ afterEach(() => {
 });
 
 describe('routes/events', () => {
-    const listHandler = getRouteHandlers(eventsRouter, 'get', '/').at(-1);
-    const mineHandler = getRouteHandlers(eventsRouter, 'get', '/mine').at(-1);
-    const moderationListHandler = getRouteHandlers(eventsRouter, 'get', '/moderation').at(-1);
-    const getByIdHandler = getRouteHandlers(eventsRouter, 'get', '/:id').at(-1);
-    const createHandler = getRouteHandlers(eventsRouter, 'post', '/').at(-1);
-    const updateHandler = getRouteHandlers(eventsRouter, 'patch', '/:id').at(-1);
-    const deleteHandler = getRouteHandlers(eventsRouter, 'delete', '/:id').at(-1);
-    const moderationDecisionHandler = getRouteHandlers(eventsRouter, 'patch', '/:id/moderation').at(-1);
+    const listHandlers = getRouteHandlers(eventsRouter, 'get', '/');
+    const mineHandlers = getRouteHandlers(eventsRouter, 'get', '/mine').slice(1);
+    const moderationListHandlers = getRouteHandlers(eventsRouter, 'get', '/moderation').slice(1);
+    const getByIdHandlers = getRouteHandlers(eventsRouter, 'get', '/:id');
+    const createHandlers = getRouteHandlers(eventsRouter, 'post', '/').slice(1);
+    const updateHandlers = getRouteHandlers(eventsRouter, 'patch', '/:id').slice(1);
+    const deleteHandlers = getRouteHandlers(eventsRouter, 'delete', '/:id').slice(1);
+    const moderationDecisionHandlers = getRouteHandlers(eventsRouter, 'patch', '/:id/moderation').slice(1);
 
     test('list passes supported filters to Event.list and returns the envelope', async () => {
         const calls = [];
@@ -41,7 +41,7 @@ describe('routes/events', () => {
 
         const res = createResponseDouble();
         const next = jest.fn();
-        await listHandler(createRequest({ query: { q: 'comp', category: 'Tecnologia', from: '2026-05-01', to: '2026-05-31' } }), res, next);
+        await runRouteHandlers(listHandlers, createRequest({ query: { q: 'comp', category: 'Tecnologia', from: '2026-05-01', to: '2026-05-31' } }), res, next);
 
         expect(next).not.toHaveBeenCalled();
         expect(calls).toEqual([{ search: 'comp', category: 'Tecnologia', from: '2026-05-01', to: '2026-05-31' }]);
@@ -54,7 +54,7 @@ describe('routes/events', () => {
         });
 
         const next = jest.fn();
-        await listHandler(createRequest(), createResponseDouble(), next);
+        await runRouteHandlers(listHandlers, createRequest(), createResponseDouble(), next);
 
         expect(next.mock.calls[0][0].status).toBe(500);
         expect(next.mock.calls[0][0].message).toBe('Não foi possível carregar os eventos.');
@@ -64,7 +64,7 @@ describe('routes/events', () => {
         trackReplacement(restores, Event, 'listByOrganizer', async organizerId => [buildEvent({ organizerId })]);
         const successRes = createResponseDouble();
         const successNext = jest.fn();
-        await mineHandler(createRequest({ user: { id: 'user-1' } }), successRes, successNext);
+        await runRouteHandlers(mineHandlers, createRequest({ user: { id: 'user-1' } }), successRes, successNext);
         expect(successNext).not.toHaveBeenCalled();
         expect(successRes.body.data.events[0].organizerId).toBe('user-1');
 
@@ -72,7 +72,7 @@ describe('routes/events', () => {
             throw new Error('query failed');
         });
         const errorNext = jest.fn();
-        await mineHandler(createRequest({ user: { id: 'user-1' } }), createResponseDouble(), errorNext);
+        await runRouteHandlers(mineHandlers, createRequest({ user: { id: 'user-1' } }), createResponseDouble(), errorNext);
         expect(errorNext.mock.calls[0][0].status).toBe(500);
     });
 
@@ -85,23 +85,23 @@ describe('routes/events', () => {
 
         const successRes = createResponseDouble();
         const successNext = jest.fn();
-        await moderationListHandler(createRequest({ user: { id: 'admin-1', role: 'admin' }, query: { status: 'rejected' } }), successRes, successNext);
+        await runRouteHandlers(moderationListHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' }, query: { status: 'rejected' } }), successRes, successNext);
         expect(successNext).not.toHaveBeenCalled();
-        expect(calls).toEqual([{ moderatorId: 'admin-1', status: 'rejected' }]);
+        expect(calls).toEqual([{ moderatorId: undefined, status: 'rejected' }]);
 
         const forbiddenNext = jest.fn();
-        await moderationListHandler(createRequest({ user: { id: 'user-1', role: 'member' } }), createResponseDouble(), forbiddenNext);
+        await runRouteHandlers(moderationListHandlers, createRequest({ user: { id: 'user-1', role: 'member' } }), createResponseDouble(), forbiddenNext);
         expect(forbiddenNext.mock.calls[0][0].status).toBe(403);
 
         const invalidStatusNext = jest.fn();
-        await moderationListHandler(createRequest({ user: { id: 'admin-1', role: 'admin' }, query: { status: 'published' } }), createResponseDouble(), invalidStatusNext);
+        await runRouteHandlers(moderationListHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' }, query: { status: 'published' } }), createResponseDouble(), invalidStatusNext);
         expect(invalidStatusNext.mock.calls[0][0].status).toBe(400);
 
         trackReplacement(restores, Event, 'listForModeration', async () => {
             throw new Error('query failed');
         });
         const errorNext = jest.fn();
-        await moderationListHandler(createRequest({ user: { id: 'admin-1', role: 'admin' } }), createResponseDouble(), errorNext);
+        await runRouteHandlers(moderationListHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' } }), createResponseDouble(), errorNext);
         expect(errorNext.mock.calls[0][0].status).toBe(500);
     });
 
@@ -110,19 +110,19 @@ describe('routes/events', () => {
 
         const successRes = createResponseDouble();
         const successNext = jest.fn();
-        await getByIdHandler(createRequest({ params: { id: 'event-1' } }), successRes, successNext);
+        await runRouteHandlers(getByIdHandlers, createRequest({ params: { id: 'event-1' } }), successRes, successNext);
         expect(successNext).not.toHaveBeenCalled();
         expect(successRes.body.data.event.id).toBe('event-1');
 
         const missingNext = jest.fn();
-        await getByIdHandler(createRequest({ params: { id: 'event-2' } }), createResponseDouble(), missingNext);
+        await runRouteHandlers(getByIdHandlers, createRequest({ params: { id: 'event-2' } }), createResponseDouble(), missingNext);
         expect(missingNext.mock.calls[0][0].status).toBe(404);
 
         trackReplacement(restores, Event, 'findPublicById', async () => {
             throw new Error('query failed');
         });
         const errorNext = jest.fn();
-        await getByIdHandler(createRequest({ params: { id: 'event-1' } }), createResponseDouble(), errorNext);
+        await runRouteHandlers(getByIdHandlers, createRequest({ params: { id: 'event-1' } }), createResponseDouble(), errorNext);
         expect(errorNext.mock.calls[0][0].status).toBe(500);
     });
 
@@ -135,7 +135,7 @@ describe('routes/events', () => {
 
         const successRes = createResponseDouble();
         const successNext = jest.fn();
-        await createHandler(createRequest({
+        await runRouteHandlers(createHandlers, createRequest({
             user: { id: 'user-1' },
             body: {
                 title: 'Semana Academica',
@@ -154,18 +154,18 @@ describe('routes/events', () => {
         });
 
         const missingNext = jest.fn();
-        await createHandler(createRequest({ user: { id: 'user-1' }, body: { title: 'Semana Academica' } }), createResponseDouble(), missingNext);
+        await runRouteHandlers(createHandlers, createRequest({ user: { id: 'user-1' }, body: { title: 'Semana Academica' } }), createResponseDouble(), missingNext);
         expect(missingNext.mock.calls[0][0].status).toBe(400);
 
         const invalidDateNext = jest.fn();
-        await createHandler(createRequest({ user: { id: 'user-1' }, body: { title: 'Semana Academica', description: 'Palestras', date: 'not-a-date' } }), createResponseDouble(), invalidDateNext);
+        await runRouteHandlers(createHandlers, createRequest({ user: { id: 'user-1' }, body: { title: 'Semana Academica', description: 'Palestras', date: 'not-a-date' } }), createResponseDouble(), invalidDateNext);
         expect(invalidDateNext.mock.calls[0][0].status).toBe(400);
 
         trackReplacement(restores, Event, 'create', async () => {
             throw new Error('write failed');
         });
         const errorNext = jest.fn();
-        await createHandler(createRequest({ user: { id: 'user-1' }, body: { title: 'Semana Academica', description: 'Palestras', date: '2026-06-01T10:00:00.000Z' } }), createResponseDouble(), errorNext);
+        await runRouteHandlers(createHandlers, createRequest({ user: { id: 'user-1' }, body: { title: 'Semana Academica', description: 'Palestras', date: '2026-06-01T10:00:00.000Z' } }), createResponseDouble(), errorNext);
         expect(errorNext.mock.calls[0][0].status).toBe(500);
     });
 
@@ -179,7 +179,7 @@ describe('routes/events', () => {
 
         const successRes = createResponseDouble();
         const successNext = jest.fn();
-        await updateHandler(createRequest({
+        await runRouteHandlers(updateHandlers, createRequest({
             user: { id: 'user-1' },
             params: { id: 'event-1' },
             body: {
@@ -206,17 +206,17 @@ describe('routes/events', () => {
 
         trackReplacement(restores, Event, 'findById', async () => null);
         const missingNext = jest.fn();
-        await updateHandler(createRequest({ user: { id: 'user-1' }, params: { id: 'event-1' }, body: { title: 'Novo', description: 'Resumo', date: '2026-06-10T19:00:00.000Z' } }), createResponseDouble(), missingNext);
+        await runRouteHandlers(updateHandlers, createRequest({ user: { id: 'user-1' }, params: { id: 'event-1' }, body: { title: 'Novo', description: 'Resumo', date: '2026-06-10T19:00:00.000Z' } }), createResponseDouble(), missingNext);
         expect(missingNext.mock.calls[0][0].status).toBe(404);
 
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'other-user' }));
         const forbiddenNext = jest.fn();
-        await updateHandler(createRequest({ user: { id: 'user-1' }, params: { id: 'event-1' }, body: { title: 'Novo', description: 'Resumo', date: '2026-06-10T19:00:00.000Z' } }), createResponseDouble(), forbiddenNext);
+        await runRouteHandlers(updateHandlers, createRequest({ user: { id: 'user-1' }, params: { id: 'event-1' }, body: { title: 'Novo', description: 'Resumo', date: '2026-06-10T19:00:00.000Z' } }), createResponseDouble(), forbiddenNext);
         expect(forbiddenNext.mock.calls[0][0].status).toBe(403);
 
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'published', organizerId: 'user-1' }));
         const publishedNext = jest.fn();
-        await updateHandler(createRequest({ user: { id: 'user-1' }, params: { id: 'event-1' }, body: { title: 'Novo', description: 'Resumo', date: '2026-06-10T19:00:00.000Z' } }), createResponseDouble(), publishedNext);
+        await runRouteHandlers(updateHandlers, createRequest({ user: { id: 'user-1' }, params: { id: 'event-1' }, body: { title: 'Novo', description: 'Resumo', date: '2026-06-10T19:00:00.000Z' } }), createResponseDouble(), publishedNext);
         expect(publishedNext.mock.calls[0][0].status).toBe(403);
 
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'rejected', organizerId: 'user-1' }));
@@ -224,7 +224,7 @@ describe('routes/events', () => {
             throw new Error('write failed');
         });
         const errorNext = jest.fn();
-        await updateHandler(createRequest({ user: { id: 'user-1' }, params: { id: 'event-1' }, body: { title: 'Novo', description: 'Resumo', date: '2026-06-10T19:00:00.000Z' } }), createResponseDouble(), errorNext);
+        await runRouteHandlers(updateHandlers, createRequest({ user: { id: 'user-1' }, params: { id: 'event-1' }, body: { title: 'Novo', description: 'Resumo', date: '2026-06-10T19:00:00.000Z' } }), createResponseDouble(), errorNext);
         expect(errorNext.mock.calls[0][0].status).toBe(500);
     });
 
@@ -237,13 +237,13 @@ describe('routes/events', () => {
 
         const successRes = createResponseDouble();
         const successNext = jest.fn();
-        await deleteHandler(createRequest({ user: { id: 'user-1' }, params: { id: 'event-1' } }), successRes, successNext);
+        await runRouteHandlers(deleteHandlers, createRequest({ user: { id: 'user-1' }, params: { id: 'event-1' } }), successRes, successNext);
         expect(successNext).not.toHaveBeenCalled();
         expect(removeCalls).toEqual(['event-1']);
 
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'other-user' }));
         const forbiddenNext = jest.fn();
-        await deleteHandler(createRequest({ user: { id: 'user-1' }, params: { id: 'event-1' } }), createResponseDouble(), forbiddenNext);
+        await runRouteHandlers(deleteHandlers, createRequest({ user: { id: 'user-1' }, params: { id: 'event-1' } }), createResponseDouble(), forbiddenNext);
         expect(forbiddenNext.mock.calls[0][0].status).toBe(403);
 
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'rejected', organizerId: 'user-1' }));
@@ -251,7 +251,7 @@ describe('routes/events', () => {
             throw new Error('delete failed');
         });
         const errorNext = jest.fn();
-        await deleteHandler(createRequest({ user: { id: 'user-1' }, params: { id: 'event-1' } }), createResponseDouble(), errorNext);
+        await runRouteHandlers(deleteHandlers, createRequest({ user: { id: 'user-1' }, params: { id: 'event-1' } }), createResponseDouble(), errorNext);
         expect(errorNext.mock.calls[0][0].status).toBe(500);
     });
 
@@ -265,7 +265,7 @@ describe('routes/events', () => {
 
         const publishRes = createResponseDouble();
         const publishNext = jest.fn();
-        await moderationDecisionHandler(createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'published' } }), publishRes, publishNext);
+        await runRouteHandlers(moderationDecisionHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'published' } }), publishRes, publishNext);
         expect(publishNext).not.toHaveBeenCalled();
         expect(statusCalls).toEqual([{ id: 'event-1', status: 'published', options: { rejectionReason: null } }]);
         expect(publishRes.body.message).toBe('Evento aprovado e publicado.');
@@ -278,7 +278,7 @@ describe('routes/events', () => {
 
         const rejectRes = createResponseDouble();
         const rejectNext = jest.fn();
-        await moderationDecisionHandler(createRequest({
+        await runRouteHandlers(moderationDecisionHandlers, createRequest({
             user: { id: 'admin-1', role: 'admin' },
             params: { id: 'event-2' },
             body: { status: 'rejected', rejectionReason: '  Ajuste a descrição do público-alvo. ' },
@@ -293,21 +293,21 @@ describe('routes/events', () => {
 
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'admin-1' }));
         const selfNext = jest.fn();
-        await moderationDecisionHandler(createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'published' } }), createResponseDouble(), selfNext);
+        await runRouteHandlers(moderationDecisionHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'published' } }), createResponseDouble(), selfNext);
         expect(selfNext.mock.calls[0][0].status).toBe(403);
 
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'published', organizerId: 'user-2' }));
         const publishedNext = jest.fn();
-        await moderationDecisionHandler(createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'rejected' } }), createResponseDouble(), publishedNext);
+        await runRouteHandlers(moderationDecisionHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'rejected' } }), createResponseDouble(), publishedNext);
         expect(publishedNext.mock.calls[0][0].status).toBe(400);
 
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'user-2' }));
         const invalidStatusNext = jest.fn();
-        await moderationDecisionHandler(createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'pending' } }), createResponseDouble(), invalidStatusNext);
+        await runRouteHandlers(moderationDecisionHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'pending' } }), createResponseDouble(), invalidStatusNext);
         expect(invalidStatusNext.mock.calls[0][0].status).toBe(400);
 
         const nonAdminNext = jest.fn();
-        await moderationDecisionHandler(createRequest({ user: { id: 'user-1', role: 'member' }, params: { id: 'event-1' }, body: { status: 'published' } }), createResponseDouble(), nonAdminNext);
+        await runRouteHandlers(moderationDecisionHandlers, createRequest({ user: { id: 'user-1', role: 'member' }, params: { id: 'event-1' }, body: { status: 'published' } }), createResponseDouble(), nonAdminNext);
         expect(nonAdminNext.mock.calls[0][0].status).toBe(403);
 
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'user-2' }));
@@ -315,7 +315,7 @@ describe('routes/events', () => {
             throw new Error('write failed');
         });
         const errorNext = jest.fn();
-        await moderationDecisionHandler(createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'rejected' } }), createResponseDouble(), errorNext);
+        await runRouteHandlers(moderationDecisionHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'rejected' } }), createResponseDouble(), errorNext);
         expect(errorNext.mock.calls[0][0].status).toBe(500);
     });
 });

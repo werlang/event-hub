@@ -73,6 +73,7 @@ Para desenvolvimento com containers, use `docker compose -f compose.dev.yaml up 
 ## Convenções de código
 
 - ES Modules, Express 5, classes para modelos (`api/model/`), rotas puras em `api/routes/`.
+- Em endpoints da API, autenticação, autorização e checagens de ownership/papel devem ficar em middlewares Express reutilizáveis. O carregamento do recurso da rota deve permanecer no próprio fluxo da rota, para deixar explícito como cada endpoint busca e trata sua entidade.
 - JWT via `helpers/token.js`; persistência MySQL com helper/driver em `api/helpers/mysql.js` e base `Model` em `api/model/model.js`.
 - Documentação em código: toda função nomeada, método, getter/setter e helper reutilizável deve receber bloco JSDoc. Callbacks anônimos curtos podem permanecer sem bloco quando forem apenas detalhe local de implementação, mas handlers inline de rota/middleware devem ser documentados imediatamente acima do registro.
 - Cada arquivo e módulo deve ter uma responsabilidade principal clara. Quando o contrato principal de um arquivo for uma classe, helpers reutilizáveis devem ficar em módulos auxiliares dedicados.

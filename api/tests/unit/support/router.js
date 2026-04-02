@@ -13,3 +13,38 @@ export function getRouteHandlers(router, method, path) {
 
     return layer.route.stack.map(routeLayer => routeLayer.handle);
 }
+
+/**
+ * Executes a route handler chain the same way Express would for unit tests.
+ */
+export async function runRouteHandlers(handlers, req, res, next) {
+    async function dispatch(index, err) {
+        if (err) {
+            next(err);
+            return;
+        }
+
+        if (index >= handlers.length) {
+            return;
+        }
+
+        let forwarded = false;
+        let forwardedError;
+
+        try {
+            await handlers[index](req, res, handlerError => {
+                forwarded = true;
+                forwardedError = handlerError;
+            });
+        } catch (error) {
+            next(error);
+            return;
+        }
+
+        if (forwarded) {
+            await dispatch(index + 1, forwardedError);
+        }
+    }
+
+    await dispatch(0);
+}
