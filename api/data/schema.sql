@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS events (
     title VARCHAR(255) NOT NULL,
     description TEXT DEFAULT NULL,
     date DATETIME NOT NULL,
-    category VARCHAR(64) DEFAULT 'Geral',
+    category VARCHAR(64) DEFAULT 'outro',
     location VARCHAR(255) DEFAULT NULL,
     status VARCHAR(32) NOT NULL DEFAULT 'pending',
     calendar_link VARCHAR(255) DEFAULT NULL,

@@ -2,6 +2,7 @@ import express from 'express';
 import { Event } from '../model/event.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { HttpError } from '../helpers/error.js';
+import { normalizeEventCategoryId } from '../helpers/event-category.js';
 import { sendCreated, sendSuccess } from '../helpers/response.js';
 
 export const router = express.Router();
@@ -12,7 +13,7 @@ export const router = express.Router();
 function parseEventPayload(payload = {}) {
     const title = String(payload.title || '').trim();
     const description = String(payload.description || '').trim();
-    const category = String(payload.category || '').trim() || 'Geral';
+    const category = normalizeEventCategoryId(payload.category, { fallback: 'outro' });
     const location = String(payload.location || '').trim() || 'A definir';
 
     if (!title || !description || !payload.date) {

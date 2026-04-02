@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { Model } from './model.js';
+import { normalizeEventCategoryId, readEventCategoryLabel } from '../helpers/event-category.js';
 
 export class Event extends Model {
 
@@ -42,7 +43,7 @@ export class Event extends Model {
         this.title = title || '';
         this.description = description || '';
         this.date = date;
-        this.category = category || 'Geral';
+        this.category = normalizeEventCategoryId(category, { fallback: 'outro' });
         this.location = location || 'A definir';
         this.status = Event.normalizeStatus(status);
         this.organizerId = organizerId;
@@ -59,6 +60,7 @@ export class Event extends Model {
             description: this.description,
             date: this.date,
             category: this.category,
+            categoryLabel: readEventCategoryLabel(this.category, { fallback: 'Outro' }),
             location: this.location,
             status: this.status,
             organizerId: this.organizerId,
@@ -145,7 +147,8 @@ export class Event extends Model {
             title: row.title,
             description: row.description,
             date: row.date ? new Date(row.date).toISOString() : row.date,
-            category: row.category,
+            category: normalizeEventCategoryId(row.category, { fallback: 'outro' }),
+            categoryLabel: readEventCategoryLabel(row.category, { fallback: 'Outro' }),
             location: row.location,
             status: Event.normalizeStatus(row.status),
             organizerId: row.organizerId || row.organizer_id,
@@ -165,7 +168,7 @@ export class Event extends Model {
             title: event.title,
             description: event.description,
             date: this.driver.toDateTime(event.date),
-            category: event.category,
+            category: normalizeEventCategoryId(event.category, { fallback: 'outro' }),
             location: event.location,
             status: this.normalizeStatus(event.status),
             organizer_id: event.organizerId,
@@ -181,7 +184,7 @@ export class Event extends Model {
             title: payload.title,
             description: payload.description,
             date: payload.date ? this.driver.toDateTime(payload.date) : undefined,
-            category: payload.category,
+            category: payload.category ? normalizeEventCategoryId(payload.category, { fallback: 'outro' }) : undefined,
             location: payload.location,
             status: payload.status ? this.normalizeStatus(payload.status) : undefined,
         }).filter(([, value]) => value !== undefined));
@@ -254,11 +257,11 @@ export class Event extends Model {
             opt: { order: { date: 1 } },
         });
 
-        const normalizedCategory = category?.toLowerCase();
+        const normalizedCategory = normalizeEventCategoryId(category, { fallback: '' }).toLowerCase();
         const normalizedSearch = search?.toLowerCase();
 
         return rows.filter(event => {
-            if (normalizedCategory && (event.category || '').toLowerCase() !== normalizedCategory) {
+            if (normalizedCategory && normalizeEventCategoryId(event.category, { fallback: '' }).toLowerCase() !== normalizedCategory) {
                 return false;
             }
 
@@ -266,7 +269,7 @@ export class Event extends Model {
                 return true;
             }
 
-            return [event.title, event.description, event.location, event.category]
+            return [event.title, event.description, event.location, event.categoryLabel, event.category]
                 .filter(Boolean)
                 .some(value => value.toLowerCase().includes(normalizedSearch));
         });
