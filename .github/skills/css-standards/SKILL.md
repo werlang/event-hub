@@ -36,14 +36,16 @@ Applies to the web client styles under `web/src/css/` and class names used in `w
 
 ## Core Rules
 
-1. Keep CSS bundled through `web/src/css/index.css` or `web/src/css/login.css`, but modularized with `@import` per component file.
-2. Each UI component must own its style file in `web/src/css/components/`.
-3. Keep project-wide tokens in `web/src/css/tokens.css` under `:root`.
-4. Never hardcode palette colors, fonts, radii, or shadows in component files when an existing token already covers the need.
-5. For hover, focus, active, muted, and surface variations, prefer `color-mix(...)` with existing tokens.
-6. Prefer nested CSS selectors within each component file to keep styles colocated and scoped.
-7. Keep interactions visually soft: subtle lift, border shifts, and shadow changes are preferred over aggressive transforms or high-contrast effects.
-8. Do not introduce alternate icon systems or version-specific Font Awesome font-family strings in component CSS.
+1. Keep page entry files such as `web/src/css/index.css`, `web/src/css/login.css`, and `web/src/css/dashboard.css` as composition layers: imports first, then only page-level layout and one-off page scaffolding.
+2. Each UI component must own its style file in `web/src/css/components/`; when a page entry starts carrying multiple component roots, extract them instead of extending the entry file.
+3. If two or more page-scoped components share the same visual primitive, extract a small shared partial for that page scope instead of duplicating rules or pushing them back into the entry file.
+4. Keep project-wide tokens in `web/src/css/tokens.css` under `:root`.
+5. Never hardcode palette colors, fonts, radii, or shadows in component files when an existing token already covers the need.
+6. For hover, focus, active, muted, and surface variations, prefer `color-mix(...)` with existing tokens.
+7. Prefer nested CSS selectors within each component file to keep styles colocated and scoped.
+8. Keep component-specific responsive rules in the same component file as the base styles they modify.
+9. Keep interactions visually soft: subtle lift, border shifts, and shadow changes are preferred over aggressive transforms or high-contrast effects.
+10. Do not introduce alternate icon systems or version-specific Font Awesome font-family strings in component CSS.
 
 ## Token Usage
 
@@ -70,9 +72,10 @@ Use shared token names from `tokens.css`:
 
 - `index.css`: imports tokens/base/component files plus home-page filter and empty-state rules
 - `login.css`: imports shared tokens/base/components plus auth-page layout and tabs rules
+- `dashboard.css`: imports shared tokens/base/components plus dashboard page layout only
 - `tokens.css`: color and spacing primitives
 - `base.css`: reset, atmospheric background, global typography primitives
-- `components/*.css`: component-specific nested rules
+- `components/*.css`: component-specific nested rules, including page-specific partials such as dashboard shell, sections, cards, event rows, modal layouts, or small shared dashboard primitives when several dashboard components depend on the same base treatment
 
 ## Interaction with JS Components
 
@@ -95,10 +98,12 @@ Example pattern:
 ## Review Checklist
 
 - Does each changed component map to a dedicated CSS file?
+- Does the page entry file stay slim and act as composition instead of owning leaf component blocks?
 - Does the change preserve the warm editorial theme instead of drifting back to a dark or neon look?
 - Are all colors, fonts, radii, and shadows tokenized via `var(--...)` where appropriate?
 - Do icon treatments follow the shared Font Awesome setup and avoid ad hoc glyph systems or stale font-family names?
 - Are tone variants created with `color-mix(...)`?
 - Are nested selectors used for component internals/states?
+- Do responsive overrides stay colocated with the component they modify?
 - Are JS visual states represented by CSS classes (not inline styles)?
 - Do headings, badges, buttons, and surfaces still match the current typography and component language?
