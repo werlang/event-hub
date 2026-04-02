@@ -102,4 +102,7 @@
 
 ## Testing
 - No automated test suite is currently configured.
-- Validate changes with manual API/Web checks and (when relevant) Docker Compose logs.
+- Feature and refactor work is not complete after code edits alone: when a task introduces or touches stable automation, update and run it.
+- When automation is still absent, validate changes with explicit manual API/Web checks and, when relevant, Docker Compose logs.
+- Prefer the smallest service-local test bootstrap when a task can add deterministic coverage cleanly inside `api/` or `web/`; otherwise document the manual validation steps and remaining gaps.
+- For web asset or bundle changes, prefer the repository workflow `docker compose -f compose.dev.yaml exec web ./node_modules/.bin/webpack --config webpack.config.js --stats errors-warnings` when the Compose stack is available.
