@@ -83,6 +83,13 @@ function readText(value, fallback) {
 }
 
 /**
+ * Returns the moderation byline shown beneath the event title.
+ */
+function readModerationAuthorText(event) {
+    return `Por ${readText(event?.organizerName, 'autoria não informada')}`;
+}
+
+/**
  * Formats an event count with singular/plural agreement.
  */
 function formatCount(total, singular, plural) {
@@ -686,6 +693,17 @@ function createDashboardEventElement(event, { mode = DASHBOARD_VIEW_BROWSE } = {
     title.className = 'dashboard-event__title';
     title.textContent = readText(event?.title, 'Evento sem título');
 
+    const titleBlock = document.createElement('div');
+    titleBlock.className = 'dashboard-event__title-block';
+    titleBlock.appendChild(title);
+
+    if (isModerationView) {
+        const author = document.createElement('p');
+        author.className = 'dashboard-event__author';
+        author.textContent = readModerationAuthorText(event);
+        titleBlock.appendChild(author);
+    }
+
     const statusGroup = document.createElement('div');
     statusGroup.className = 'dashboard-event__status-group';
 
@@ -711,7 +729,7 @@ function createDashboardEventElement(event, { mode = DASHBOARD_VIEW_BROWSE } = {
     timelinePill.append(tooltipTimeline.get(), isPastEvent(event) ? 'Passado' : 'Próximo');
     statusGroup.appendChild(timelinePill);
 
-    headline.append(title, statusGroup);
+    headline.append(titleBlock, statusGroup);
     header.appendChild(headline);
 
     if (isModerationView && isPendingModerationEvent(event)) {

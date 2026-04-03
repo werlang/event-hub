@@ -181,6 +181,20 @@
         color: var(--color-text);
     }
 
+    & .dashboard-event__title-block {
+        display: grid;
+        gap: 6px;
+    }
+
+    & .dashboard-event__author {
+        color: var(--color-text-secondary);
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+    }
+
     & .dashboard-event__description {
         color: var(--color-text-secondary);
         line-height: 1.7;

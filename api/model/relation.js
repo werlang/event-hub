@@ -116,4 +116,29 @@ export class Relation {
             ...this.nativeObject,
         } });
     }
+
+    /**
+     * Returns every relation row whose related field matches any provided value.
+     */
+    async getMany(fieldValues = [], { view = [] } = {}) {
+        const normalizedValues = [
+            ...new Set(
+                (fieldValues || [])
+                    .map(value => String(value || '').trim())
+                    .filter(Boolean),
+            ),
+        ];
+
+        if (normalizedValues.length === 0) {
+            return [];
+        }
+
+        return this.driver.find(this.tableName, {
+            filter: {
+                ...this.nativeObject,
+                [this.relatedField]: { in: normalizedValues },
+            },
+            view,
+        });
+    }
 }

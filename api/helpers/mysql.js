@@ -40,9 +40,19 @@ export class Mysql {
     }
 
     /**
+     * Quotes a SQL identifier, including dotted table/column references.
+     */
+    static #quoteIdentifier(identifier) {
+        return String(identifier)
+            .split('.')
+            .map(part => part === '*' ? '*' : `\`${part}\``)
+            .join('.');
+    }
+
+    /**
      * Executes a formatted SQL statement through mysql2.
      */
-    static async query(sql, data) {
+    static async #query(sql, data) {
         // console.log(sql, data);
         await Mysql.connect();
 
@@ -76,7 +86,7 @@ export class Mysql {
             const values = Object.values(row);
             const fields = Object.keys(row).map(k => `\`${k}\``);
             let sql = `INSERT INTO \`${table}\` (${fields.join(',')}) VALUES (${values.map(() => '?').join(',')})`;
-            return Mysql.query(sql, values);
+            return Mysql.#query(sql, values);
         }));
     }
 
@@ -126,7 +136,7 @@ export class Mysql {
         const sql = `UPDATE \`${table}\` SET ${fielsdSql} WHERE ${id}`;
         // console.log(Mysql.format(sql, data));
         // replicateDB.saveUpdate(table, sql, data, this);
-        return Mysql.query(sql, values);
+        return Mysql.#query(sql, values);
     }
 
     /**
@@ -153,7 +163,7 @@ export class Mysql {
             data.push(clause);
         }
         
-        return Mysql.query(sql, data);
+        return Mysql.#query(sql, data);
     }
 
     /**
@@ -164,7 +174,7 @@ export class Mysql {
 
         const statement = Object.entries(filter).map(([k,v],i) => {
             // email: null
-            if (v === null) return `\`${k}\` IS NULL`;
+            if (v === null) return `${Mysql.#quoteIdentifier(k)} IS NULL`;
 
             if (Array.isArray(v)){
                 // age: [18, 19, 20]
@@ -172,7 +182,7 @@ export class Mysql {
                 
                 // add all values to the values array
                 values.push(...v);
-                return `\`${k}\` IN (${v.map(() => '?').join(',')})`;
+                return `${Mysql.#quoteIdentifier(k)} IN (${v.map(() => '?').join(',')})`;
             }
             else if (typeof v === 'object'){
                 // age: { in: [18, 19, 20] }
@@ -181,40 +191,40 @@ export class Mysql {
                     
                     // add all values to the values array
                     values.push(...v.in);
-                    return `\`${k}\` IN (${v.in.map(() => '?').join(',')})`;
+                    return `${Mysql.#quoteIdentifier(k)} IN (${v.in.map(() => '?').join(',')})`;
                 }
 
                 // age: { between: [18, 20] }
                 if (Object.keys(v)[0] === 'between'){
                     // add 2 values to the values array
                     values.push(v.between[0], v.between[1]);
-                    return `\`${k}\` BETWEEN ? AND ?`;
+                    return `${Mysql.#quoteIdentifier(k)} BETWEEN ? AND ?`;
                 }
 
                 // name: { like: '%John%' }
                 if (Object.keys(v)[0] === 'like'){
                     // replace the value with the like value
                     values.push(`%${v.like}%`);
-                    return `\`${k}\` LIKE ?`;
+                    return `${Mysql.#quoteIdentifier(k)} LIKE ?`;
                 }
 
                 // name: { not: 'John' }
                 if (Object.keys(v)[0] === 'not'){
                     // name: { not: null }
-                    if (v.not === null) return `\`${k}\` IS NOT NULL`;
+                    if (v.not === null) return `${Mysql.#quoteIdentifier(k)} IS NOT NULL`;
                     values.push(v.not);
-                    return `\`${k}\` != ?`;
+                    return `${Mysql.#quoteIdentifier(k)} != ?`;
                 }
 
                 // age: { '>=': 18 }
                 const e = Object.keys(v)[0];
                 values.push(Object.values(v)[0]);
-                return `\`${k}\` ${e} ?`;
+                return `${Mysql.#quoteIdentifier(k)} ${e} ?`;
             }
 
             // name: 'John'
             values.push(v);
-            return `\`${k}\` = ?`;
+            return `${Mysql.#quoteIdentifier(k)} = ?`;
         }).join(' AND ');
 
         return { statement, values };
@@ -225,7 +235,7 @@ export class Mysql {
      */
     static async find(table, { filter={}, view=[], opt={}} = {}) {
         view = Array.isArray(view) ? view : [ view ];
-        view = view.length > 0 ? view.map(v => `\`${v}\``).join(',') : '*';
+        view = view.length > 0 ? view.map(v => Mysql.#quoteIdentifier(v)).join(',') : '*';
 
         // filter not an object
         if (typeof filter !== 'object') {
@@ -244,7 +254,9 @@ export class Mysql {
         const where = filterNames.length > 0 ? `WHERE ${ whereStatements }` : '';
 
         // ORDER BY id DESC
-        const order = opt.order ? `ORDER BY ${ Object.keys(opt.order)[0] } ${ Object.values(opt.order)[0] === 1 ? 'ASC' : 'DESC' }` : '';
+        const order = opt.order
+            ? `ORDER BY ${ Mysql.#quoteIdentifier(Object.keys(opt.order)[0]) } ${ Object.values(opt.order)[0] === 1 ? 'ASC' : 'DESC' }`
+            : '';
         
         // LIMIT 10
         const limit = opt.limit ? `LIMIT ${ opt.limit }` : '';
@@ -254,7 +266,7 @@ export class Mysql {
 
         const sql = `SELECT ${view} FROM \`${table}\` ${where} ${order} ${limit} ${offset}`;
         // console.log(sql, values);
-        return Mysql.query(sql, values);
+        return Mysql.#query(sql, values);
     }
 
     /**

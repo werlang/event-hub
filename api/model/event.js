@@ -1,5 +1,7 @@
 import crypto from 'crypto';
 import { Model } from './model.js';
+import { Relation } from './relation.js';
+import { User } from './user.js';
 import { normalizeEventCategoryId, readEventCategoryLabel } from '../helpers/event-category.js';
 
 export class Event extends Model {
@@ -35,6 +37,7 @@ export class Event extends Model {
         status,
         rejectionReason,
         organizerId,
+        organizerName,
         createdAt,
     } = {}) {
         super();
@@ -47,6 +50,7 @@ export class Event extends Model {
         this.status = Event.normalizeStatus(status);
         this.rejectionReason = Event.normalizeRejectionReason(rejectionReason);
         this.organizerId = organizerId;
+        this.organizerName = typeof organizerName === 'string' ? organizerName.trim() || undefined : undefined;
         this.createdAt = createdAt || new Date().toISOString();
     }
 
@@ -65,6 +69,7 @@ export class Event extends Model {
             status: this.status,
             rejectionReason: this.rejectionReason,
             organizerId: this.organizerId,
+            organizerName: this.organizerName,
             createdAt: this.createdAt,
         };
     }
@@ -120,6 +125,9 @@ export class Event extends Model {
             status: Event.normalizeStatus(row.status),
             rejectionReason: Event.normalizeRejectionReason(row.rejectionReason || row.rejection_reason),
             organizerId: row.organizerId || row.organizer_id,
+            organizerName: typeof (row.organizerName || row.organizer_name) === 'string'
+                ? (row.organizerName || row.organizer_name).trim() || undefined
+                : undefined,
             createdAt: row.createdAt || row.created_at
                 ? new Date(row.createdAt || row.created_at).toISOString()
                 : undefined,
@@ -205,6 +213,29 @@ export class Event extends Model {
     }
 
     /**
+     * Loads organizer names for a list of events through the relation helper.
+     */
+    static async #hydrateOrganizerNames(events = []) {
+        if (!Array.isArray(events) || events.length === 0) {
+            return [];
+        }
+
+        const organizerRelation = new Relation(User.table, {}, 'id', User.driver);
+        const organizers = await organizerRelation.getMany(
+            events.map(event => event.organizerId),
+            { view: ['id', 'name'] },
+        );
+        const organizerNamesById = new Map(
+            organizers.map(organizer => [String(organizer.id), User.normalizeName(organizer.name)]),
+        );
+
+        return events.map(event => ({
+            ...event,
+            organizerName: organizerNamesById.get(String(event.organizerId)),
+        }));
+    }
+
+    /**
      * Lists events filtered by period, category, and free-text search.
      */
     static async list(filters = {}) {
@@ -232,7 +263,7 @@ export class Event extends Model {
         const normalizedCategory = normalizeEventCategoryId(category, { fallback: '' }).toLowerCase();
         const normalizedSearch = search?.toLowerCase();
 
-        return rows.filter(event => {
+        const filteredEvents = rows.filter(event => {
             if (normalizedCategory && normalizeEventCategoryId(event.category, { fallback: '' }).toLowerCase() !== normalizedCategory) {
                 return false;
             }
@@ -245,6 +276,8 @@ export class Event extends Model {
                 .filter(Boolean)
                 .some(value => value.toLowerCase().includes(normalizedSearch));
         });
+
+            return this.#hydrateOrganizerNames(filteredEvents);
     }
 
     /**
@@ -265,18 +298,15 @@ export class Event extends Model {
      * Lists unpublished events from other organizers for moderation.
      */
     static async listForModeration({ moderatorId, status } = {}) {
-        const filter = {
-            status: status ? this.normalizeStatus(status) : { not: this.STATUS_PUBLISHED },
-        };
-
-        if (moderatorId) {
-            filter.organizer_id = { not: moderatorId };
-        }
-
-        return this.find({
-            filter,
+        const events = await this.find({
+            filter: {
+                status: status ? this.normalizeStatus(status) : { not: this.STATUS_PUBLISHED },
+                ...(moderatorId ? { organizer_id: { not: moderatorId } } : {}),
+            },
             opt: { order: { date: 0 } },
         });
+
+        return this.#hydrateOrganizerNames(events);
     }
 
     /**
