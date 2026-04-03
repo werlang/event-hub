@@ -18,10 +18,24 @@ export class User extends Model {
     constructor({ id, name, email, role, password, passwordHash } = {}) {
         super();
         this.id = id || crypto.randomUUID();
-        this.name = name || '';
-        this.email = email?.toLowerCase() || '';
+        this.name = User.normalizeName(name);
+        this.email = User.normalizeEmail(email);
         this.role = User.normalizeRole(role);
-        this.#passwordHash = passwordHash || User.hashPassword(password || '');
+        this.#passwordHash = passwordHash || User.hashPassword(password.toString().trim());
+    }
+
+    /**
+     * Normalizes a stored or user-provided display name.
+     */
+    static normalizeName(name) {
+        return typeof name === 'string' ? name.trim() : '';
+    }
+
+    /**
+     * Normalizes an e-mail address for persistence and lookup.
+     */
+    static normalizeEmail(email) {
+        return typeof email === 'string' ? email.trim().toLowerCase() : '';
     }
 
     /**
@@ -101,8 +115,8 @@ export class User extends Model {
 
         return {
             id: json.id,
-            name: json.name,
-            email: json.email?.toLowerCase(),
+            name: this.normalizeName(json.name),
+            email: this.normalizeEmail(json.email),
             role: User.normalizeRole(json.role),
             password_hash: json.passwordHash,
             created_at: this.driver.toDateTime(payload.createdAt || Date.now()),
@@ -141,8 +155,9 @@ export class User extends Model {
      * Retrieves a user by normalized email.
      */
     static async findByEmail(email) {
-        if (!email) return null;
-        return this.get({ email: email.toLowerCase() });
+        const normalizedEmail = this.normalizeEmail(email);
+        if (!normalizedEmail) return null;
+        return this.get({ email: normalizedEmail });
     }
 
     /**
@@ -171,6 +186,22 @@ export class User extends Model {
 
         await this.driver.update(this.table, {
             password_hash: this.hashPassword(password || ''),
+        }, id);
+
+        return this.get(id);
+    }
+
+    /**
+     * Updates the persisted display name and e-mail for a user.
+     */
+    static async updateProfile(id, { name, email } = {}) {
+        if (!id) {
+            return null;
+        }
+
+        await this.driver.update(this.table, {
+            name: this.normalizeName(name),
+            email: this.normalizeEmail(email),
         }, id);
 
         return this.get(id);

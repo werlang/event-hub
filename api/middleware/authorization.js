@@ -29,3 +29,16 @@ export function assertPromotableUser(user, actor) {
         throw new HttpError(400, 'Este usuário já é administrador.');
     }
 }
+
+/**
+ * Ensures the requested account can have its password reset by an administrator.
+ */
+export function assertPasswordResettableUser(user) {
+    if (!user) {
+        throw new HttpError(404, 'Usuário não encontrado.');
+    }
+
+    if (User.normalizeRole(user.role) === 'admin') {
+        throw new HttpError(400, 'Administradores não podem ser redefinidos por este fluxo.');
+    }
+}

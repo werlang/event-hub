@@ -2,7 +2,11 @@ import express from 'express';
 import { User } from '../model/user.js';
 import { signToken } from '../helpers/token.js';
 import { authMiddleware } from '../middleware/auth.js';
-import { assertPromotableUser, requireAdminUser } from '../middleware/authorization.js';
+import {
+    assertPasswordResettableUser,
+    assertPromotableUser,
+    requireAdminUser,
+} from '../middleware/authorization.js';
 import { HttpError } from '../helpers/error.js';
 import { sendCreated, sendSuccess } from '../helpers/response.js';
 
@@ -40,6 +44,42 @@ function parsePasswordChangePayload(payload = {}) {
     }
 
     return { currentPassword, newPassword };
+}
+
+/**
+ * Validates the authenticated profile update payload.
+ */
+function parseProfileUpdatePayload(payload = {}) {
+    const name = typeof payload.name === 'string'
+        ? payload.name.trim()
+        : '';
+    const email = typeof payload.email === 'string'
+        ? payload.email.trim().toLowerCase()
+        : '';
+
+    if (!name || !email) {
+        throw new HttpError(400, 'Informe nome e e-mail.');
+    }
+
+    return { name, email };
+}
+
+/**
+ * Validates the administrator password reset payload.
+ */
+function parseAdminPasswordResetPayload(payload = {}) {
+    const email = typeof payload.email === 'string'
+        ? payload.email.trim().toLowerCase()
+        : '';
+    const newPassword = typeof payload.newPassword === 'string'
+        ? payload.newPassword
+        : '';
+
+    if (!email || !newPassword) {
+        throw new HttpError(400, 'Informe o e-mail do usuário e a nova senha.');
+    }
+
+    return { email, newPassword };
 }
 
 /**
@@ -142,6 +182,32 @@ router.get('/me', authMiddleware, async (req, res, next) => {
 });
 
 /**
+ * Updates the authenticated user's profile and refreshes the session token.
+ */
+router.put('/me',
+    authMiddleware,
+    async (req, res, next) => {
+    try {
+        const currentUser = await loadAuthenticatedUser(req.user.id);
+        const { name, email } = parseProfileUpdatePayload(req.body);
+        const existingUser = await User.findByEmail(email);
+
+        if (existingUser && existingUser.id !== currentUser.id) {
+            throw new HttpError(409, 'Já existe uma conta com este e-mail.');
+        }
+
+        const updatedUser = await User.updateProfile(currentUser.id, { name, email });
+        const token = createSessionToken(updatedUser);
+        return sendSuccess(res, {
+            data: { user: publicUser(updatedUser), token },
+            message: 'Perfil atualizado.',
+        });
+    } catch (err) {
+        return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível atualizar o perfil.', err));
+    }
+});
+
+/**
  * Changes the authenticated user's password after validating the current password.
  */
 router.put('/password',
@@ -163,6 +229,30 @@ router.put('/password',
         });
     } catch (err) {
         return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível atualizar a senha.', err));
+    }
+});
+
+/**
+ * Resets a member password through the administrator tooling.
+ */
+router.put('/users/password/reset',
+    authMiddleware,
+    requireAdminUser,
+    async (req, res, next) => {
+    try {
+        await loadAuthenticatedUser(req.user.id);
+        const { email, newPassword } = parseAdminPasswordResetPayload(req.body);
+        const targetUser = await User.findByEmail(email);
+
+        assertPasswordResettableUser(targetUser);
+
+        const updatedUser = await User.updatePassword(targetUser.id, newPassword);
+        return sendSuccess(res, {
+            data: { user: publicUser(updatedUser) },
+            message: 'Senha do usuário atualizada.',
+        });
+    } catch (err) {
+        return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível redefinir a senha do usuário.', err));
     }
 });
 
