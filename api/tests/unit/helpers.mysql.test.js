@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from '@jest/globals';
+import { afterEach, describe, expect, jest, test } from '@jest/globals';
 import { CustomError } from '../../helpers/error.js';
 import { Mysql } from '../../helpers/mysql.js';
 import { restoreTracked, trackReplacement } from './support/doubles.js';
@@ -70,11 +70,12 @@ describe('helpers/mysql', () => {
         });
     });
 
-    test('find builds a SELECT query and delegates execution to Mysql.query', async () => {
-        const calls = [];
-        trackReplacement(restores, Mysql, 'query', async (sql, data) => {
-            calls.push({ sql, data });
-            return [{ id: 'event-1' }];
+    test('find builds a SELECT query and delegates execution through the pool', async () => {
+        const execute = jest.fn().mockResolvedValue([[{ id: 'event-1' }]]);
+        trackReplacement(restores, Mysql, 'connect', async () => {
+            Mysql.connected = true;
+            Mysql.connection = { execute, format: jest.fn() };
+            return Mysql;
         });
 
         const rows = await Mysql.find('events', {
@@ -84,55 +85,49 @@ describe('helpers/mysql', () => {
         });
 
         expect(rows).toEqual([{ id: 'event-1' }]);
-        expect(calls[0]).toEqual({
-            sql: 'SELECT `id`,`title` FROM `events` WHERE `status` = ? ORDER BY date ASC LIMIT 5 OFFSET 10',
-            data: ['published'],
-        });
+        expect(execute).toHaveBeenCalledWith(
+            'SELECT `id`,`title` FROM `events` WHERE `status` = ? ORDER BY `date` ASC LIMIT 5 OFFSET 10',
+            ['published'],
+        );
     });
 
     test('find validates the filter type and supports wildcard projections', async () => {
         await expect(Mysql.find('events', { filter: 'invalid' })).rejects.toThrow('Invalid filter for find operation.');
 
-        const calls = [];
-        trackReplacement(restores, Mysql, 'query', async (sql, data) => {
-            calls.push({ sql, data });
-            return [{ id: 'event-1' }];
+        const execute = jest.fn().mockResolvedValue([[{ id: 'event-1' }]]);
+        trackReplacement(restores, Mysql, 'connect', async () => {
+            Mysql.connected = true;
+            Mysql.connection = { execute, format: jest.fn() };
+            return Mysql;
         });
 
         await Mysql.find('events');
 
-        expect(calls[0]).toEqual({
-            sql: 'SELECT * FROM `events`    ',
-            data: [],
-        });
+        expect(execute).toHaveBeenCalledWith('SELECT * FROM `events`', []);
     });
 
     test('insert builds one INSERT statement per row', async () => {
-        const calls = [];
-        trackReplacement(restores, Mysql, 'query', async (sql, data) => {
-            calls.push({ sql, data });
-            return { ok: true };
+        const execute = jest.fn().mockResolvedValue([[]]);
+        trackReplacement(restores, Mysql, 'connect', async () => {
+            Mysql.connected = true;
+            Mysql.connection = { execute, format: jest.fn() };
+            return Mysql;
         });
 
         await Mysql.insert('users', [{ id: 'user-1', name: 'Ada' }, { id: 'user-2', name: 'Grace' }]);
 
-        expect(calls).toEqual([
-            {
-                sql: 'INSERT INTO `users` (`id`,`name`) VALUES (?,?)',
-                data: ['user-1', 'Ada'],
-            },
-            {
-                sql: 'INSERT INTO `users` (`id`,`name`) VALUES (?,?)',
-                data: ['user-2', 'Grace'],
-            },
+        expect(execute.mock.calls).toEqual([
+            ['INSERT INTO `users` (`id`,`name`) VALUES (?,?)', ['user-1', 'Ada']],
+            ['INSERT INTO `users` (`id`,`name`) VALUES (?,?)', ['user-2', 'Grace']],
         ]);
     });
 
     test('update builds arithmetic and object-clause updates', async () => {
-        const calls = [];
-        trackReplacement(restores, Mysql, 'query', async (sql, data) => {
-            calls.push({ sql, data });
-            return { ok: true };
+        const execute = jest.fn().mockResolvedValue([[]]);
+        trackReplacement(restores, Mysql, 'connect', async () => {
+            Mysql.connected = true;
+            Mysql.connection = { execute, format: jest.fn() };
+            return Mysql;
         });
 
         await Mysql.update('events', {
@@ -142,59 +137,56 @@ describe('helpers/mysql', () => {
             organizer_id: { not: 'user-1' },
         });
 
-        expect(calls[0]).toEqual({
-            sql: 'UPDATE `events` SET `views` = views + ?, `category` = ? WHERE `organizer_id` != ?',
-            data: [2, 'Tecnologia', 'user-1'],
-        });
+        expect(execute).toHaveBeenCalledWith(
+            'UPDATE `events` SET `views` = views + ?, `category` = ? WHERE `organizer_id` != ?',
+            [2, 'Tecnologia', 'user-1'],
+        );
     });
 
     test('update supports decrement operations and rejects unsupported update operators', async () => {
-        const calls = [];
-        trackReplacement(restores, Mysql, 'query', async (sql, data) => {
-            calls.push({ sql, data });
-            return { ok: true };
+        const execute = jest.fn().mockResolvedValue([[]]);
+        trackReplacement(restores, Mysql, 'connect', async () => {
+            Mysql.connected = true;
+            Mysql.connection = { execute, format: jest.fn() };
+            return Mysql;
         });
 
         await Mysql.update('events', { seats: { dec: 1 } }, 'event-1');
 
-        expect(calls[0]).toEqual({
-            sql: 'UPDATE `events` SET `seats` = seats - ? WHERE `id` = ?',
-            data: [1, 'event-1'],
-        });
+        expect(execute).toHaveBeenCalledWith(
+            'UPDATE `events` SET `seats` = seats - ? WHERE `id` = ?',
+            [1, 'event-1'],
+        );
 
         await expect(Mysql.update('events', { seats: { multiply: 2 } }, 'event-1')).rejects.toThrow('Invalid update operation.');
     });
 
     test('delete builds a DELETE statement for object clauses and limits', async () => {
-        const calls = [];
-        trackReplacement(restores, Mysql, 'query', async (sql, data) => {
-            calls.push({ sql, data });
-            return { ok: true };
+        const execute = jest.fn().mockResolvedValue([[]]);
+        trackReplacement(restores, Mysql, 'connect', async () => {
+            Mysql.connected = true;
+            Mysql.connection = { execute, format: jest.fn() };
+            return Mysql;
         });
 
         await Mysql.delete('events', { status: 'rejected' }, { limit: 3 });
 
-        expect(calls[0]).toEqual({
-            sql: 'DELETE FROM `events` WHERE `status` = ? LIMIT 3',
-            data: ['rejected'],
-        });
+        expect(execute).toHaveBeenCalledWith('DELETE FROM `events` WHERE `status` = ? LIMIT 3', ['rejected']);
     });
 
     test('delete validates the clause and supports deleting by id', async () => {
         await expect(Mysql.delete('events')).rejects.toThrow('Invalid clause for delete operation.');
 
-        const calls = [];
-        trackReplacement(restores, Mysql, 'query', async (sql, data) => {
-            calls.push({ sql, data });
-            return { ok: true };
+        const execute = jest.fn().mockResolvedValue([[]]);
+        trackReplacement(restores, Mysql, 'connect', async () => {
+            Mysql.connected = true;
+            Mysql.connection = { execute, format: jest.fn() };
+            return Mysql;
         });
 
         await Mysql.delete('events', 'event-1');
 
-        expect(calls[0]).toEqual({
-            sql: 'DELETE FROM `events` WHERE id = ?',
-            data: ['event-1'],
-        });
+        expect(execute).toHaveBeenCalledWith('DELETE FROM `events` WHERE id = ?', ['event-1']);
     });
 
     test('format requires an active mysql connection', () => {

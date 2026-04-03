@@ -11,7 +11,13 @@ function createRelationDriver(initialRows = []) {
     return {
         rows,
         async find(tableName, { filter }) {
-            return rows.filter(row => Object.entries(filter).every(([key, value]) => row[key] === value));
+            return rows.filter(row => Object.entries(filter).every(([key, value]) => {
+                if (value && typeof value === 'object' && Array.isArray(value.in)) {
+                    return value.in.includes(row[key]);
+                }
+
+                return row[key] === value;
+            }));
         },
         async insert(tableName, row) {
             rows.push({ ...row });
@@ -104,5 +110,23 @@ describe('model/relation', () => {
         expect(driver.rows).toEqual([
             { event_id: 'event-1', tag_id: 'tag-1', weight: 5, pinned: true },
         ]);
+    });
+
+    test('getMany fetches the normalized subset of related values', async () => {
+        const relation = new Relation(
+            'users',
+            {},
+            'id',
+            createRelationDriver([
+                { id: 'user-1', name: 'Ada Lovelace' },
+                { id: 'user-2', name: 'Grace Hopper' },
+            ]),
+        );
+
+        await expect(relation.getMany(['user-1', ' user-2 ', 'user-1'], { view: ['id', 'name'] })).resolves.toEqual([
+            { id: 'user-1', name: 'Ada Lovelace' },
+            { id: 'user-2', name: 'Grace Hopper' },
+        ]);
+        await expect(relation.getMany(['', null])).resolves.toEqual([]);
     });
 });

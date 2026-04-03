@@ -12,12 +12,13 @@ afterEach(() => {
 describe('model/user', () => {
     test('constructor normalizes email, role, and password hashing', () => {
         const user = new User({
-            name: 'Ada',
-            email: 'ADA@EXAMPLE.COM',
+            name: '  Ada  ',
+            email: ' ADA@EXAMPLE.COM ',
             role: 'OWNER',
             password: 'secret123',
         });
 
+        expect(user.name).toBe('Ada');
         expect(user.email).toBe('ada@example.com');
         expect(user.role).toBe('member');
         expect(user.passwordHash).not.toBe('secret123');
@@ -173,6 +174,31 @@ describe('model/user', () => {
         expect(getSpy).toEqual([]);
     });
 
+    test('updateProfile normalizes persisted fields and reloads the entity', async () => {
+        const updateCalls = [];
+        trackReplacement(restores, User, 'driver', {
+            async update(table, payload, id) {
+                updateCalls.push({ table, payload, id });
+            },
+        });
+        trackReplacement(restores, User, 'get', async id => buildUser({ id, name: 'Grace Hopper', email: 'grace@example.com' }));
+
+        const updated = await User.updateProfile('user-1', {
+            name: '  Grace Hopper  ',
+            email: ' GRACE@EXAMPLE.COM ',
+        });
+
+        expect(updateCalls).toEqual([{
+            table: 'users',
+            payload: {
+                name: 'Grace Hopper',
+                email: 'grace@example.com',
+            },
+            id: 'user-1',
+        }]);
+        expect(updated).toEqual(buildUser({ id: 'user-1', name: 'Grace Hopper', email: 'grace@example.com' }));
+    });
+
     test('listForAdministration delegates to list with the excluded actor id', async () => {
         const calls = [];
         trackReplacement(restores, User, 'list', async options => {
@@ -231,6 +257,7 @@ describe('model/user', () => {
         });
 
         await expect(User.updatePassword('', 'new-secret')).resolves.toBeNull();
+        await expect(User.updateProfile('', { name: 'Ada', email: 'ada@example.com' })).resolves.toBeNull();
         await expect(User.updateRole('', 'admin')).resolves.toBeNull();
         expect(driverCalls).toEqual([]);
     });

@@ -26,7 +26,9 @@ describe('routes/auth', () => {
     const registerHandlers = getRouteHandlers(authRouter, 'post', '/register');
     const loginHandlers = getRouteHandlers(authRouter, 'post', '/login');
     const meHandlers = getRouteHandlers(authRouter, 'get', '/me').slice(1);
+    const updateMeHandlers = getRouteHandlers(authRouter, 'put', '/me').slice(1);
     const passwordHandlers = getRouteHandlers(authRouter, 'put', '/password').slice(1);
+    const resetPasswordHandlers = getRouteHandlers(authRouter, 'put', '/users/password/reset').slice(1);
     const usersHandlers = getRouteHandlers(authRouter, 'get', '/users').slice(1);
     const promoteHandlers = getRouteHandlers(authRouter, 'put', '/users/:id/promote').slice(1);
 
@@ -137,6 +139,65 @@ describe('routes/auth', () => {
         expect(expiredNext.mock.calls[0][0].message).toBe('Sessão expirada.');
     });
 
+    test('update me updates the authenticated profile, refreshes the token, and rejects duplicates', async () => {
+        trackReplacement(restores, User, 'findById', async id => buildUser({ id, role: 'member' }));
+        trackReplacement(restores, User, 'findByEmail', async email => {
+            if (email === 'grace@example.com') {
+                return buildUser({ id: 'user-9', email });
+            }
+
+            return buildUser({ id: 'user-1', email });
+        });
+        trackReplacement(restores, User, 'updateProfile', async (id, payload) => buildUser({ id, ...payload }));
+
+        const successRes = createResponseDouble();
+        const successNext = jest.fn();
+        await runRouteHandlers(updateMeHandlers, createRequest({
+            user: { id: 'user-1', role: 'member' },
+            body: { name: 'Grace Hopper', email: 'ada@example.com' },
+        }), successRes, successNext);
+        expect(successNext).not.toHaveBeenCalled();
+        expect(successRes.body.message).toBe('Perfil atualizado.');
+        expect(successRes.body.data.user).toEqual({
+            id: 'user-1',
+            name: 'Grace Hopper',
+            email: 'ada@example.com',
+            role: 'member',
+        });
+        expect(typeof successRes.body.data.token).toBe('string');
+
+        const missingFieldsNext = jest.fn();
+        await runRouteHandlers(updateMeHandlers, createRequest({
+            user: { id: 'user-1', role: 'member' },
+            body: { name: '', email: '' },
+        }), createResponseDouble(), missingFieldsNext);
+        expect(missingFieldsNext.mock.calls[0][0].status).toBe(400);
+
+        const duplicateNext = jest.fn();
+        await runRouteHandlers(updateMeHandlers, createRequest({
+            user: { id: 'user-1', role: 'member' },
+            body: { name: 'Grace Hopper', email: 'grace@example.com' },
+        }), createResponseDouble(), duplicateNext);
+        expect(duplicateNext.mock.calls[0][0].status).toBe(409);
+    });
+
+    test('update me maps unexpected failures to a 500 error', async () => {
+        trackReplacement(restores, User, 'findById', async id => buildUser({ id, role: 'member' }));
+        trackReplacement(restores, User, 'findByEmail', async () => null);
+        trackReplacement(restores, User, 'updateProfile', async () => {
+            throw new Error('write failed');
+        });
+
+        const next = jest.fn();
+        await runRouteHandlers(updateMeHandlers, createRequest({
+            user: { id: 'user-1', role: 'member' },
+            body: { name: 'Grace Hopper', email: 'grace@example.com' },
+        }), createResponseDouble(), next);
+
+        expect(next.mock.calls[0][0].status).toBe(500);
+        expect(next.mock.calls[0][0].message).toBe('Não foi possível atualizar o perfil.');
+    });
+
     test('password validates the payload, current password, and update flow', async () => {
         trackReplacement(restores, User, 'findById', async id => buildUser({
             id,
@@ -192,6 +253,82 @@ describe('routes/auth', () => {
 
         expect(next.mock.calls[0][0].status).toBe(500);
         expect(next.mock.calls[0][0].message).toBe('Não foi possível atualizar a senha.');
+    });
+
+    test('admin password reset handles success, validation, missing users, admin targets, and forbidden actors', async () => {
+        trackReplacement(restores, User, 'findById', async id => buildUser({ id, role: id === 'admin-1' ? 'admin' : 'member' }));
+        trackReplacement(restores, User, 'findByEmail', async email => {
+            if (email === 'missing@example.com') {
+                return null;
+            }
+
+            if (email === 'admin@example.com') {
+                return buildUser({ id: 'admin-2', email, role: 'admin' });
+            }
+
+            return buildUser({ id: 'user-2', email, role: 'member' });
+        });
+        trackReplacement(restores, User, 'updatePassword', async id => buildUser({ id, email: 'member@example.com', role: 'member' }));
+
+        const successRes = createResponseDouble();
+        const successNext = jest.fn();
+        await runRouteHandlers(resetPasswordHandlers, createRequest({
+            user: { id: 'admin-1', role: 'admin' },
+            body: { email: 'member@example.com', newPassword: 'reset-secret' },
+        }), successRes, successNext);
+        expect(successNext).not.toHaveBeenCalled();
+        expect(successRes.body.message).toBe('Senha do usuário atualizada.');
+        expect(successRes.body.data.user).toEqual({
+            id: 'user-2',
+            name: 'Ada Lovelace',
+            email: 'member@example.com',
+            role: 'member',
+        });
+
+        const missingFieldsNext = jest.fn();
+        await runRouteHandlers(resetPasswordHandlers, createRequest({
+            user: { id: 'admin-1', role: 'admin' },
+            body: { email: '', newPassword: '' },
+        }), createResponseDouble(), missingFieldsNext);
+        expect(missingFieldsNext.mock.calls[0][0].status).toBe(400);
+
+        const missingUserNext = jest.fn();
+        await runRouteHandlers(resetPasswordHandlers, createRequest({
+            user: { id: 'admin-1', role: 'admin' },
+            body: { email: 'missing@example.com', newPassword: 'reset-secret' },
+        }), createResponseDouble(), missingUserNext);
+        expect(missingUserNext.mock.calls[0][0].status).toBe(404);
+
+        const adminTargetNext = jest.fn();
+        await runRouteHandlers(resetPasswordHandlers, createRequest({
+            user: { id: 'admin-1', role: 'admin' },
+            body: { email: 'admin@example.com', newPassword: 'reset-secret' },
+        }), createResponseDouble(), adminTargetNext);
+        expect(adminTargetNext.mock.calls[0][0].status).toBe(400);
+
+        const forbiddenNext = jest.fn();
+        await runRouteHandlers(resetPasswordHandlers, createRequest({
+            user: { id: 'user-1', role: 'member' },
+            body: { email: 'member@example.com', newPassword: 'reset-secret' },
+        }), createResponseDouble(), forbiddenNext);
+        expect(forbiddenNext.mock.calls[0][0].status).toBe(403);
+    });
+
+    test('admin password reset maps unexpected failures to a 500 error', async () => {
+        trackReplacement(restores, User, 'findById', async id => buildUser({ id, role: 'admin' }));
+        trackReplacement(restores, User, 'findByEmail', async () => buildUser({ id: 'user-2', role: 'member', email: 'member@example.com' }));
+        trackReplacement(restores, User, 'updatePassword', async () => {
+            throw new Error('write failed');
+        });
+
+        const next = jest.fn();
+        await runRouteHandlers(resetPasswordHandlers, createRequest({
+            user: { id: 'admin-1', role: 'admin' },
+            body: { email: 'member@example.com', newPassword: 'reset-secret' },
+        }), createResponseDouble(), next);
+
+        expect(next.mock.calls[0][0].status).toBe(500);
+        expect(next.mock.calls[0][0].message).toBe('Não foi possível redefinir a senha do usuário.');
     });
 
     test('users returns safe records only for administrators', async () => {

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from '@jest/globals';
 import { Event } from '../../model/event.js';
+import { Relation } from '../../model/relation.js';
 import { buildEvent } from './support/fixtures.js';
 import { restoreTracked, trackReplacement } from './support/doubles.js';
 
@@ -53,6 +54,7 @@ describe('model/event', () => {
             status: 'PUBLISHED',
             rejectionReason: 'Aprovado sem pendencias.',
             organizer_id: 'user-1',
+            organizer_name: '  Ada Lovelace  ',
             created_at: '2026-04-02T12:00:00.000Z',
         });
         const serialized = Event.serialize(buildEvent({
@@ -73,6 +75,7 @@ describe('model/event', () => {
             status: 'published',
             rejectionReason: 'Aprovado sem pendencias.',
             organizerId: 'user-1',
+            organizerName: 'Ada Lovelace',
             createdAt: '2026-04-02T12:00:00.000Z',
         });
         expect(serialized).toEqual({
@@ -111,6 +114,7 @@ describe('model/event', () => {
             status: 'pending',
             rejectionReason: null,
             organizerId: 'user-1',
+            organizerName: undefined,
             createdAt: undefined,
         });
     });
@@ -139,6 +143,7 @@ describe('model/event', () => {
 
     test('list applies public status and in-memory search filters', async () => {
         const findCalls = [];
+        const relationCalls = [];
         trackReplacement(restores, Event, 'driver', {
             toDateTime(value) {
                 return `mysql:${value}`;
@@ -156,9 +161,13 @@ describe('model/event', () => {
         trackReplacement(restores, Event, 'find', async options => {
             findCalls.push(options);
             return [
-                buildEvent({ title: 'Semana da Computacao', category: 'Tecnologia', location: 'Auditorio' }),
-                buildEvent({ id: 'event-2', title: 'Feira de Artes', category: 'Cultura', location: 'Patio' }),
+                buildEvent({ title: 'Semana da Computacao', category: 'Tecnologia', location: 'Auditorio', organizerName: undefined }),
+                buildEvent({ id: 'event-2', title: 'Feira de Artes', category: 'Cultura', location: 'Patio', organizerId: 'user-2', organizerName: undefined }),
             ];
+        });
+        trackReplacement(restores, Relation.prototype, 'getMany', async function(fieldValues, options) {
+            relationCalls.push({ fieldValues, options });
+            return [{ id: 'user-1', name: 'Ada Lovelace' }];
         });
 
         const events = await Event.list({
@@ -176,6 +185,11 @@ describe('model/event', () => {
             opt: { order: { date: 1 } },
         });
         expect(events.map(event => event.id)).toEqual(['event-1']);
+        expect(events[0].organizerName).toBe('Ada Lovelace');
+        expect(relationCalls).toEqual([{
+            fieldValues: ['user-1'],
+            options: { view: ['id', 'name'] },
+        }]);
     });
 
     test('list supports open-ended date filters and returns all events when no search is present', async () => {
@@ -193,13 +207,18 @@ describe('model/event', () => {
         trackReplacement(restores, Event, 'driver', driver);
 
         const calls = [];
+        const relationCalls = [];
         trackReplacement(restores, Event, 'find', async options => {
             calls.push(options);
-            return [buildEvent({ id: 'event-1' })];
+            return [buildEvent({ id: 'event-1', organizerName: undefined })];
+        });
+        trackReplacement(restores, Relation.prototype, 'getMany', async function(fieldValues, options) {
+            relationCalls.push({ fieldValues, options });
+            return [{ id: 'user-1', name: 'Ada Lovelace' }];
         });
 
-        await expect(Event.list({ from: '2026-05-01T00:00:00.000Z' })).resolves.toEqual([buildEvent({ id: 'event-1' })]);
-        await expect(Event.list({ to: '2026-05-31T23:59:59.000Z' })).resolves.toEqual([buildEvent({ id: 'event-1' })]);
+        await expect(Event.list({ from: '2026-05-01T00:00:00.000Z' })).resolves.toEqual([buildEvent({ id: 'event-1', organizerName: 'Ada Lovelace' })]);
+        await expect(Event.list({ to: '2026-05-31T23:59:59.000Z' })).resolves.toEqual([buildEvent({ id: 'event-1', organizerName: 'Ada Lovelace' })]);
 
         expect(calls).toEqual([
             {
@@ -211,9 +230,13 @@ describe('model/event', () => {
                 opt: { order: { date: 1 } },
             },
         ]);
+        expect(relationCalls).toEqual([
+            { fieldValues: ['user-1'], options: { view: ['id', 'name'] } },
+            { fieldValues: ['user-1'], options: { view: ['id', 'name'] } },
+        ]);
     });
 
-    test('listByOrganizer and listForModeration delegate with the right filters', async () => {
+    test('listByOrganizer delegates with the right filters', async () => {
         const calls = [];
         trackReplacement(restores, Event, 'find', async options => {
             calls.push(options);
@@ -221,27 +244,71 @@ describe('model/event', () => {
         });
 
         await Event.listByOrganizer('user-1');
-        await Event.listForModeration({ moderatorId: 'admin-1', status: 'REJECTED' });
 
         expect(calls).toEqual([
             {
                 filter: { organizer_id: 'user-1' },
                 opt: { order: { date: 0 } },
             },
-            {
-                filter: {
-                    status: 'rejected',
-                    organizer_id: { not: 'admin-1' },
-                },
-                opt: { order: { date: 0 } },
-            },
         ]);
+    });
+
+    test('listForModeration queries unpublished events together with organizer names', async () => {
+        const calls = [];
+        const relationCalls = [];
+        trackReplacement(restores, Event, 'find', async options => {
+            calls.push(options);
+            return [buildEvent({
+                organizerId: 'user-2',
+                organizerName: undefined,
+                status: 'rejected',
+                rejectionReason: 'Ajustar cronograma',
+                category: 'Tecnologia',
+                location: 'Auditorio',
+                title: 'Semana',
+                description: 'Palestras',
+            })];
+        });
+        trackReplacement(restores, Relation.prototype, 'getMany', async function(fieldValues, options) {
+            relationCalls.push({ fieldValues, options });
+            return [{ id: 'user-2', name: 'Grace Hopper' }];
+        });
+
+        await expect(Event.listForModeration({ moderatorId: 'admin-1', status: 'REJECTED' })).resolves.toEqual([
+            buildEvent({
+                organizerId: 'user-2',
+                organizerName: 'Grace Hopper',
+                status: 'rejected',
+                rejectionReason: 'Ajustar cronograma',
+                category: 'Tecnologia',
+                location: 'Auditorio',
+                title: 'Semana',
+                description: 'Palestras',
+            }),
+        ]);
+
+        expect(calls).toEqual([{
+            filter: {
+                status: 'rejected',
+                organizer_id: { not: 'admin-1' },
+            },
+            opt: { order: { date: 0 } },
+        }]);
+        expect(relationCalls).toEqual([{
+            fieldValues: ['user-2'],
+            options: { view: ['id', 'name'] },
+        }]);
     });
 
     test('listByOrganizer and find helpers short-circuit missing ids, and moderation defaults to unpublished events', async () => {
         const calls = [];
+        const relationCalls = [];
         trackReplacement(restores, Event, 'find', async options => {
             calls.push(options);
+            return [];
+        });
+        trackReplacement(restores, Relation.prototype, 'getMany', async function(fieldValues, options) {
+            relationCalls.push({ fieldValues, options });
             return [];
         });
 
@@ -251,9 +318,12 @@ describe('model/event', () => {
         await Event.listForModeration();
 
         expect(calls).toEqual([{
-            filter: { status: { not: 'published' } },
+            filter: {
+                status: { not: 'published' },
+            },
             opt: { order: { date: 0 } },
         }]);
+        expect(relationCalls).toEqual([]);
     });
 
     test('create inserts the event and reloads it', async () => {

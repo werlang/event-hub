@@ -37,19 +37,21 @@ Para desenvolvimento com containers, use `docker compose -f compose.dev.yaml up 
   - `POST /auth/register` exige `name`, `email` e `password`, e retorna token JWT (12h) + usuário.
   - `POST /auth/login` retorna token JWT (12h) + usuário.
   - `GET /auth/me` retorna sessão atual (incluindo `role`).
+  - `PUT /auth/me` atualiza `name` e `email` da conta autenticada e retorna o usuário com token renovado.
   - `PUT /auth/password` atualiza a senha da conta autenticada.
   - `GET /auth/users` lista usuários para ferramentas administrativas.
+  - `PUT /auth/users/password/reset` redefine a senha de uma conta `member` a partir do e-mail informado por um administrador.
   - `PUT /auth/users/:id/promote` promove uma conta `member` para `admin`.
 - **Login/Register (`/login`)**: a interface alterna entre abas, sincroniza `#register` na URL, envia login/registro ao backend, persiste o token localmente e redireciona após autenticar.
 - **Publicação (`/publish`)**: a página SSR já contém o formulário e o toggle de horário, mas o repositório ainda não possui um bundle dedicado para validar sessão e enviar o formulário.
 - **Eventos (API)**:
   - `POST /events` (Bearer token) — cria evento com `title`, `description`, `date`, `category`, `location`.
-  - `GET /events` — lista pública com filtros `search|q`, `category`, `from`, `to`.
+  - `GET /events` — lista pública com filtros `search|q`, `category`, `from`, `to`, retornando também `organizerName`.
   - `GET /events/:id` — detalhe público.
   - `GET /events/mine` (Bearer token) — lista os eventos da conta autenticada.
   - `PUT /events/:id` (Bearer token) — atualiza um evento pendente ou rejeitado e o reenfileira para moderação.
   - `DELETE /events/:id` (Bearer token) — exclui um evento pendente ou rejeitado.
-  - `GET /events/moderation` (Bearer token admin) — lista a fila administrativa com filtro opcional `status=pending|rejected`.
+  - `GET /events/moderation` (Bearer token admin) — lista a fila administrativa com filtro opcional `status=pending|rejected`, retornando também `organizerName`.
   - `PUT /events/:id/moderation` (Bearer token admin) — aprova ou rejeita um evento pendente.
 
 ## Exemplos de links compartilháveis
@@ -85,6 +87,7 @@ Para desenvolvimento com containers, use `docker compose -f compose.dev.yaml up 
 - ES Modules, Express 5, classes para modelos (`api/model/`), rotas puras em `api/routes/`.
 - Em endpoints da API, autenticação, autorização e checagens de ownership/papel devem ficar em middlewares Express reutilizáveis. O carregamento do recurso da rota deve permanecer no próprio fluxo da rota, para deixar explícito como cada endpoint busca e trata sua entidade.
 - JWT via `helpers/token.js`; persistência MySQL com helper/driver em `api/helpers/mysql.js` e base `Model` em `api/model/model.js`.
+- Quando um modelo da API precisar buscar dados de outra tabela, a composição deve passar por `api/model/relation.js`; não introduza joins SQL diretos no código de aplicação.
 - Documentação em código: toda função nomeada, método, getter/setter e helper reutilizável deve receber bloco JSDoc. Callbacks anônimos curtos podem permanecer sem bloco quando forem apenas detalhe local de implementação, mas handlers inline de rota/middleware devem ser documentados imediatamente acima do registro.
 - Cada arquivo e módulo deve ter uma responsabilidade principal clara. Quando o contrato principal de um arquivo for uma classe, helpers reutilizáveis devem ficar em módulos auxiliares dedicados.
 - Mudanças novas devem priorizar legibilidade e extensibilidade: nomes descritivos, métodos curtos, fluxo explícito e reaproveitamento das abstrações já existentes antes de criar novos desvios condicionais.

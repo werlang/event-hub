@@ -31,6 +31,7 @@ export function buildEvent(overrides = {}) {
         status: 'pending',
         rejectionReason: null,
         organizerId: 'user-1',
+        organizerName: 'Ada Lovelace',
         createdAt: '2026-04-02T12:00:00.000Z',
         ...overrides,
     };

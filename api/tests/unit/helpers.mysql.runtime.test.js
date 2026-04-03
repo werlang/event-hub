@@ -64,7 +64,7 @@ describe('helpers/mysql runtime lifecycle', () => {
         expect(Mysql.connected).toBe(false);
     });
 
-    test('query executes trimmed SQL and wraps driver failures as CustomError', async () => {
+    test('find executes trimmed SQL and wraps driver failures as CustomError', async () => {
         const pool = {
             end: jest.fn(),
             format: jest.fn(),
@@ -76,13 +76,12 @@ describe('helpers/mysql runtime lifecycle', () => {
 
         const { Mysql } = await loadMysqlModule();
 
-        await expect(Mysql.query(' SELECT 1 ', [])).resolves.toEqual([{ id: 'event-1' }]);
-        await expect(Mysql.query('SELECT ?', ['value'])).rejects.toMatchObject({
-            message: 'boom',
-            data: {
-                sql: 'SELECT ?',
+        await expect(Mysql.find('events', { filter: { id: 'event-1' }, view: ['id'] })).resolves.toEqual([{ id: 'event-1' }]);
+        await expect(Mysql.find('events', { filter: { id: 'value' }, view: ['id'] })).rejects.toMatchObject({
+            data: expect.objectContaining({
+                sql: expect.stringContaining('SELECT `id` FROM `events`'),
                 data: ['value'],
-            },
+            }),
         });
     });
 

@@ -36,7 +36,7 @@ describe('routes/events', () => {
         const calls = [];
         trackReplacement(restores, Event, 'list', async filters => {
             calls.push(filters);
-            return [buildEvent({ status: 'published' })];
+            return [buildEvent({ status: 'published', organizerName: 'Ada Lovelace' })];
         });
 
         const res = createResponseDouble();
@@ -46,6 +46,7 @@ describe('routes/events', () => {
         expect(next).not.toHaveBeenCalled();
         expect(calls).toEqual([{ search: 'comp', category: 'Tecnologia', from: '2026-05-01', to: '2026-05-31' }]);
         expect(res.body.data.events).toHaveLength(1);
+        expect(res.body.data.events[0].organizerName).toBe('Ada Lovelace');
     });
 
     test('list maps unexpected failures to a 500 error', async () => {
@@ -80,7 +81,7 @@ describe('routes/events', () => {
         const calls = [];
         trackReplacement(restores, Event, 'listForModeration', async options => {
             calls.push(options);
-            return [buildEvent({ status: 'pending' })];
+            return [buildEvent({ status: 'pending', organizerName: 'Ada Lovelace' })];
         });
 
         const successRes = createResponseDouble();
@@ -88,6 +89,7 @@ describe('routes/events', () => {
         await runRouteHandlers(moderationListHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' }, query: { status: 'rejected' } }), successRes, successNext);
         expect(successNext).not.toHaveBeenCalled();
         expect(calls).toEqual([{ moderatorId: undefined, status: 'rejected' }]);
+        expect(successRes.body.data.events[0].organizerName).toBe('Ada Lovelace');
 
         const forbiddenNext = jest.fn();
         await runRouteHandlers(moderationListHandlers, createRequest({ user: { id: 'user-1', role: 'member' } }), createResponseDouble(), forbiddenNext);
