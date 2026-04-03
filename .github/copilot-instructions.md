@@ -12,12 +12,14 @@
 - **Single responsibility first**: keep files, classes, and helpers focused on one primary job. When a file exists to export a class, move reusable standalone helpers into companion modules instead of mixing multiple responsibilities in the same file.
 - **Readable over clever**: prefer descriptive names, small methods, guard clauses, explicit data flow, and predictable public APIs over compact but opaque implementations.
 - **Scalable structure**: extend existing abstractions or compose smaller collaborators before adding more branching to bloated modules, controllers, or UI entrypoints.
+- **Cross-table data loading**: when API code needs related records from another table, compose that through `api/model/relation.js`. Do not add direct SQL joins in models or expose a public raw-query method from the MySQL driver.
 
 ## Architecture
 - **API service** (`api/`): REST endpoints for auth and events.
 - **Web service** (`web/`): SSR shell with Mustache and client behavior bundled with Webpack.
 - **No shared package**: `api/` and `web/` are independent Node projects.
 - **Persistence**: MySQL access flows through the base `Model` class and the `Mysql` driver (`api/model/model.js`, `api/helpers/mysql.js`).
+- **Relations**: cross-table lookups and relation-style data loading should flow through `api/model/relation.js` instead of ad hoc joins in model code.
 
 ## Implementation Expectations
 - Future tasks should preserve or improve maintainability, scalability, and ease of understanding.

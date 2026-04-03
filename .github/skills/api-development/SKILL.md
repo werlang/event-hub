@@ -78,6 +78,8 @@ Error middleware (`api/middleware/error.js`) derives `type` from HTTP status nam
 - Keep reusable auth, role, and ownership guards as Express middleware checks rather than ad hoc helper branches scattered across route handlers.
 - Keep business/data operations in models/helpers and avoid writing SQL directly in route handlers.
 - Use the shared base `Model` class with the `Mysql` driver instead of introducing a datastore/service wrapper layer.
+- When API code needs data from another table, resolve it through `api/model/relation.js` or model composition. Do not introduce direct SQL joins in models, routes, or helpers.
+- Treat raw SQL execution as an internal MySQL-driver concern. Do not expose or rely on a public `Mysql.query(...)` style API from application code.
 - Treat checked-in schema files as the source of truth. Do not add runtime schema upgrade or legacy-compatibility code such as `ensureSchema`, request-time `ALTER TABLE`, `SHOW COLUMNS`, or lazy migration guards in production code.
 - Preserve the global envelope format for both success and errors.
 - After each API feature or behavior change, update the Jest unit suite in `api/tests/unit` and run `docker compose -f compose.dev.yaml exec api npm test` before considering the task complete.

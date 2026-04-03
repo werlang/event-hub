@@ -42,6 +42,8 @@ description: Work with domain models for users and events, including password ha
   - schema columns and SQL names if persistence changes
   - route validation and docs
 - Keep models extending the shared `Model` base class and let the `Mysql` driver handle query building.
+- When a model needs fields from another table, load them through `api/model/relation.js` and compose the final payload in model code instead of adding direct SQL joins.
+- Treat raw SQL execution as private to `api/helpers/mysql.js`; model code should not call a public driver query method.
 - Be careful with date fields: `serialize()` converts to MySQL datetime strings and `normalize()` converts back to ISO strings.
 - Avoid cross-service coupling; API and Web remain independent packages.
 
