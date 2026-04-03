@@ -151,6 +151,194 @@
                     </div>
                 </div>
             </details>
+
+            <details class="dashboard-section" id="dashboard-settings-section" hidden>
+                <summary class="dashboard-section__summary">
+                    <div class="dashboard-section__summary-copy">
+                        <p class="dashboard-section__eyebrow">Configurações</p>
+                        <h2>Conta e acessos</h2>
+                        <p class="dashboard-section__description" id="dashboard-settings-description">
+                            Atualize seus dados, fortaleça sua senha e, se você administra a agenda, gerencie acessos da equipe por aqui.
+                        </p>
+                    </div>
+
+                    <div class="dashboard-section__summary-side">
+                        <span class="dashboard-section__badge" id="dashboard-settings-badge">Conta pessoal</span>
+                        <span class="dashboard-section__toggle" aria-hidden="true"><i class="fa-solid fa-chevron-down"></i></span>
+                    </div>
+                </summary>
+
+                <div class="dashboard-section__content">
+                    <div class="dashboard-settings-layout">
+                        <aside class="dashboard-settings-overview">
+                            <p class="dashboard-settings-overview__eyebrow">Sua sessão</p>
+                            <h3 class="dashboard-settings-overview__title" id="dashboard-settings-account-name">Conta ativa</h3>
+                            <p class="dashboard-settings-overview__intro" id="dashboard-settings-intro">
+                                Organize seus dados de acesso e mantenha a central pronta para o próximo envio.
+                            </p>
+
+                            <dl class="dashboard-settings-overview__facts">
+                                <div class="dashboard-settings-overview__fact">
+                                    <dt>Nome exibido</dt>
+                                    <dd id="dashboard-settings-fact-name">-</dd>
+                                </div>
+
+                                <div class="dashboard-settings-overview__fact">
+                                    <dt>E-mail atual</dt>
+                                    <dd id="dashboard-settings-fact-email">-</dd>
+                                </div>
+
+                                <div class="dashboard-settings-overview__fact">
+                                    <dt>Perfil</dt>
+                                    <dd id="dashboard-settings-fact-role">Membro</dd>
+                                </div>
+                            </dl>
+
+                            <div class="dashboard-settings-nav" id="dashboard-settings-nav" aria-label="Atalhos das configurações">
+                                <button class="button button--ghost dashboard-settings-nav__button" type="button" data-dashboard-settings-anchor="profile" aria-current="true">
+                                    <i class="fa-solid fa-id-card" aria-hidden="true"></i>
+                                    <span>Dados da conta</span>
+                                </button>
+
+                                <button class="button button--ghost dashboard-settings-nav__button" type="button" data-dashboard-settings-anchor="password">
+                                    <i class="fa-solid fa-key" aria-hidden="true"></i>
+                                    <span>Senha</span>
+                                </button>
+
+                                <button class="button button--ghost dashboard-settings-nav__button" type="button" data-dashboard-settings-anchor="admin" id="dashboard-settings-admin-nav" hidden>
+                                    <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
+                                    <span>Ferramentas admin</span>
+                                </button>
+                            </div>
+                        </aside>
+
+                        <div class="dashboard-settings-panels">
+                            <article class="dashboard-settings-panel" id="dashboard-settings-panel-profile" data-dashboard-settings-panel="profile" tabindex="-1">
+                                <div class="dashboard-settings-panel__header">
+                                    <p class="dashboard-settings-panel__eyebrow">Perfil</p>
+                                    <h3>Atualize seu nome e e-mail</h3>
+                                </div>
+
+                                <form class="form form--visible dashboard-settings-form" id="dashboard-settings-profile-form">
+                                    <div class="form-row">
+                                        <label for="dashboard-settings-name">
+                                            <span>Nome completo</span>
+                                            <input id="dashboard-settings-name" name="name" type="text" autocomplete="name" placeholder="Como seu nome deve aparecer na agenda">
+                                        </label>
+
+                                        <label for="dashboard-settings-email">
+                                            <span>E-mail de acesso</span>
+                                            <input id="dashboard-settings-email" name="email" type="email" autocomplete="email" placeholder="voce@ifsul.edu.br">
+                                        </label>
+                                    </div>
+
+                                    <button class="button" id="dashboard-settings-profile-submit" type="submit">
+                                        <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                                        <span>Salvar perfil</span>
+                                    </button>
+                                </form>
+                            </article>
+
+                            <article class="dashboard-settings-panel" id="dashboard-settings-panel-password" data-dashboard-settings-panel="password" tabindex="-1">
+                                <div class="dashboard-settings-panel__header">
+                                    <p class="dashboard-settings-panel__eyebrow">Segurança</p>
+                                    <h3>Troque sua senha</h3>
+                                    <p class="dashboard-settings-panel__description">
+                                        Use uma nova senha para proteger sua conta e mantenha o acesso à central de eventos atualizado.
+                                    </p>
+                                </div>
+
+                                <form class="form form--visible dashboard-settings-form" id="dashboard-settings-password-form">
+                                    <div class="form-row">
+                                        <label for="dashboard-settings-current-password">
+                                            <span>Senha atual</span>
+                                            <input id="dashboard-settings-current-password" name="currentPassword" type="password" autocomplete="current-password" placeholder="Digite sua senha atual">
+                                        </label>
+                                    </div>
+
+                                    <div class="form-row"> 
+                                        <label for="dashboard-settings-new-password">
+                                            <span>Nova senha</span>
+                                            <input id="dashboard-settings-new-password" name="newPassword" type="password" autocomplete="new-password" placeholder="Defina uma nova senha">
+                                        </label>
+    
+                                        <label for="dashboard-settings-confirm-password">
+                                            <span>Confirme a nova senha</span>
+                                            <input id="dashboard-settings-confirm-password" name="confirmPassword" type="password" autocomplete="new-password" placeholder="Repita a nova senha">
+                                        </label>
+                                    </div>
+
+                                    <button class="button" id="dashboard-settings-password-submit" type="submit">
+                                        <i class="fa-solid fa-key" aria-hidden="true"></i>
+                                        <span>Atualizar senha</span>
+                                    </button>
+                                </form>
+                            </article>
+
+                            <section class="dashboard-settings-admin" id="dashboard-settings-admin-group" hidden>
+                                <div class="dashboard-settings-admin__header" id="dashboard-settings-panel-admin" data-dashboard-settings-panel="admin" tabindex="-1">
+                                    <p class="dashboard-settings-panel__eyebrow">Administração</p>
+                                    <h3>Ferramentas para contas dos usuários</h3>
+                                    <p class="dashboard-settings-panel__description">
+                                        Redefina o acesso de membros por e-mail e promova novas pessoas para a administração.
+                                    </p>
+                                </div>
+
+                                <div class="dashboard-settings-admin__grid">
+                                    <article class="dashboard-settings-panel dashboard-settings-panel--admin">
+                                        <div class="dashboard-settings-panel__header">
+                                            <p class="dashboard-settings-panel__eyebrow">Reset de senha</p>
+                                            <h4>Redefinir senha de membro</h4>
+                                            <p class="dashboard-settings-panel__description">
+                                                Digite o e-mail já cadastrado e defina uma nova senha para o usuário.
+                                            </p>
+                                        </div>
+
+                                        <form class="form form--visible dashboard-settings-form" id="dashboard-settings-admin-reset-form">
+                                            <label for="dashboard-settings-admin-reset-email">
+                                                <span>E-mail do usuário</span>
+                                                <input id="dashboard-settings-admin-reset-email" name="email" type="email" autocomplete="off" placeholder="membro@ifsul.edu.br">
+                                            </label>
+
+                                            <label for="dashboard-settings-admin-reset-password">
+                                                <span>Nova senha</span>
+                                                <input id="dashboard-settings-admin-reset-password" name="newPassword" type="password" autocomplete="new-password" placeholder="Defina a senha temporária ou final">
+                                            </label>
+
+                                            <button class="button" id="dashboard-settings-admin-reset-submit" type="submit">
+                                                <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+                                                <span>Redefinir senha</span>
+                                            </button>
+                                        </form>
+                                    </article>
+
+                                    <article class="dashboard-settings-panel dashboard-settings-panel--admin">
+                                        <div class="dashboard-settings-panel__header">
+                                            <p class="dashboard-settings-panel__eyebrow">Permissões</p>
+                                            <h4>Promover usuário</h4>
+                                            <p class="dashboard-settings-panel__description">
+                                                Digite o e-mail já cadastrado. Administradores podem gerenciar a agenda e as contas dos usuários.
+                                            </p>
+                                        </div>
+
+                                        <form class="form form--visible dashboard-settings-form" id="dashboard-settings-admin-promote-form">
+                                            <label for="dashboard-settings-admin-promote-email">
+                                                <span>E-mail do usuário</span>
+                                                <input id="dashboard-settings-admin-promote-email" name="email" type="email" autocomplete="off" placeholder="novo.admin@ifsul.edu.br">
+                                            </label>
+
+                                            <button class="button" id="dashboard-settings-admin-promote-submit" type="submit">
+                                                <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
+                                                <span>Promover usuário</span>
+                                            </button>
+                                        </form>
+                                    </article>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+            </details>
         </div>
     </main>
 

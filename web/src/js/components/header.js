@@ -3,12 +3,41 @@ import { clearToken } from '../helpers/api.js';
 import { Toast } from './toast.js';
 
 /**
+ * Builds the initials shown by the authenticated header action.
+ */
+function readUserInitials(name) {
+    const normalizedName = typeof name === 'string' ? name.trim() : '';
+
+    if (!normalizedName) {
+        return 'U';
+    }
+
+    const initials = normalizedName
+        .split(/\s+/)
+        .map(part => part[0])
+        .filter((character, index, characters) => index === 0 || index === characters.length - 1)
+        .join('')
+        .toUpperCase();
+
+    return initials || 'U';
+}
+
+/**
  * Header component, responsible for rendering the header and managing the login/logout buttons.
  */
 export class Header {
 
     #enforceAuth;
     #session;
+    #logoutHandler = (event) => {
+        event.preventDefault();
+        clearToken();
+        Toast.flash('Sessão encerrada.', {
+            tone: 'info',
+            group: 'auth-redirect',
+        });
+        window.location.href = '/';
+    };
 
     #LOGIN_REDIRECT_REASONS = new Set(['missing-token', 'invalid-token']);
 
@@ -42,26 +71,21 @@ export class Header {
             return this;
         }
 
-        const loginButton = document.querySelector('#header-login-link');
-        const logoutButton = document.querySelector('#header-logout-link');
+        this.#applyAuthenticatedSession();
+        return this;
+    }
 
-        loginButton.classList.add('logged');
-        const userName = this.#session.user?.name;
-        const initials = userName ? userName.split(' ').map((n) => n[0]).filter((c, i, a) => i === 0 || i === a.length - 1).join('').toUpperCase() : 'U';
-        loginButton.href = '/dashboard';
-        loginButton.textContent = initials;
+    /**
+     * Applies a known authenticated session to the header without re-fetching it.
+     */
+    setSession(session) {
+        this.#session = session && typeof session === 'object'
+            ? session
+            : null;
 
-        logoutButton.classList.add('active');
-        logoutButton.addEventListener('click', (event) => {
-            event.preventDefault();
-            // remove auth token and send user to login page
-            clearToken();
-            Toast.flash('Sessão encerrada.', {
-                tone: 'info',
-                group: 'auth-redirect',
-            });
-            window.location.href = '/';
-        });
+        if (this.#session?.isAuthenticated) {
+            this.#applyAuthenticatedSession();
+        }
 
         return this;
     }
@@ -74,6 +98,27 @@ export class Header {
             this.#session = await getCurrentSession();
         }
         return this.#session;
+    }
+
+    /**
+     * Synchronizes the header controls with the active authenticated session.
+     */
+    #applyAuthenticatedSession() {
+        const loginButton = document.querySelector('#header-login-link');
+        const logoutButton = document.querySelector('#header-logout-link');
+
+        if (!(loginButton instanceof HTMLAnchorElement) || !(logoutButton instanceof HTMLAnchorElement)) {
+            return this;
+        }
+
+        loginButton.classList.add('logged');
+        loginButton.href = '/dashboard';
+        loginButton.textContent = readUserInitials(this.#session?.user?.name);
+
+        logoutButton.classList.add('active');
+        logoutButton.removeEventListener('click', this.#logoutHandler);
+        logoutButton.addEventListener('click', this.#logoutHandler);
+        return this;
     }
 
 }

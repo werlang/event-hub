@@ -16,6 +16,7 @@
 @import './components/dashboard-section.css';
 @import './components/dashboard-summary-card.css';
 @import './components/dashboard-event.css';
+@import './components/dashboard-settings.css';
 @import './components/dashboard-modal.css';
 
 body {

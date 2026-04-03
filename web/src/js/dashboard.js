@@ -7,7 +7,7 @@ import { DashboardEventFormModal } from './dashboard/create-event-modal.js';
 import { DashboardDeleteEventModal } from './dashboard/delete-event-modal.js';
 import { canManageOwnEvent } from './dashboard/event-management.js';
 import { DashboardRejectEventModal } from './dashboard/reject-event-modal.js';
-import { DashboardSettingsModal } from './dashboard/settings-modal.js';
+import { DashboardSettingsPanels } from './dashboard/settings-panels.js';
 import { Toast } from './components/toast.js';
 import { Tooltip } from './components/tooltip.js';
 import { requestApi } from './helpers/api.js';
@@ -22,6 +22,7 @@ const DASHBOARD_HIDDEN_CLASS = 'dashboard-empty-state--hidden';
 const DASHBOARD_EVENTS_PER_PAGE = 10;
 const DASHBOARD_VIEW_BROWSE = 'browse';
 const DASHBOARD_VIEW_MODERATION = 'moderation';
+const DASHBOARD_VIEW_SETTINGS = 'settings';
 const DASHBOARD_FILTER_ALL = 'all';
 const DASHBOARD_FILTER_ASC = 'asc';
 const DASHBOARD_FILTER_DESC = 'desc';
@@ -910,7 +911,8 @@ class DashboardPage extends BaseComponent {
     #currentModerationPage = 1;
     #currentView = DASHBOARD_VIEW_BROWSE;
     #session = null;
-    #settingsModal;
+    #header;
+    #settingsPanels;
     #actionTabs;
 
     /**
@@ -933,8 +935,11 @@ class DashboardPage extends BaseComponent {
         this.#rejectEventModal.onRejectSuccess(async ({ event }) => {
             await this.#syncModerationAfterDecision(event);
         });
-        this.#settingsModal = new DashboardSettingsModal({
-            trigger: null,
+        this.#settingsPanels = new DashboardSettingsPanels({
+            section: this.#elements.settingsSection,
+        });
+        this.#settingsPanels.onSessionChange(async ({ session }) => {
+            this.#applySession(session);
         });
         this.#actionTabs = new DashboardActionTabs({
             tabList: this.#elements.actionTabList,
@@ -977,8 +982,8 @@ class DashboardPage extends BaseComponent {
             return;
         }
 
-        const header = new Header(true);
-        const session = await header.getSession();
+        this.#header = new Header(true);
+        const session = await this.#header.getSession();
         if (!session) {
             return;
         }
@@ -994,17 +999,30 @@ class DashboardPage extends BaseComponent {
             return;
         }
 
+        this.#applySession(session, { render: false });
+        Toast.dismissGroup(DASHBOARD_STATUS_TOAST_GROUP);
+        this.#renderHeader();
+        this.refreshEvents({ showErrors: true });
+    }
+
+    /**
+     * Applies one authenticated session snapshot across dashboard collaborators.
+     */
+    #applySession(session, { render = true } = {}) {
         this.#session = session;
+        this.#header?.setSession(session);
         this.#eventFormModal.setSession(session);
         this.#deleteEventModal.setSession(session);
         this.#rejectEventModal.setSession(session);
-        this.#settingsModal.setUser(session.user);
-        Toast.dismissGroup(DASHBOARD_STATUS_TOAST_GROUP);
-        this.#renderHeader();
+        this.#settingsPanels.setSession(session);
+
         if (this.#elements.userName) {
-            this.#elements.userName.textContent = session.user?.name || 'Usuário';
+            this.#elements.userName.textContent = session?.user?.name || 'Usuário';
         }
-        this.refreshEvents({ showErrors: true });
+
+        if (render) {
+            this.#renderDashboardSections();
+        }
     }
 
     /**
@@ -1060,6 +1078,7 @@ class DashboardPage extends BaseComponent {
             summaryGrid: root?.querySelector('#dashboard-summary-grid') || null,
             overviewSection: root?.querySelector('#dashboard-overview-section') || null,
             eventsSection: root?.querySelector('#dashboard-events-section') || null,
+            settingsSection: root?.querySelector('#dashboard-settings-section') || null,
             eventsEyebrow: root?.querySelector('#dashboard-events-eyebrow') || null,
             eventsHeading: root?.querySelector('#dashboard-events-heading') || null,
             eventsDescription: root?.querySelector('#dashboard-events-description') || null,
@@ -1091,6 +1110,7 @@ class DashboardPage extends BaseComponent {
             && this.#elements.overviewSection
             && this.#elements.summaryGrid
             && this.#elements.eventsSection
+            && this.#elements.settingsSection
             && this.#elements.eventsList
             && this.#elements.eventsEmpty
         );
@@ -1147,15 +1167,9 @@ class DashboardPage extends BaseComponent {
         }
 
         if (tabName === 'settings') {
-            try {
-                await this.#settingsModal.open();
-            } catch {
-                this.#showToast(
-                    'Não foi possível abrir as configurações agora.',
-                    'error',
-                    { group: DASHBOARD_STATUS_TOAST_GROUP },
-                );
-            }
+            this.#currentView = DASHBOARD_VIEW_SETTINGS;
+            this.#renderDashboardSections();
+            this.#settingsPanels.focus();
             return this.#currentView;
         }
 
@@ -1420,6 +1434,7 @@ class DashboardPage extends BaseComponent {
         this.#renderHeader();
         this.#renderOverview();
         this.#renderEventList();
+        this.#renderSettingsSection();
     }
 
     /**
@@ -1443,13 +1458,14 @@ class DashboardPage extends BaseComponent {
      * Renders the overview cards and the section badge.
      */
     #renderOverview() {
-        const isModerationView = this.#currentView === DASHBOARD_VIEW_MODERATION;
+        const isListHidden = this.#currentView === DASHBOARD_VIEW_MODERATION
+            || this.#currentView === DASHBOARD_VIEW_SETTINGS;
 
         if (this.#elements.overviewSection) {
-            this.#elements.overviewSection.hidden = isModerationView;
+            this.#elements.overviewSection.hidden = isListHidden;
         }
 
-        if (isModerationView) {
+        if (isListHidden) {
             return;
         }
 
@@ -1484,6 +1500,16 @@ class DashboardPage extends BaseComponent {
      * Renders the current user's event list and empty state.
      */
     #renderEventList() {
+        const isSettingsView = this.#currentView === DASHBOARD_VIEW_SETTINGS;
+
+        if (this.#elements.eventsSection) {
+            this.#elements.eventsSection.hidden = isSettingsView;
+        }
+
+        if (isSettingsView) {
+            return;
+        }
+
         const sectionCopy = readEventSectionCopy(this.#currentView);
         const activeEvents = this.#readActiveEvents();
         const isBrowseView = this.#currentView === DASHBOARD_VIEW_BROWSE;
@@ -1695,6 +1721,22 @@ class DashboardPage extends BaseComponent {
         }));
 
         this.#elements.eventsPaginationControls.replaceChildren(controls);
+    }
+
+    /**
+     * Shows or hides the inline settings area for the current dashboard view.
+     */
+    #renderSettingsSection() {
+        if (!this.#elements.settingsSection) {
+            return;
+        }
+
+        const isSettingsView = this.#currentView === DASHBOARD_VIEW_SETTINGS;
+        this.#elements.settingsSection.hidden = !isSettingsView;
+
+        if (isSettingsView) {
+            this.#elements.settingsSection.open = true;
+        }
     }
 
     /**
