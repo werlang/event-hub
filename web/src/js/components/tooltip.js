@@ -70,9 +70,12 @@ export class Tooltip extends BaseComponent {
     #bubble;
     #content;
     #placement;
+    #root;
     #standalone = false;
     #visible = false;
     #hasContent = false;
+
+    static tooltipList = [];
 
     /**
      * Creates a reusable tooltip cue with hover and focus behavior.
@@ -98,6 +101,7 @@ export class Tooltip extends BaseComponent {
 
         super(rootElement);
         this.#standalone = !hasExistingElement;
+        this.#root = rootElement;
 
         rootElement.classList.add('tooltip');
 
@@ -157,6 +161,9 @@ export class Tooltip extends BaseComponent {
         });
         this.on(window, 'resize', () => this.#syncPosition());
         this.on(document, 'scroll', () => this.#syncPosition(), true);
+
+        Tooltip.tooltipList.push(this);
+        this.#destroyDisconnected();
     }
 
     /**
@@ -294,5 +301,19 @@ export class Tooltip extends BaseComponent {
     #applyBubblePlacementClass(placement) {
         this.#bubble.classList.toggle('tooltip__bubble--top', placement === 'top');
         this.#bubble.classList.toggle('tooltip__bubble--bottom', placement === 'bottom');
+    }
+
+    #destroyDisconnected() {
+        setTimeout(() => {
+            Tooltip.tooltipList.forEach((instance) => {
+                if (instance.#root.isConnected) {
+                    return;
+                }
+    
+                instance.destroy();
+            });
+    
+            Tooltip.tooltipList = Tooltip.tooltipList.filter(instance => instance.#root.isConnected);
+        }, 1000);
     }
 }
