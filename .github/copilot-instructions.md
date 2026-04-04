@@ -9,6 +9,7 @@
 - **HTTP methods**: keep the API contract limited to `GET`, `POST`, `PUT`, and `DELETE`. Do not introduce `PATCH` routes.
 - **In-code documentation**: every named function, method, getter/setter, and reusable local helper must have a JSDoc block. Short anonymous callbacks may stay undocumented when they are clearly local implementation details, but inline route or middleware handlers must be documented directly above the registration call.
 - **Private class fields**: prefer `#field` / `#method` where state should be encapsulated.
+- **Related behavior in classes**: prefer small focused classes that unify related behavior over scattering the same domain logic across standalone helper exports.
 - **Single responsibility first**: keep files, classes, and helpers focused on one primary job. When a file exists to export a class, move reusable standalone helpers into companion modules instead of mixing multiple responsibilities in the same file.
 - **Readable over clever**: prefer descriptive names, small methods, guard clauses, explicit data flow, and predictable public APIs over compact but opaque implementations.
 - **Scalable structure**: extend existing abstractions or compose smaller collaborators before adding more branching to bloated modules, controllers, or UI entrypoints.

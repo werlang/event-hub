@@ -38,14 +38,15 @@ Applies to the web client styles under `web/src/css/` and class names used in `w
 
 1. Keep page entry files such as `web/src/css/index.css`, `web/src/css/login.css`, and `web/src/css/dashboard.css` as composition layers: imports first, then only page-level layout and one-off page scaffolding.
 2. Each UI component must own its style file in `web/src/css/components/`; when a page entry starts carrying multiple component roots, extract them instead of extending the entry file.
-3. If two or more page-scoped components share the same visual primitive, extract a small shared partial for that page scope instead of duplicating rules or pushing them back into the entry file.
-4. Keep project-wide tokens in `web/src/css/tokens.css` under `:root`.
-5. Never hardcode palette colors, fonts, radii, or shadows in component files when an existing token already covers the need.
-6. For hover, focus, active, muted, and surface variations, prefer `color-mix(...)` with existing tokens.
-7. Prefer nested CSS selectors within each component file to keep styles colocated and scoped.
-8. Keep component-specific responsive rules in the same component file as the base styles they modify.
-9. Keep interactions visually soft: subtle lift, border shifts, and shadow changes are preferred over aggressive transforms or high-contrast effects.
-10. Do not introduce alternate icon systems or version-specific Font Awesome font-family strings in component CSS.
+3. If a page-specific component is a contextual variant of a reusable component, keep the shared visual primitive in the reusable component file and let the page-specific file contain only contextual overrides, extra affordances, and container-specific states.
+4. If two or more page-scoped components share the same visual primitive and there is no clear reusable base component yet, extract a small shared partial for that page scope instead of duplicating rules or pushing them back into the entry file.
+5. Keep project-wide tokens in `web/src/css/tokens.css` under `:root`.
+6. Never hardcode palette colors, fonts, radii, or shadows in component files when an existing token already covers the need.
+7. For hover, focus, active, muted, and surface variations, prefer `color-mix(...)` with existing tokens.
+8. Prefer nested CSS selectors within each component file to keep styles colocated and scoped.
+9. Keep component-specific responsive rules in the same component file as the base styles they modify.
+10. Keep interactions visually soft: subtle lift, border shifts, and shadow changes are preferred over aggressive transforms or high-contrast effects.
+11. Do not introduce alternate icon systems or version-specific Font Awesome font-family strings in component CSS.
 
 ## Token Usage
 
@@ -63,6 +64,7 @@ Use shared token names from `tokens.css`:
 
 - `header.css` and `hero.css` define the public-facing visual identity. Keep them elegant and warm, with restrained gradients and clear framing.
 - `panel.css` and `event-card.css` should read as paper surfaces: bright cards, soft borders, rounded edges, and careful shadows.
+- When a dashboard or page-specific card builds on the same card surface and metadata structure, keep that base treatment in `event-card.css` and reserve the page-specific stylesheet for status colors, actions, feedback panels, and other local customizations.
 - `button.css` uses an earthy, uppercase call-to-action language. Primary buttons lean brown, ghost buttons stay surface-based.
 - Filter styles currently live in `index.css`, while form primitives live in `form.css`; preserve that split unless there is a clear reason to extract a new component file.
 - Compact metadata elements such as pills, chips, and session badges should feel crisp and intentional, not flashy.

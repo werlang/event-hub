@@ -55,12 +55,13 @@ When changing API integration behavior, keep this precedence explicit.
 ## Implementation Guidance
 
 1. Keep client logic modular through the existing class-based component layer in `web/src/js/components/`.
-2. Preserve current UX flows before adding new UI states.
-3. Keep CSS updates in the existing split: `index.css` for the public pages, `login.css` for auth-specific layout.
-4. Keep home listing/filter logic in `index.js`; keep auth-tabs behavior in `login.js`.
-5. If you add publish-page behavior, wire a real bundle entry first instead of documenting a non-existent `publish.js` file.
-6. Maintain Portuguese-facing text consistency already present in forms and messages.
-7. For interaction-heavy UI work, do not stop at DOM inspection or bundle success alone; verify the rendered page in a browser and exercise the affected interaction states before considering the task done.
+2. When multiple frontend helpers revolve around the same domain object, consolidate them into one focused class instead of keeping scattered function exports. For event-specific presentation and sorting logic, prefer extending or reusing `web/src/js/helpers/event.js`.
+3. Preserve current UX flows before adding new UI states.
+4. Keep CSS updates in the existing split: `index.css` for the public pages, `login.css` for auth-specific layout.
+5. Keep home listing/filter logic in `index.js`; keep auth-tabs behavior in `login.js`.
+6. If you add publish-page behavior, wire a real bundle entry first instead of documenting a non-existent `publish.js` file.
+7. Maintain Portuguese-facing text consistency already present in forms and messages.
+8. For interaction-heavy UI work, do not stop at DOM inspection or bundle success alone; verify the rendered page in a browser and exercise the affected interaction states before considering the task done.
 
 ## Validation Expectations
 

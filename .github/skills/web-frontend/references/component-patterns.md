@@ -22,19 +22,6 @@ export function initHomePage() {
 }
 ```
 
-## Query String Helper
-
-```javascript
-const params = createHomeFilterParams({
-    search: filters.search,
-    category: filters.category,
-    from: filters.from,
-    to: filters.to,
-});
-
-syncUrlWithParams(params);
-```
-
 ## Envelope-Aware Request Pattern
 
 ```javascript
