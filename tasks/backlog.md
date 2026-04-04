@@ -184,3 +184,83 @@ Produce final release artifacts (`04-commit-msg.md`, `05-gitlab-mr.md`) and comp
 - [x] Final artifact files are created and coherent with delivered implementation
 - [x] Progress trackers reflect final state
 - [x] Delivery summary includes validations and known residual risks
+
+## [TODO-0002] Default index search to the next seven days
+- Status: todo
+- Priority: P1
+- Type: feature
+- Scope: web
+- Source: tasks/TODOs.md#L11
+- Dependencies: none
+
+### Context
+The home event search should start with a `Proximos 7 dias` style date window so users see imminent events without having to configure the filters manually.
+
+### Implementation Notes
+Keep the default coherent across the SSR shell, query-state hydration, and client-side filtering so shared URLs and refreshes behave predictably.
+
+### Acceptance Criteria
+- [ ] The home page loads with the next-seven-days filter applied by default
+- [ ] User-selected filters and shared query-string state still hydrate correctly after the default is introduced
+- [ ] Module/class responsibilities remain clear and no unrelated concerns are added to existing files
+- [ ] Validation step (manual or automated)
+
+## [TODO-0003] Align index filters with dashboard filter patterns
+- Status: todo
+- Priority: P1
+- Type: refactor
+- Scope: web
+- Source: tasks/TODOs.md#L12
+- Dependencies: TODO-0002
+
+### Context
+The index filter section should be brought closer to the dashboard filter treatment so the application presents a more consistent filtering experience.
+
+### Implementation Notes
+Reuse existing dashboard-oriented filter primitives or component styles where that reduces duplication cleanly, rather than creating another one-off filter variant.
+
+### Acceptance Criteria
+- [ ] The index filter section is visually and structurally aligned with the dashboard filter treatment
+- [ ] Shared filter styles or component patterns are reused where practical without introducing tight coupling
+- [ ] Module/class responsibilities remain clear and no unrelated concerns are added to existing files
+- [ ] Validation step (manual or automated)
+
+## [TODO-0004] Show event authors on index cards
+- Status: todo
+- Priority: P1
+- Type: feature
+- Scope: web
+- Source: tasks/TODOs.md#L13
+- Dependencies: TODO-0002
+
+### Context
+Home event listings should show author information consistent with the moderation view so the same event metadata is presented similarly across the application.
+
+### Implementation Notes
+Mirror the existing moderation-card author treatment where possible and keep any required data plumbing aligned with the current API and web-layer contracts.
+
+### Acceptance Criteria
+- [ ] Index event cards display author information using a treatment that matches or cleanly parallels dashboard moderation cards
+- [ ] Any required API or view-model data plumbing preserves current event listing behavior
+- [ ] Module/class responsibilities remain clear and no unrelated concerns are added to existing files
+- [ ] Validation step (manual or automated)
+
+## [TODO-0005] Review and polish index page consistency
+- Status: todo
+- Priority: P2
+- Type: tech-debt
+- Scope: web
+- Source: tasks/TODOs.md#L14-L19
+- Dependencies: TODO-0002, TODO-0003, TODO-0004
+
+### Context
+After the filter and event-card changes land, the index page still needs a focused consistency review to catch remaining UX or presentation mismatches introduced by the work.
+
+### Implementation Notes
+Use the existing codebase patterns, UI conventions, and reference material as guardrails for any final polish instead of creating standalone style churn.
+
+### Acceptance Criteria
+- [ ] The index page has been reviewed for visual and interaction consistency after the related changes
+- [ ] Any follow-up fixes are limited to concrete index inconsistencies discovered during that review
+- [ ] Module/class responsibilities remain clear and no unrelated concerns are added to existing files
+- [ ] Validation step (manual or automated)
