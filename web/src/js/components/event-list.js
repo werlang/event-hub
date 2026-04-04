@@ -1,6 +1,6 @@
 import { BaseComponent } from './base-component.js';
 import { EventCard } from './event-card.js';
-import { sortEventsByDate } from '../helpers/event-sort.js';
+import { Event } from '../helpers/event.js';
 
 export class EventList extends BaseComponent {
 	#emptyState;
@@ -34,7 +34,7 @@ export class EventList extends BaseComponent {
 			this.#emptyState.textContent = emptyMessage || this.#defaultEmptyMessage;
 		}
 
-		const sortedEvents = Array.isArray(events) ? sortEventsByDate(events) : [];
+		const sortedEvents = Event.sortByDate(events);
 		if (sortedEvents.length === 0) {
 			this.get().replaceChildren();
 			if (this.#emptyState) {

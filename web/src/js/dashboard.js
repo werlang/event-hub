@@ -11,10 +11,7 @@ import { DashboardSettingsPanels } from './dashboard/settings-panels.js';
 import { Toast } from './components/toast.js';
 import { Tooltip } from './components/tooltip.js';
 import { requestApi } from './helpers/api.js';
-import { formatDateTimePtBr } from './helpers/date-format.js';
-import { isPastEvent, sortEventsByDate, sortEventsByDateDescending } from './helpers/event-sort.js';
-import { readEventCategoryMeta, readEventTagSummary } from './helpers/event-category.js';
-import { createLocationContent } from './helpers/location-link.js';
+import { Event } from './helpers/event.js';
 
 const DASHBOARD_STATUS_TOAST_GROUP = 'dashboard-status';
 const DASHBOARD_ACTION_TOAST_GROUP = 'dashboard-action';
@@ -81,13 +78,6 @@ function isAdminRole(role) {
 function readText(value, fallback) {
     const normalizedValue = typeof value === 'string' ? value.trim() : '';
     return normalizedValue || fallback;
-}
-
-/**
- * Returns the moderation byline shown beneath the event title.
- */
-function readModerationAuthorText(event) {
-    return `Por ${readText(event?.organizerName, 'autoria não informada')}`;
 }
 
 /**
@@ -168,7 +158,8 @@ function isPendingModerationEvent(event) {
  * Reports whether an event is current or upcoming for dashboard summary purposes.
  */
 function isUpcomingEvent(event) {
-    return Boolean(event?.date) && !isPastEvent(event);
+    const eventRecord = Event.from(event);
+    return Boolean(eventRecord.toJSON().date) && !eventRecord.isPast();
 }
 
 /**
@@ -356,7 +347,7 @@ function normalizeDashboardSortOrder(value) {
  * Returns the canonical category metadata for one dashboard event.
  */
 function readDashboardEventCategory(event) {
-    return readEventCategoryMeta(event?.category || event?.categoryLabel);
+    return Event.from(event).readCategoryMeta();
 }
 
 /**
@@ -415,7 +406,7 @@ function filterDashboardBrowseEvents(events, filters) {
             return false;
         }
 
-        if (!includePast && isPastEvent(event)) {
+        if (!includePast && Event.from(event).isPast()) {
             return false;
         }
 
@@ -423,8 +414,8 @@ function filterDashboardBrowseEvents(events, filters) {
     });
 
     return normalizedOrder === DASHBOARD_FILTER_ASC
-        ? sortEventsByDate(filteredEvents)
-        : sortEventsByDateDescending(filteredEvents);
+        ? Event.sortByDate(filteredEvents)
+        : Event.sortByDateDescending(filteredEvents);
 }
 
 /**
@@ -523,7 +514,7 @@ function createMetaPill(content, modifier = '') {
  * Creates the compact category summary shown in dashboard event metadata.
  */
 function createCategoryMetaContent(event) {
-    const summary = readEventTagSummary(event, { visibleCount: 1 });
+    const summary = Event.from(event).readTagSummary({ visibleCount: 1 });
     const label = summary.visibleTags[0]?.label || 'Outro';
     const content = document.createElement('span');
     content.textContent = summary.hiddenCount > 0 ? `${label} +${summary.hiddenCount}` : label;
@@ -654,6 +645,7 @@ function createModerationEventActionToolbar() {
  * Creates a highlighted moderation-feedback block for rejected events.
  */
 function createModerationFeedbackElement(event) {
+    const eventRecord = Event.from(event);
     const feedback = document.createElement('div');
     feedback.className = 'dashboard-event__feedback';
 
@@ -663,7 +655,7 @@ function createModerationFeedbackElement(event) {
 
     const text = document.createElement('p');
     text.className = 'dashboard-event__feedback-text';
-    text.textContent = readText(event?.rejectionReason, 'O moderador devolveu este evento sem observações adicionais.');
+    text.textContent = eventRecord.readRejectionReason('O moderador devolveu este evento sem observações adicionais.');
 
     feedback.append(label, text);
     return feedback;
@@ -673,14 +665,16 @@ function createModerationFeedbackElement(event) {
  * Creates a rendered event card tailored for the active dashboard list.
  */
 function createDashboardEventElement(event, { mode = DASHBOARD_VIEW_BROWSE } = {}) {
-    const statusMeta = readStatusMeta(event?.status);
+    const eventRecord = Event.from(event);
+    const isPastEvent = eventRecord.isPast();
+    const statusMeta = readStatusMeta(eventRecord.readStatus('pending'));
     const isModerationView = mode === DASHBOARD_VIEW_MODERATION;
     const isManageable = !isModerationView && canManageOwnEvent(event);
     const article = document.createElement('article');
     article.className = `dashboard-event dashboard-event--${statusMeta.tone}`;
-    article.dataset.eventId = readText(event?.id, '');
+    article.dataset.eventId = eventRecord.readId('');
 
-    if (isPastEvent(event)) {
+    if (isPastEvent) {
         article.classList.add('dashboard-event--past');
     }
 
@@ -692,7 +686,7 @@ function createDashboardEventElement(event, { mode = DASHBOARD_VIEW_BROWSE } = {
 
     const title = document.createElement('h3');
     title.className = 'dashboard-event__title';
-    title.textContent = readText(event?.title, 'Evento sem título');
+    title.textContent = eventRecord.readTitle('Evento sem título');
 
     const titleBlock = document.createElement('div');
     titleBlock.className = 'dashboard-event__title-block';
@@ -701,7 +695,7 @@ function createDashboardEventElement(event, { mode = DASHBOARD_VIEW_BROWSE } = {
     if (isModerationView) {
         const author = document.createElement('p');
         author.className = 'dashboard-event__author';
-        author.textContent = readModerationAuthorText(event);
+        author.textContent = eventRecord.readAuthorText();
         titleBlock.appendChild(author);
     }
 
@@ -720,14 +714,14 @@ function createDashboardEventElement(event, { mode = DASHBOARD_VIEW_BROWSE } = {
     statusGroup.appendChild(statusPill);
 
     const tooltipTimeline = new Tooltip({
-        content: isPastEvent(event) ? 'Este evento já ocorreu.' : 'Este evento ainda vai acontecer.',
-        label: `Timeline: ${isPastEvent(event) ? 'Passado' : 'Próximo'}`,
-        icon: isPastEvent(event) ? 'clock-rotate-left' : 'clock',
+        content: isPastEvent ? 'Este evento já ocorreu.' : 'Este evento ainda vai acontecer.',
+        label: `Timeline: ${isPastEvent ? 'Passado' : 'Próximo'}`,
+        icon: isPastEvent ? 'clock-rotate-left' : 'clock',
     });
 
     const timelinePill = document.createElement('span');
     timelinePill.className = 'dashboard-status-pill dashboard-status-pill--neutral';
-    timelinePill.append(tooltipTimeline.get(), isPastEvent(event) ? 'Passado' : 'Próximo');
+    timelinePill.append(tooltipTimeline.get(), isPastEvent ? 'Passado' : 'Próximo');
     statusGroup.appendChild(timelinePill);
 
     headline.append(titleBlock, statusGroup);
@@ -741,23 +735,23 @@ function createDashboardEventElement(event, { mode = DASHBOARD_VIEW_BROWSE } = {
 
     const description = document.createElement('p');
     description.className = 'dashboard-event__description';
-    description.textContent = readText(event?.description, 'Sem descrição.');
+    description.textContent = eventRecord.readDescription('Sem descrição.');
 
     const meta = document.createElement('div');
     meta.className = 'dashboard-event__meta';
     meta.append(
-        createMetaPill(createCategoryMetaContent(event), 'category'),
-        createMetaPill(createLocationContent(event?.location, {
+        createMetaPill(createCategoryMetaContent(eventRecord), 'category'),
+        createMetaPill(eventRecord.createLocationContent({
             fallback: 'A definir',
             linkClass: 'dashboard-meta-pill__link',
         }), 'location'),
-        createMetaPill(document.createTextNode(formatDateTimePtBr(event?.date)), 'date'),
+        createMetaPill(document.createTextNode(eventRecord.formatDateTimePtBr()), 'date'),
     );
 
     article.append(header, description);
 
-    if (!isModerationView && statusMeta.tone === 'warning' && event?.rejectionReason) {
-        article.appendChild(createModerationFeedbackElement(event));
+    if (!isModerationView && statusMeta.tone === 'warning' && eventRecord.readRejectionReason()) {
+        article.appendChild(createModerationFeedbackElement(eventRecord));
     }
 
     article.append(meta);
@@ -1054,7 +1048,7 @@ class DashboardPage extends BaseComponent {
             return;
         }
 
-        this.#events = sortEventsByDateDescending(response.data?.events || []);
+        this.#events = Event.sortByDateDescending(response.data?.events || []);
         this.#currentEventPage = 1;
         this.#renderDashboardSections();
     }
@@ -1207,7 +1201,7 @@ class DashboardPage extends BaseComponent {
             return currentEvent.id !== event.id;
         });
 
-        this.#events = sortEventsByDateDescending([event, ...nextEvents]);
+        this.#events = Event.sortByDateDescending([event, ...nextEvents]);
         this.#currentEventPage = 1;
         this.#renderDashboardSections();
         this.#actionTabs.setActive(this.#currentView);
@@ -1770,7 +1764,7 @@ class DashboardPage extends BaseComponent {
             return;
         }
 
-        this.#moderationEvents = sortEventsByDateDescending(response.data?.events || []);
+        this.#moderationEvents = Event.sortByDateDescending(response.data?.events || []);
         this.#currentModerationPage = 1;
         this.#renderDashboardSections();
     }

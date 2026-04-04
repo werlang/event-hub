@@ -6,105 +6,43 @@
 @import './components/hero.css';
 @import './components/button.css';
 @import './components/panel.css';
+@import './components/empty-state.css';
 @import './components/quick-chips.css';
 @import './components/event-card.css';
 @import './components/form.css';
+@import './components/filter-surface.css';
 @import './components/toast.css';
 @import './components/tooltip.css';
 
 
-.filters {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-    gap: 16px;
-    align-items: end;
+#home-filter-surface {
+    gap: 24px;
+}
+
+.home-filters {
+    gap: 18px;
+}
+
+.home-filters__form {
+    margin-top: 0;
+
+    & label > span {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    & label > span i {
+        color: color-mix(in srgb, var(--color-main), var(--color-text) 24%);
+        font-size: 0.95rem;
+    }
+}
+
+.home-filters__submit {
     width: 100%;
-
-    & > .button {
-        min-height: 56px;
-    }
+    min-height: 56px;
 }
 
-.filters label {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    color: var(--color-text-secondary);
-    font-size: 0.95rem;
-    font-weight: 600;
-}
-
-.filters label.select-field {
-    position: relative;
-}
-
-.filters label.select-field::after {
-    content: '\f078';
-    position: absolute;
-    right: 18px;
-    bottom: 20px;
-    font: var(--fa-font-solid);
-    color: color-mix(in srgb, var(--color-main), var(--color-text) 22%);
-    pointer-events: none;
-    transition: color 0.2s ease;
-}
-
-.filters label.select-field:focus-within::after {
-    color: var(--color-main);
-}
-
-.filters input,
-.filters select,
-.filters textarea {
-    width: 100%;
-    padding: 16px 18px;
-    border-radius: var(--radius-sm);
-    border: 2px solid color-mix(in srgb, var(--color-main), transparent 78%);
-    background: var(--color-background);
-    color: var(--color-text);
-    font-size: 1rem;
-    line-height: 1.4;
-    box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text), transparent 92%);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, transform 0.2s ease;
-
-    &:hover {
-        border-color: color-mix(in srgb, var(--color-main), transparent 58%);
-        box-shadow: 0 6px 14px color-mix(in srgb, var(--color-text), transparent 92%);
-    }
-
-    &:focus {
-        outline: none;
-        border-color: var(--color-main);
-        background: var(--color-background);
-        box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-main), transparent 88%), 0 10px 20px color-mix(in srgb, var(--color-text), transparent 92%);
-    }
-
-    &:disabled {
-        cursor: not-allowed;
-        background: color-mix(in srgb, var(--color-background), var(--color-text) 6%);
-        color: color-mix(in srgb, var(--color-text-secondary), #ffffff 12%);
-        box-shadow: none;
-    }
-
-    &::placeholder {
-        color: color-mix(in srgb, var(--color-text-secondary), #ffffff 12%);
-    }
-}
-
-.filters select {
-    padding-right: 48px;
-    cursor: pointer;
-    appearance: none;
-    background-image: none;
-}
-
-.filters textarea {
-    min-height: 140px;
-    resize: vertical;
-}
-
-@media (max-width: 720px) {
-    .filters {
-        grid-template-columns: 1fr;
-    }
+.home-filters__chips {
+    padding-top: 2px;
 }

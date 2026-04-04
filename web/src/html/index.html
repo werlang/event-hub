@@ -27,42 +27,45 @@
     <main>
         <section class="panel" id="events">
             <div class="panel__header" id="home-filter-surface">
-                <div>
+                <div class="home-filters__intro">
                     <div class="panel__heading">
                         <h2>Filtrar eventos</h2>
                         <span id="home-filter-tooltip"></span>
                     </div>
                     <p class="hint">Refine a agenda com busca, categoria e intervalo de datas.</p>
                 </div>
-                <form class="filters" id="filter-form">
-                    <label>
-                        <span>Busca</span>
-                        <input type="search" id="filter-search" placeholder="Palestras, oficinas, simpósios..." />
-                    </label>
-                    <label class="select-field">
-                        <span>Categoria</span>
-                        <select id="filter-category">
-                            <option value="">Todas</option>
-                            <option value="reuniao">Reunião Interna</option>
-                            <option value="academico">Evento Acadêmico</option>
-                            <option value="extensao">Extensão e Parceria</option>
-                            <option value="representacao">Representação Institucional</option>
-                            <option value="outro">Outro</option>
-                        </select>
-                    </label>
-                    <label>
-                        <span>De</span>
-                        <input type="date" id="filter-from" value="{{weekStart}}">
-                    </label>
-                    <label>
-                        <span>Até</span>
-                        <input type="date" id="filter-to" value="{{weekEnd}}">
-                    </label>
-                    <button class="button button--primary" id="apply-filters" type="submit"><i class="fa-solid fa-filter" aria-hidden="true"></i><span>Aplicar filtros</span></button>
-                </form>
-                <div class="chips" id="quick-chips"></div>
+                <div class="home-filters filter-surface">
+                    <form class="form form--visible filter-surface__grid home-filters__form" id="filter-form" aria-label="Filtros da agenda">
+                        <label for="filter-search">
+                            <span><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>Busca</span>
+                            <input type="search" id="filter-search" placeholder="Palestras, oficinas, simpósios..." />
+                        </label>
+                        <label class="select-field" for="filter-category">
+                            <span><i class="fa-solid fa-list" aria-hidden="true"></i>Categoria</span>
+                            <select id="filter-category">
+                                <option value="">Todas</option>
+                                <option value="reuniao">Reunião Interna</option>
+                                <option value="academico">Evento Acadêmico</option>
+                                <option value="extensao">Extensão e Parceria</option>
+                                <option value="representacao">Representação Institucional</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </label>
+                        <label for="filter-from">
+                            <span><i class="fa-solid fa-calendar-day" aria-hidden="true"></i>De</span>
+                            <input type="date" id="filter-from" value="{{defaultFrom}}">
+                        </label>
+                        <label for="filter-to">
+                            <span><i class="fa-solid fa-calendar-days" aria-hidden="true"></i>Até</span>
+                            <input type="date" id="filter-to" value="{{defaultTo}}">
+                        </label>
+                        <button class="button button--primary home-filters__submit" id="apply-filters" type="submit"><i class="fa-solid fa-filter" aria-hidden="true"></i><span>Aplicar filtros</span></button>
+                    </form>
+                    <div class="chips home-filters__chips" id="quick-chips"></div>
+                </div>
             </div>
             <div id="events-grid" class="grid"></div>
+            <p class="empty-state" id="events-empty" hidden>Nenhum evento encontrado.</p>
         </section>
     </main>
 

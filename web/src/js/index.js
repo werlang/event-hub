@@ -6,7 +6,6 @@ import {
     createHomeFilterParams,
     hasSpecificHomeQuery,
     readHomeFiltersFromUrl,
-    syncUrlWithParams,
 } from './helpers/query-state.js';
 import { EventList } from './components/event-list.js';
 import { FilterForm } from './components/filter-form.js';
@@ -30,6 +29,7 @@ function createElements() {
         filterForm: document.querySelector('#filter-form'),
         quickChips: document.querySelector('#quick-chips'),
         grid: document.querySelector('#events-grid'),
+        emptyState: document.querySelector('#events-empty'),
         filterSearch: document.querySelector('#filter-search'),
         filterCategory: document.querySelector('#filter-category'),
         filterFrom: document.querySelector('#filter-from'),
@@ -136,6 +136,7 @@ export function initHomePage() {
 
     const eventList = new EventList({
         grid: elements.grid,
+        emptyState: elements.emptyState,
     });
     const filterForm = new FilterForm({
         form: elements.filterForm,
@@ -145,7 +146,7 @@ export function initHomePage() {
         filterTo: elements.filterTo,
     });
     const quickChips = new QuickChips({ container: elements.quickChips });
-    const initialFilters = readHomeFiltersFromUrl();
+    const initialFilters = readHomeFiltersFromUrl(window.location.search, filterForm.readFilters());
     const agendaOnlyMode = hasSpecificHomeQuery();
 
     if (!eventList.isReady() || !filterForm.isReady() || !quickChips.isReady()) {
@@ -159,13 +160,12 @@ export function initHomePage() {
         clearHomeToasts();
 
         const params = createHomeFilterParams(filters);
-        syncUrlWithParams(params);
 
         const query = params.toString();
         const endpoint = query ? `/events?${query}` : '/events';
         const response = await apiClient.request(endpoint);
         if (!response.ok) {
-            eventList.clear();
+            eventList.clear({ showEmptyState: false });
             showHomeToast('Não foi possível carregar os eventos no momento.', 'error');
             return;
         }

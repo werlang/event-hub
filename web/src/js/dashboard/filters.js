@@ -1,6 +1,5 @@
 import { BaseComponent } from '../components/base-component.js';
-import { readEventCategoryMeta } from '../helpers/event-category.js';
-import { isPastEvent, sortEventsByDate, sortEventsByDateDescending } from '../helpers/event-sort.js';
+import { Event } from '../helpers/event.js';
 
 export const DASHBOARD_FILTER_ALL = 'all';
 export const DASHBOARD_FILTER_ASC = 'asc';
@@ -51,7 +50,7 @@ export function normalizeDashboardSortOrder(value) {
  * Returns the canonical category metadata for one dashboard event.
  */
 function readDashboardEventCategory(event) {
-    return readEventCategoryMeta(event?.category || event?.categoryLabel);
+    return Event.from(event).readCategoryMeta();
 }
 
 /**
@@ -136,7 +135,7 @@ export function filterDashboardBrowseEvents(events, filters) {
             return false;
         }
 
-        if (!includePast && isPastEvent(event)) {
+        if (!includePast && Event.from(event).isPast()) {
             return false;
         }
 
@@ -144,8 +143,8 @@ export function filterDashboardBrowseEvents(events, filters) {
     });
 
     return normalizedOrder === DASHBOARD_FILTER_ASC
-        ? sortEventsByDate(filteredEvents)
-        : sortEventsByDateDescending(filteredEvents);
+        ? Event.sortByDate(filteredEvents)
+        : Event.sortByDateDescending(filteredEvents);
 }
 
 /**
