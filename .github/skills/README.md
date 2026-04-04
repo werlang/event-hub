@@ -12,6 +12,7 @@ Agent skills for GitHub Copilot in this repository.
 | [entity-models](entity-models/) | Maintain `User`, `Event`, and MySQL-backed domain behavior |
 | [debugging-operations](debugging-operations/) | Diagnose startup, runtime, API, and frontend integration issues |
 | [test-first-delivery](test-first-delivery/) | Deliver behavior changes with tests when feasible and explicit validation when automation is absent |
+| [skill-updater](skill-updater/) | Keep skill guides aligned with durable coding principles, structure rules, and repository conventions learned from tasks |
 
 ## Notes
 
