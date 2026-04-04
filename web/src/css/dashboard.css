@@ -14,7 +14,6 @@
 @import './components/event-card.css';
 @import './components/dashboard-primitives.css';
 @import './components/dashboard-shell.css';
-@import './components/dashboard-filters.css';
 @import './components/dashboard-section.css';
 @import './components/dashboard-summary-card.css';
 @import './components/dashboard-event.css';
@@ -33,4 +32,22 @@ main {
     overflow: clip;
     padding: clamp(52px, 7vw, 92px) clamp(18px, 4vw, 34px) clamp(76px, 10vw, 128px);
     background-color: var(--color-background);
+}
+
+.filter-surface .tooltip__trigger {
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    color: color-mix(in srgb, var(--color-main), var(--color-text) 18%);
+    box-shadow: none;
+
+    &:hover,
+    &:focus-visible {
+        border-color: color-mix(in srgb, var(--color-main), transparent 42%);
+        background: color-mix(in srgb, var(--color-main), transparent 88%);
+        color: var(--color-main);
+    }
 }

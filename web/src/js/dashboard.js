@@ -946,7 +946,7 @@ class DashboardPage extends BaseComponent {
         this.#showPastFilterTooltip = this.#elements.eventsFilterShowPastTooltip
             ? new Tooltip({
                 element: this.#elements.eventsFilterShowPastTooltip,
-                label: 'Entenda o filtro de eventos passados',
+                label: 'Incluir eventos passados',
                 icon: 'circle-info',
                 customClass: 'dashboard-events-filters__tooltip',
             })
@@ -1081,8 +1081,8 @@ class DashboardPage extends BaseComponent {
             eventsFilters: root?.querySelector('#dashboard-events-filters') || null,
             eventsFilterStatus: root?.querySelector('#dashboard-events-filter-status') || null,
             eventsFilterCategory: root?.querySelector('#dashboard-events-filter-category') || null,
-            eventsFilterShowPast: root?.querySelector('#dashboard-events-filter-show-past') || null,
-            eventsFilterShowPastTooltip: root?.querySelector('.dashboard-events-filters__checkbox-field[title]') || null,
+            eventsFilterShowPast: root?.querySelector('.checkbox-field #filter-show-past') || null,
+            eventsFilterShowPastTooltip: root?.querySelector('.checkbox-field[title]') || null,
             eventsFilterOrder: root?.querySelector('#dashboard-events-filter-order') || null,
             eventsList: root?.querySelector('#dashboard-events-list') || null,
             eventsEmpty: root?.querySelector('#dashboard-events-empty') || null,

@@ -82,6 +82,12 @@ function showHomeToast(text, tone = 'info') {
 function createQuickChips() {
     return [
         {
+            id: 'today',
+            label: 'Hoje',
+            icon: 'calendar-day',
+            buildFilters: () => getNextDaysRangeLocal(1),
+        },
+        {
             id: 'this-week',
             label: 'Esta semana',
             icon: 'calendar-week',
@@ -90,26 +96,14 @@ function createQuickChips() {
         {
             id: 'next-seven-days',
             label: 'Próximos 7 dias',
-            icon: 'calendar-day',
+            icon: 'calendar-days',
             buildFilters: () => getNextDaysRangeLocal(7),
         },
         {
-            id: 'category-academic',
-            label: 'Acadêmicos',
-            icon: 'graduation-cap',
-            buildFilters: () => ({ category: 'academico' }),
-        },
-        {
-            id: 'category-extension',
-            label: 'Extensão',
-            icon: 'hands-holding-circle',
-            buildFilters: () => ({ category: 'extensao' }),
-        },
-        {
-            id: 'category-representation',
-            label: 'Institucionais',
-            icon: 'building-columns',
-            buildFilters: () => ({ category: 'representacao' }),
+            id: 'next-thirty-days',
+            label: 'Todos Próximos',
+            icon: 'infinity',
+            buildFilters: () => getNextDaysRangeLocal(365),
         },
     ];
 }
@@ -146,7 +140,7 @@ export function initHomePage() {
         filterTo: elements.filterTo,
     });
     const quickChips = new QuickChips({ container: elements.quickChips });
-    const initialFilters = readHomeFiltersFromUrl(window.location.search, filterForm.readFilters());
+    const initialFilters = readHomeFiltersFromUrl(window.location.search);
     const agendaOnlyMode = hasSpecificHomeQuery();
 
     if (!eventList.isReady() || !filterForm.isReady() || !quickChips.isReady()) {

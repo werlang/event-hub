@@ -1,3 +1,9 @@
+#events-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
 .card,
 .dashboard-event {
     position: relative;

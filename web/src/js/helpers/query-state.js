@@ -1,4 +1,4 @@
-import { getNextDaysRangeLocal } from './week-range.js';
+import { getCurrentWeekRangeLocal } from './week-range.js';
 
 /**
  * Normalizes a possible query-string value into trimmed text.
@@ -16,7 +16,7 @@ export function createDefaultHomeFilters(referenceDate = new Date()) {
     return {
         search: '',
         category: '',
-        ...getNextDaysRangeLocal(7, referenceDate),
+        ...getCurrentWeekRangeLocal(referenceDate),
     };
 }
 
