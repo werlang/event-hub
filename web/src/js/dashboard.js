@@ -828,8 +828,7 @@ class DashboardPage extends BaseComponent {
             : null;
         this.#pagination = new Pagination({
             container: this.#elements.eventsPagination,
-            summary: this.#elements.eventsPaginationSummary,
-            controls: this.#elements.eventsPaginationControls,
+            ariaLabel: 'Paginação dos eventos',
             pageSize: DASHBOARD_EVENTS_PER_PAGE,
         });
         this.#pagination.onPageChange(({ page }) => {
@@ -977,8 +976,6 @@ class DashboardPage extends BaseComponent {
             eventsList: root?.querySelector('#dashboard-events-list') || null,
             eventsEmpty: root?.querySelector('#dashboard-events-empty') || null,
             eventsPagination: root?.querySelector('#dashboard-events-pagination') || null,
-            eventsPaginationSummary: root?.querySelector('#dashboard-events-pagination-summary') || null,
-            eventsPaginationControls: root?.querySelector('#dashboard-events-pagination-controls') || null,
             createToggle: root?.querySelector('#dashboard-create-toggle') || null,
             settingsButton: root?.querySelector('#dashboard-settings-button') || null,
         };

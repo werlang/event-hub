@@ -34,8 +34,6 @@ function createElements() {
         grid: document.querySelector('#events-grid'),
         emptyState: document.querySelector('#events-empty'),
         pagination: document.querySelector('#home-events-pagination'),
-        paginationSummary: document.querySelector('#home-events-pagination-summary'),
-        paginationControls: document.querySelector('#home-events-pagination-controls'),
         filterSearch: document.querySelector('#filter-search'),
         filterCategory: document.querySelector('#filter-category'),
         filterFrom: document.querySelector('#filter-from'),
@@ -140,8 +138,7 @@ export function initHomePage() {
     });
     const pagination = new Pagination({
         container: elements.pagination,
-        summary: elements.paginationSummary,
-        controls: elements.paginationControls,
+        ariaLabel: 'Paginação dos eventos da agenda',
         pageSize: HOME_EVENTS_PER_PAGE,
     });
     const filterForm = new FilterForm({

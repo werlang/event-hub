@@ -22,8 +22,6 @@ function createElements() {
         grid: document.querySelector('#events-grid'),
         emptyState: document.querySelector('#events-empty'),
         pagination: document.querySelector('#week-events-pagination'),
-        paginationSummary: document.querySelector('#week-events-pagination-summary'),
-        paginationControls: document.querySelector('#week-events-pagination-controls'),
     };
 }
 
@@ -111,8 +109,7 @@ export function initWeekPage() {
     });
     const pagination = new Pagination({
         container: elements.pagination,
-        summary: elements.paginationSummary,
-        controls: elements.paginationControls,
+        ariaLabel: 'Paginação dos eventos da semana',
         pageSize: WEEK_EVENTS_PER_PAGE,
     });
     let currentPage = 1;

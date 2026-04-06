@@ -94,15 +94,17 @@ export class Pagination extends BaseComponent {
     #controls;
     #pageSize;
     #onPageChange = null;
+    #ariaLabel;
 
     /**
-     * Creates one reusable pagination controller around a container, summary, and controls region.
+     * Creates one reusable pagination controller around one container that owns its markup.
      */
-    constructor({ container, summary, controls, pageSize = 10 } = {}) {
+    constructor({ container, ariaLabel = 'Paginacao', pageSize = 10 } = {}) {
         super(container || null);
-        this.#summary = summary || null;
-        this.#controls = controls || null;
+        this.#ariaLabel = readPaginationLabel(ariaLabel, 'Paginacao');
         this.#pageSize = Number.isInteger(pageSize) && pageSize > 0 ? pageSize : 10;
+
+        this.#buildStructure();
 
         this.on(this.#controls, 'click', (domEvent) => {
             this.#handleControlClick(domEvent);
@@ -250,5 +252,26 @@ export class Pagination extends BaseComponent {
         }
 
         this.#onPageChange?.({ page });
+    }
+
+    /**
+     * Builds the pagination summary and controls inside the root container.
+     */
+    #buildStructure() {
+        if (!this.get()) {
+            return;
+        }
+
+        const summary = document.createElement('p');
+        summary.className = 'pagination__summary';
+        summary.textContent = 'Mostrando 0 de 0 eventos.';
+
+        const controls = document.createElement('nav');
+        controls.className = 'pagination__controls';
+        controls.setAttribute('aria-label', this.#ariaLabel);
+
+        this.get().replaceChildren(summary, controls);
+        this.#summary = summary;
+        this.#controls = controls;
     }
 }
