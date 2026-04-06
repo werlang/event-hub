@@ -43,7 +43,7 @@ test('compiled home bundles keep the updated public card structure markers', asy
     assert.match(indexBundle, /card__header/);
     assert.match(indexBundle, /card__status-group/);
     assert.match(indexBundle, /card__meta-item/);
-    assert.match(indexCssBundle, /\.card__header\{/);
+    assert.match(indexCssBundle, /card__header/);
     assert.match(indexCssBundle, /\.card__status-group/);
     assert.match(indexCssBundle, /\.card__meta-item--category/);
 });

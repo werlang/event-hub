@@ -1,0 +1,58 @@
+@import './tokens.css';
+@import './base.css';
+
+@import './components/header.css';
+@import './components/footer.css';
+@import './components/button.css';
+@import './components/panel.css';
+@import './components/empty-state.css';
+@import './components/event-card.css';
+@import './components/toast.css';
+
+.week-shell {
+    display: grid;
+    gap: 24px;
+}
+
+.week-shell__header {
+    grid-template-columns: minmax(0, 1.7fr) minmax(240px, 0.9fr);
+    gap: 24px;
+}
+
+.week-shell__intro {
+    display: grid;
+    gap: 10px;
+}
+
+.week-shell__eyebrow {
+    margin: 0;
+    color: color-mix(in srgb, var(--color-main-alt), var(--color-text) 20%);
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.week-shell__range {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    padding: 10px 14px;
+    border: 1px solid color-mix(in srgb, var(--color-main), transparent 72%);
+    border-radius: var(--radius-pill);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--color-main), transparent 90%), color-mix(in srgb, var(--color-main-alt), transparent 92%));
+    color: color-mix(in srgb, var(--color-main-alt), var(--color-text) 16%);
+    font-weight: 700;
+}
+
+.week-shell__hint {
+    max-width: 58ch;
+}
+
+@media (max-width: 840px) {
+    .week-shell__header {
+        grid-template-columns: 1fr;
+    }
+}

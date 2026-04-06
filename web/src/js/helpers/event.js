@@ -533,7 +533,7 @@ export class Event {
             tooltipLabel: `Timeline: ${label}`,
             tooltipContent: isPast
                 ? `Este evento aconteceu ${distance} atrás.`
-                : `Este evento acontece em ${distance}.`,
+                : `Este evento acontecerá em ${distance}.`,
             icon: isPast ? 'clock-rotate-left' : 'clock',
             modifier: isPast ? 'past' : 'upcoming',
             isPast,

@@ -7,6 +7,7 @@ export default {
     entry: {
         index: './src/js/index.js',
         login: './src/js/login.js',
+        week: './src/js/week.js',
         dashboard: './src/js/dashboard.js',
     },
     output: {

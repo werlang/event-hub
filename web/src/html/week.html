@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda da Semana · Agenda Acadêmica</title>
+    <link rel="stylesheet" href="/css/week.min.css">
+    <script type="module" src="/js/week.min.js"></script>
+</head>
+
+<body>
+    {{> header}}
+
+    <main>
+        <section class="panel week-shell" aria-labelledby="week-page-title">
+            <div class="panel__header week-shell__header">
+                <div class="week-shell__intro">
+                    <p class="week-shell__eyebrow">Agenda da semana</p>
+                    <h2 id="week-page-title">Eventos Campus Charqueadas</h2>
+                    <p class="week-shell__range" id="week-range-label">{{weekRangeLabel}}</p>
+                    <p class="hint week-shell__hint">
+                        Esta lista reúne somente os eventos já aprovados para o período atual.
+                    </p>
+                </div>
+            </div>
+
+            <div id="events-grid"></div>
+            <p class="empty-state" id="events-empty"></p>
+        </section>
+    </main>
+
+    {{> footer}}
+</body>
+{{{template-vars}}}
+
+</html>
