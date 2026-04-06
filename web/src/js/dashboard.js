@@ -8,6 +8,7 @@ import { DashboardDeleteEventModal } from './dashboard/delete-event-modal.js';
 import { canManageOwnEvent } from './dashboard/event-management.js';
 import { DashboardRejectEventModal } from './dashboard/reject-event-modal.js';
 import { DashboardSettingsPanels } from './dashboard/settings-panels.js';
+import { Pagination } from './components/pagination.js';
 import { Toast } from './components/toast.js';
 import { Tooltip } from './components/tooltip.js';
 import { requestApi } from './helpers/api.js';
@@ -760,134 +761,6 @@ function createDashboardEventElement(event, { mode = DASHBOARD_VIEW_BROWSE } = {
     return article;
 }
 
-/**
- * Returns the number of event pages required for the current dashboard list.
- */
-function readDashboardEventPageCount(events) {
-    const totalEvents = Array.isArray(events) ? events.length : 0;
-
-    if (totalEvents === 0) {
-        return 0;
-    }
-
-    return Math.ceil(totalEvents / DASHBOARD_EVENTS_PER_PAGE);
-}
-
-/**
- * Clamps an arbitrary page number into the available dashboard page range.
- */
-function clampDashboardEventPage(page, totalPages) {
-    const normalizedPage = Number.parseInt(page, 10);
-
-    if (!Number.isInteger(totalPages) || totalPages < 1) {
-        return 1;
-    }
-
-    if (!Number.isInteger(normalizedPage) || normalizedPage < 1) {
-        return 1;
-    }
-
-    return Math.min(normalizedPage, totalPages);
-}
-
-/**
- * Returns the event slice that belongs to the requested dashboard page.
- */
-function readDashboardEventPageItems(events, page) {
-    const normalizedEvents = Array.isArray(events) ? events : [];
-    const totalPages = readDashboardEventPageCount(normalizedEvents);
-
-    if (totalPages === 0) {
-        return [];
-    }
-
-    const currentPage = clampDashboardEventPage(page, totalPages);
-    const startIndex = (currentPage - 1) * DASHBOARD_EVENTS_PER_PAGE;
-    return normalizedEvents.slice(startIndex, startIndex + DASHBOARD_EVENTS_PER_PAGE);
-}
-
-/**
- * Builds the compact page number sequence rendered by the dashboard pager.
- */
-function readDashboardEventPageSequence(currentPage, totalPages) {
-    if (totalPages <= 7) {
-        return Array.from({ length: totalPages }, (_, index) => index + 1);
-    }
-
-    const visiblePages = new Set([1, totalPages, currentPage - 1, currentPage, currentPage + 1]);
-    const sortedPages = Array.from(visiblePages)
-        .filter(page => page >= 1 && page <= totalPages)
-        .sort((left, right) => left - right);
-
-    return sortedPages.reduce((sequence, page) => {
-        const previousPage = sequence.at(-1);
-
-        if (typeof previousPage === 'number' && page - previousPage === 2) {
-            sequence.push(previousPage + 1);
-        } else if (typeof previousPage === 'number' && page - previousPage > 2) {
-            sequence.push('ellipsis');
-        }
-
-        sequence.push(page);
-        return sequence;
-    }, []);
-}
-
-/**
- * Creates one pager button used by the dashboard event list.
- */
-function createDashboardPaginationButton({ label, page, icon, current = false, disabled = false, navigation = false } = {}) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    const buttonClasses = ['button', 'button--ghost', 'dashboard-pagination__button'];
-
-    if (current) {
-        buttonClasses.push('dashboard-pagination__button--current');
-    }
-
-    if (navigation) {
-        buttonClasses.push('dashboard-pagination__button--nav');
-    }
-
-    button.className = buttonClasses.join(' ');
-    button.disabled = Boolean(disabled);
-
-    const resolvedLabel = readText(label, 'Página');
-
-    if (current) {
-        button.setAttribute('aria-current', 'page');
-    }
-
-    button.setAttribute('aria-label', navigation ? resolvedLabel : `Ir para a página ${resolvedLabel}`);
-
-    if (!disabled && Number.isInteger(page)) {
-        button.dataset.dashboardPage = String(page);
-    }
-
-    if (typeof icon === 'string' && icon.trim()) {
-        const iconElement = document.createElement('i');
-        iconElement.classList.add('fa-solid', `fa-${icon.trim()}`);
-        iconElement.setAttribute('aria-hidden', 'true');
-        button.appendChild(iconElement);
-    }
-
-    const labelElement = document.createElement('span');
-    labelElement.textContent = resolvedLabel;
-    button.appendChild(labelElement);
-    return button;
-}
-
-/**
- * Creates a non-interactive ellipsis element used inside the dashboard pager.
- */
-function createDashboardPaginationGap() {
-    const gap = document.createElement('span');
-    gap.className = 'dashboard-pagination__gap';
-    gap.setAttribute('aria-hidden', 'true');
-    gap.textContent = '...';
-    return gap;
-}
-
 class DashboardPage extends BaseComponent {
     #elements;
     #events = [];
@@ -909,6 +782,7 @@ class DashboardPage extends BaseComponent {
     #header;
     #settingsPanels;
     #actionTabs;
+    #pagination;
 
     /**
      * Creates the dashboard page controller around the page root.
@@ -952,15 +826,30 @@ class DashboardPage extends BaseComponent {
                 customClass: 'dashboard-events-filters__tooltip',
             })
             : null;
+        this.#pagination = new Pagination({
+            container: this.#elements.eventsPagination,
+            summary: this.#elements.eventsPaginationSummary,
+            controls: this.#elements.eventsPaginationControls,
+            pageSize: DASHBOARD_EVENTS_PER_PAGE,
+        });
+        this.#pagination.onPageChange(({ page }) => {
+            const totalPages = this.#pagination.readPageCount(this.#readActiveEvents());
+            const nextPage = this.#pagination.clampPage(page, totalPages);
+
+            if (nextPage === this.#readCurrentListPage()) {
+                return;
+            }
+
+            this.#setCurrentListPage(nextPage);
+            this.#renderEventList();
+            this.#elements.eventsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
 
         this.on(this.#elements.eventsList, 'click', event => {
             void this.#handleEventListClick(event);
         });
         this.on(this.#elements.eventsFilters, 'change', event => {
             this.#handleBrowseFilterChange(event);
-        });
-        this.on(this.#elements.eventsPaginationControls, 'click', event => {
-            this.#handleEventPaginationClick(event);
         });
 
         if (this.#elements.eventsEmpty) {
@@ -1239,31 +1128,6 @@ class DashboardPage extends BaseComponent {
         this.#syncModerationPage();
         this.#renderDashboardSections();
         this.#actionTabs.setActive(this.#currentView);
-    }
-
-    /**
-     * Handles clicks on one dashboard pagination control.
-     */
-    #handleEventPaginationClick(domEvent) {
-        const button = domEvent.target instanceof Element
-            ? domEvent.target.closest('[data-dashboard-page]')
-            : null;
-
-        if (!button || !this.#elements.eventsPaginationControls?.contains(button)) {
-            return;
-        }
-
-        const requestedPage = Number.parseInt(button.dataset.dashboardPage || '', 10);
-        const totalPages = readDashboardEventPageCount(this.#readActiveEvents());
-        const nextPage = clampDashboardEventPage(requestedPage, totalPages);
-
-        if (nextPage === this.#readCurrentListPage()) {
-            return;
-        }
-
-        this.#setCurrentListPage(nextPage);
-        this.#renderEventList();
-        this.#elements.eventsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     /**
@@ -1556,7 +1420,7 @@ class DashboardPage extends BaseComponent {
         }
 
         const fragment = document.createDocumentFragment();
-        readDashboardEventPageItems(activeEvents, this.#readCurrentListPage()).forEach((event) => {
+        this.#pagination.readPageItems(activeEvents, this.#readCurrentListPage()).forEach((event) => {
             fragment.appendChild(createDashboardEventElement(event, { mode: this.#currentView }));
         });
 
@@ -1662,60 +1526,11 @@ class DashboardPage extends BaseComponent {
      * Renders the pager summary and controls for the current event slice.
      */
     #renderEventPagination() {
-        if (!this.#elements.eventsPagination || !this.#elements.eventsPaginationSummary || !this.#elements.eventsPaginationControls) {
-            return;
-        }
-
         const activeEvents = this.#readActiveEvents();
-        const totalEvents = activeEvents.length;
-        const totalPages = readDashboardEventPageCount(activeEvents);
-        const currentPage = this.#readCurrentListPage();
-
-        if (totalPages <= 1) {
-            this.#elements.eventsPagination.hidden = true;
-            this.#elements.eventsPaginationControls.replaceChildren();
-            this.#elements.eventsPaginationSummary.textContent = totalEvents === 0
-                ? 'Mostrando 0 de 0 eventos.'
-                : `Mostrando ${totalEvents} de ${totalEvents} eventos.`;
-            return;
-        }
-
-        const startIndex = ((currentPage - 1) * DASHBOARD_EVENTS_PER_PAGE) + 1;
-        const endIndex = Math.min(currentPage * DASHBOARD_EVENTS_PER_PAGE, totalEvents);
-        this.#elements.eventsPagination.hidden = false;
-        this.#elements.eventsPaginationSummary.textContent = `Mostrando ${startIndex} a ${endIndex} de ${totalEvents} eventos.`;
-
-        const controls = document.createDocumentFragment();
-        controls.appendChild(createDashboardPaginationButton({
-            label: 'Anterior',
-            page: currentPage - 1,
-            icon: 'arrow-left',
-            disabled: currentPage === 1,
-            navigation: true,
-        }));
-
-        readDashboardEventPageSequence(currentPage, totalPages).forEach((item) => {
-            if (item === 'ellipsis') {
-                controls.appendChild(createDashboardPaginationGap());
-                return;
-            }
-
-            controls.appendChild(createDashboardPaginationButton({
-                label: String(item),
-                page: item,
-                current: item === currentPage,
-            }));
+        this.#pagination.render({
+            items: activeEvents,
+            currentPage: this.#readCurrentListPage(),
         });
-
-        controls.appendChild(createDashboardPaginationButton({
-            label: 'Próxima',
-            page: currentPage + 1,
-            icon: 'arrow-right',
-            disabled: currentPage === totalPages,
-            navigation: true,
-        }));
-
-        this.#elements.eventsPaginationControls.replaceChildren(controls);
     }
 
     /**
@@ -1811,16 +1626,16 @@ class DashboardPage extends BaseComponent {
      * Keeps the owner-event page inside the valid browse range.
      */
     #syncBrowsePage() {
-        const totalPages = readDashboardEventPageCount(filterDashboardBrowseEvents(this.#events, this.#browseFilters));
-        this.#currentEventPage = clampDashboardEventPage(this.#currentEventPage, totalPages);
+        const totalPages = this.#pagination.readPageCount(filterDashboardBrowseEvents(this.#events, this.#browseFilters));
+        this.#currentEventPage = this.#pagination.clampPage(this.#currentEventPage, totalPages);
     }
 
     /**
      * Keeps the moderation page inside the valid queue range.
      */
     #syncModerationPage() {
-        const totalPages = readDashboardEventPageCount(this.#moderationEvents);
-        this.#currentModerationPage = clampDashboardEventPage(this.#currentModerationPage, totalPages);
+        const totalPages = this.#pagination.readPageCount(this.#moderationEvents);
+        this.#currentModerationPage = this.#pagination.clampPage(this.#currentModerationPage, totalPages);
     }
 
     /**
