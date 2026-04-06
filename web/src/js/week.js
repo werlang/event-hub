@@ -2,12 +2,14 @@ import '../css/week.css';
 
 import { Header } from './components/header.js';
 import { EventList } from './components/event-list.js';
+import { Pagination } from './components/pagination.js';
 import { Toast } from './components/toast.js';
 import { apiClient } from './helpers/api.js';
 import { TemplateVar } from './helpers/template-var.js';
 import { getCurrentWeekRangeLocal } from './helpers/week-range.js';
 
 const WEEK_TOAST_GROUP = 'week-status';
+const WEEK_EVENTS_PER_PAGE = 10;
 
 new Header();
 
@@ -19,6 +21,9 @@ function createElements() {
         rangeLabel: document.querySelector('#week-range-label'),
         grid: document.querySelector('#events-grid'),
         emptyState: document.querySelector('#events-empty'),
+        pagination: document.querySelector('#week-events-pagination'),
+        paginationSummary: document.querySelector('#week-events-pagination-summary'),
+        paginationControls: document.querySelector('#week-events-pagination-controls'),
     };
 }
 
@@ -88,31 +93,6 @@ function readCurrentWeekRange() {
 }
 
 /**
- * Updates the visible summary badge with the current event total.
- */
-function setWeekSummary(elements, total, rangeLabel) {
-    if (!elements.emptyState) {
-        return;
-    }
-
-    if (!Number.isFinite(total)) {
-        elements.emptyState.innerHTML = `<i class="fas fa-spinner fa-spin fa-pulse"></i> Carregando eventos...`;
-        console.log(`Total de eventos nesta semana: ${total}`); // debug log
-        return;
-    }
-
-
-    if (total === 0) {
-        elements.emptyState.innerHTML = '0 eventos nesta semana';
-        return;
-    }
-
-    elements.emptyState.textContent = total === 1
-        ? `1 evento em ${rangeLabel}`
-        : `${total} eventos em ${rangeLabel}`;
-}
-
-/**
  * Creates the public API path used to load the approved weekly event list.
  */
 function createWeekEventsPath({ from, to }) {
@@ -129,6 +109,14 @@ export function initWeekPage() {
         grid: elements.grid,
         emptyState: elements.emptyState,
     });
+    const pagination = new Pagination({
+        container: elements.pagination,
+        summary: elements.paginationSummary,
+        controls: elements.paginationControls,
+        pageSize: WEEK_EVENTS_PER_PAGE,
+    });
+    let currentPage = 1;
+    let loadedEvents = [];
 
     if (!eventList.isReady()) {
         return;
@@ -141,7 +129,33 @@ export function initWeekPage() {
         elements.rangeLabel.textContent = rangeLabel;
     }
 
-    setWeekSummary(elements, Number.NaN, rangeLabel);
+    pagination.onPageChange(({ page }) => {
+        if (page === currentPage) {
+            return;
+        }
+
+        currentPage = pagination.clampPage(page, loadedEvents);
+        renderCurrentPage();
+        elements.grid?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    /**
+     * Renders the current page of weekly events and updates the pager.
+     */
+    function renderCurrentPage() {
+        if (loadedEvents.length === 0) {
+            eventList.clear({
+                emptyMessage: 'Nenhum evento aprovado está programado para esta semana.',
+                showEmptyState: true,
+            });
+            pagination.render({ items: loadedEvents, currentPage });
+            return;
+        }
+
+        currentPage = pagination.clampPage(currentPage, loadedEvents);
+        eventList.render(pagination.readPageItems(loadedEvents, currentPage));
+        pagination.render({ items: loadedEvents, currentPage });
+    }
 
     /**
      * Loads the current-week public event list.
@@ -152,23 +166,14 @@ export function initWeekPage() {
         const response = await apiClient.request(createWeekEventsPath(weekRange));
         if (!response.ok) {
             eventList.clear({ showEmptyState: false });
-            setWeekSummary(elements, 0, rangeLabel);
+            pagination.render({ items: [], currentPage: 1 });
             showWeekToast('Não foi possível carregar os eventos desta semana no momento.', 'error');
             return;
         }
 
-        const events = Array.isArray(response.data?.events) ? response.data.events : [];
-        setWeekSummary(elements, events.length, rangeLabel);
-
-        if (events.length === 0) {
-            eventList.clear({
-                emptyMessage: 'Nenhum evento aprovado está programado para esta semana.',
-                showEmptyState: true,
-            });
-            return;
-        }
-
-        eventList.render(events);
+        loadedEvents = Array.isArray(response.data?.events) ? response.data.events : [];
+        currentPage = 1;
+        renderCurrentPage();
     }
 
     loadWeekEvents();

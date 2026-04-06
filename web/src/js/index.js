@@ -9,14 +9,17 @@ import {
 } from './helpers/query-state.js';
 import { EventList } from './components/event-list.js';
 import { FilterForm } from './components/filter-form.js';
+import { Pagination } from './components/pagination.js';
 import { QuickChips } from './components/quick-chips.js';
 import { Tooltip } from './components/tooltip.js';
+import { Event } from './helpers/event.js';
 import { getCurrentWeekRangeLocal, getNextDaysRangeLocal } from './helpers/week-range.js';
 import { Header } from './components/header.js';
 
 new Header();
 
 const HOME_TOAST_GROUP = 'home-status';
+const HOME_EVENTS_PER_PAGE = 10;
 
 /**
  * Collects the home-page elements used by the client entry.
@@ -30,6 +33,9 @@ function createElements() {
         quickChips: document.querySelector('#quick-chips'),
         grid: document.querySelector('#events-grid'),
         emptyState: document.querySelector('#events-empty'),
+        pagination: document.querySelector('#home-events-pagination'),
+        paginationSummary: document.querySelector('#home-events-pagination-summary'),
+        paginationControls: document.querySelector('#home-events-pagination-controls'),
         filterSearch: document.querySelector('#filter-search'),
         filterCategory: document.querySelector('#filter-category'),
         filterFrom: document.querySelector('#filter-from'),
@@ -132,6 +138,12 @@ export function initHomePage() {
         grid: elements.grid,
         emptyState: elements.emptyState,
     });
+    const pagination = new Pagination({
+        container: elements.pagination,
+        summary: elements.paginationSummary,
+        controls: elements.paginationControls,
+        pageSize: HOME_EVENTS_PER_PAGE,
+    });
     const filterForm = new FilterForm({
         form: elements.filterForm,
         filterSearch: elements.filterSearch,
@@ -142,10 +154,37 @@ export function initHomePage() {
     const quickChips = new QuickChips({ container: elements.quickChips });
     const initialFilters = readHomeFiltersFromUrl(window.location.search);
     const agendaOnlyMode = hasSpecificHomeQuery();
+    let currentPage = 1;
+    let loadedEvents = [];
 
     if (!eventList.isReady() || !filterForm.isReady() || !quickChips.isReady()) {
         return;
     }
+
+    pagination.onPageChange(({ page }) => {
+        if (page === currentPage) {
+            return;
+        }
+
+        currentPage = pagination.clampPage(page, loadedEvents);
+        renderCurrentPage();
+        elements.grid?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    /**
+     * Renders the current home-event slice and updates the shared pager.
+     */
+    const renderCurrentPage = () => {
+        if (loadedEvents.length === 0) {
+            eventList.clear();
+            pagination.render({ items: loadedEvents, currentPage: 1 });
+            return;
+        }
+
+        currentPage = pagination.clampPage(currentPage, loadedEvents);
+        eventList.render(pagination.readPageItems(loadedEvents, currentPage));
+        pagination.render({ items: loadedEvents, currentPage });
+    };
 
     /**
      * Loads events for the provided filters and syncs the current URL state.
@@ -159,19 +198,24 @@ export function initHomePage() {
         const endpoint = query ? `/events?${query}` : '/events';
         const response = await apiClient.request(endpoint);
         if (!response.ok) {
+            loadedEvents = [];
+            currentPage = 1;
             eventList.clear({ showEmptyState: false });
+            pagination.render({ items: loadedEvents, currentPage });
             showHomeToast('Não foi possível carregar os eventos no momento.', 'error');
             return;
         }
 
-        const events = Array.isArray(response.data?.events) ? response.data.events : [];
-        if (events.length === 0) {
-            eventList.clear();
+        loadedEvents = Event.sortByDate(Array.isArray(response.data?.events) ? response.data.events : []);
+        currentPage = 1;
+
+        if (loadedEvents.length === 0) {
+            renderCurrentPage();
             showHomeToast('Nenhum evento encontrado para os filtros aplicados.');
             return;
         }
 
-        eventList.render(events);
+        renderCurrentPage();
     };
 
     filterForm.hydrate(initialFilters);

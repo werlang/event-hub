@@ -7,6 +7,7 @@
 @import './components/panel.css';
 @import './components/empty-state.css';
 @import './components/event-card.css';
+@import './components/pagination.css';
 @import './components/toast.css';
 
 .week-shell {
@@ -49,6 +50,10 @@
 
 .week-shell__hint {
     max-width: 58ch;
+}
+
+.week-events-pagination {
+    margin-top: 8px;
 }
 
 @media (max-width: 840px) {
