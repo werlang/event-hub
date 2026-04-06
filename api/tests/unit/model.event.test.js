@@ -35,6 +35,8 @@ describe('model/event', () => {
         expect(Event.isPublishedStatus(' published ')).toBe(true);
         expect(Event.normalizeRejectionReason('  Ajuste a data do evento.  ')).toBe('Ajuste a data do evento.');
         expect(Event.normalizeRejectionReason('   ')).toBeNull();
+        expect(Event.normalizeCalendarLink('  https://calendar.google.com/event  ')).toBe('https://calendar.google.com/event');
+        expect(Event.normalizeCalendarLink('   ')).toBeNull();
     });
 
     test('normalize and serialize map database fields consistently', () => {
@@ -53,6 +55,7 @@ describe('model/event', () => {
             location: 'Auditorio',
             status: 'PUBLISHED',
             rejectionReason: 'Aprovado sem pendencias.',
+            calendar_link: ' https://calendar.google.com/calendar/event?eid=abc123 ',
             organizer_id: 'user-1',
             organizer_name: '  Ada Lovelace  ',
             created_at: '2026-04-02T12:00:00.000Z',
@@ -62,6 +65,7 @@ describe('model/event', () => {
             organizerId: 'user-1',
             category: 'Tecnologia',
             rejectionReason: '  Falta anexar o cronograma.  ',
+            calendarLink: ' https://calendar.google.com/calendar/event?eid=fixture ',
         }));
 
         expect(normalized).toEqual({
@@ -74,6 +78,7 @@ describe('model/event', () => {
             location: 'Auditorio',
             status: 'published',
             rejectionReason: 'Aprovado sem pendencias.',
+            calendarLink: 'https://calendar.google.com/calendar/event?eid=abc123',
             organizerId: 'user-1',
             organizerName: 'Ada Lovelace',
             createdAt: '2026-04-02T12:00:00.000Z',
@@ -87,6 +92,7 @@ describe('model/event', () => {
             location: 'Auditorio Central',
             status: 'published',
             rejection_reason: 'Falta anexar o cronograma.',
+            calendar_link: 'https://calendar.google.com/calendar/event?eid=fixture',
             organizer_id: 'user-1',
             created_at: 'mysql:2026-04-02T12:00:00.000Z',
         });
@@ -113,6 +119,7 @@ describe('model/event', () => {
             location: 'Auditorio',
             status: 'pending',
             rejectionReason: null,
+            calendarLink: null,
             organizerId: 'user-1',
             organizerName: undefined,
             createdAt: undefined,
@@ -131,6 +138,7 @@ describe('model/event', () => {
             date: '2026-06-01T10:00:00.000Z',
             status: 'REJECTED',
             rejectionReason: '  Ajustar local e público-alvo. ',
+            calendarLink: ' https://calendar.google.com/calendar/event?eid=editable ',
         });
 
         expect(serialized).toEqual({
@@ -138,6 +146,7 @@ describe('model/event', () => {
             date: 'mysql:2026-06-01T10:00:00.000Z',
             status: 'rejected',
             rejection_reason: 'Ajustar local e público-alvo.',
+            calendar_link: 'https://calendar.google.com/calendar/event?eid=editable',
         });
     });
 
@@ -362,6 +371,7 @@ describe('model/event', () => {
         const updatedDetails = await Event.updateDetails('event-1', { title: 'Novo titulo' });
         const updatedStatus = await Event.updateStatus('event-1', 'published', {
             rejectionReason: 'Nao deve permanecer salvo.',
+            calendarLink: null,
         });
         await Event.remove('event-1');
 
@@ -376,6 +386,7 @@ describe('model/event', () => {
                 payload: {
                     status: 'published',
                     rejection_reason: 'Nao deve permanecer salvo.',
+                    calendar_link: null,
                 },
                 id: 'event-1',
             },

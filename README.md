@@ -27,6 +27,21 @@ Abra `http://localhost:80` (Compose) ou `http://localhost:3000` (execução loca
 
 Para desenvolvimento com containers, use `docker compose -f compose.dev.yaml up -d --build`.
 
+## Integração com Google Calendar
+
+Quando um administrador aprova um evento em `PUT /events/:id/moderation` com `status=published`, a API pode criar automaticamente um item em um calendário compartilhado do Google e salvar o link público retornado em `calendarLink`.
+
+Configuração necessária no ambiente da API:
+
+- `GOOGLE_CALENDAR_ID`: id do calendário compartilhado.
+- `GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL`: e-mail da service account usada pela API.
+- `GOOGLE_CALENDAR_SERVICE_ACCOUNT_PRIVATE_KEY`: chave privada da service account. Se vier de `.env`, mantenha quebras de linha como `\n`.
+- `GOOGLE_CALENDAR_EVENT_DURATION_MINUTES`: duração padrão do evento criado no Google Calendar quando o sistema só possui uma data/hora inicial. Opcional; padrão `60`.
+
+Se nenhuma dessas variáveis estiver configurada, a aprovação continua funcionando sem publicar no Google Calendar. Se apenas parte da configuração estiver presente, a API trata isso como erro de configuração para evitar uma publicação incompleta.
+
+Para usar um calendário comum da instituição, compartilhe esse calendário com o e-mail da service account com permissão para criar eventos.
+
 ## Fluxos principais
 
 - **Páginas web**: `/` opera em dois modos (neutro sem carregar eventos por padrão, ou agenda-only quando acessada com query de filtro); `/login` renderiza a troca visual entre abas de entrada e registro; `/publish` renderiza o formulário de publicação.

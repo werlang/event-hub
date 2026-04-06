@@ -5,6 +5,7 @@ import { requireAdminUser } from '../middleware/authorization.js';
 import { assertAdminCanModerateEvent, assertOwnerCanManageEvent } from '../middleware/event-authorization.js';
 import { HttpError } from '../helpers/error.js';
 import { normalizeEventCategoryId } from '../helpers/event-category.js';
+import { GoogleCalendarPublisher } from '../helpers/google-calendar.js';
 import { sendCreated, sendSuccess } from '../helpers/response.js';
 
 export const router = express.Router();
@@ -224,17 +225,36 @@ router.put('/:id/moderation',
         assertAdminCanModerateEvent(currentEvent, req.user, { allowSelfModeration: ALLOW_SELF_MODERATION });
 
         const moderationDecision = parseModerationDecisionPayload(req.body);
-        const updatedEvent = await Event.updateStatus(currentEvent.id, moderationDecision.status, {
-            rejectionReason: moderationDecision.rejectionReason,
-        });
-        const message = moderationDecision.status === Event.STATUS_PUBLISHED
-            ? 'Evento aprovado e publicado.'
-            : 'Evento rejeitado.';
+        let createdCalendarEntry = null;
 
-        return sendSuccess(res, {
-            data: { event: updatedEvent },
-            message,
-        });
+        try {
+            if (moderationDecision.status === Event.STATUS_PUBLISHED) {
+                createdCalendarEntry = await GoogleCalendarPublisher.publishApprovedEvent(currentEvent);
+            }
+
+            const updatedEvent = await Event.updateStatus(currentEvent.id, moderationDecision.status, {
+                rejectionReason: moderationDecision.rejectionReason,
+                calendarLink: createdCalendarEntry?.htmlLink ?? null,
+            });
+            const message = moderationDecision.status === Event.STATUS_PUBLISHED
+                ? 'Evento aprovado e publicado.'
+                : 'Evento rejeitado.';
+
+            return sendSuccess(res, {
+                data: { event: updatedEvent },
+                message,
+            });
+        } catch (error) {
+            if (createdCalendarEntry?.id) {
+                try {
+                    await GoogleCalendarPublisher.deleteEvent(createdCalendarEntry.id);
+                } catch {
+                    // Best-effort cleanup to avoid orphan calendar entries after persistence failures.
+                }
+            }
+
+            throw error;
+        }
     } catch (err) {
         return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível moderar o evento.', err));
     }

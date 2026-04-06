@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, jest, test } from '@jest/globals';
 import { router as eventsRouter } from '../../routes/events.js';
+import { GoogleCalendarPublisher } from '../../helpers/google-calendar.js';
 import { Event } from '../../model/event.js';
 import { buildEvent } from './support/fixtures.js';
 import { createResponseDouble, restoreTracked, trackReplacement } from './support/doubles.js';
@@ -259,23 +260,51 @@ describe('routes/events', () => {
 
     test('moderation decisions enforce admin rules, validate statuses, and wrap failures', async () => {
         const statusCalls = [];
+        const deleteCalls = [];
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'user-2' }));
+        trackReplacement(restores, GoogleCalendarPublisher, 'publishApprovedEvent', async () => ({
+            id: 'calendar-event-1',
+            htmlLink: 'https://calendar.google.com/calendar/event?eid=abc123',
+        }));
+        trackReplacement(restores, GoogleCalendarPublisher, 'deleteEvent', async id => {
+            deleteCalls.push(id);
+        });
         trackReplacement(restores, Event, 'updateStatus', async (id, status, options) => {
             statusCalls.push({ id, status, options });
-            return buildEvent({ id, status, organizerId: 'user-2', rejectionReason: options?.rejectionReason ?? null });
+            return buildEvent({
+                id,
+                status,
+                organizerId: 'user-2',
+                rejectionReason: options?.rejectionReason ?? null,
+                calendarLink: options?.calendarLink ?? null,
+            });
         });
 
         const publishRes = createResponseDouble();
         const publishNext = jest.fn();
         await runRouteHandlers(moderationDecisionHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'published' } }), publishRes, publishNext);
         expect(publishNext).not.toHaveBeenCalled();
-        expect(statusCalls).toEqual([{ id: 'event-1', status: 'published', options: { rejectionReason: null } }]);
+        expect(statusCalls).toEqual([{
+            id: 'event-1',
+            status: 'published',
+            options: {
+                rejectionReason: null,
+                calendarLink: 'https://calendar.google.com/calendar/event?eid=abc123',
+            },
+        }]);
         expect(publishRes.body.message).toBe('Evento aprovado e publicado.');
+        expect(deleteCalls).toEqual([]);
 
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'user-2' }));
         trackReplacement(restores, Event, 'updateStatus', async (id, status, options) => {
             statusCalls.push({ id, status, options });
-            return buildEvent({ id, status, organizerId: 'user-2', rejectionReason: options?.rejectionReason ?? null });
+            return buildEvent({
+                id,
+                status,
+                organizerId: 'user-2',
+                rejectionReason: options?.rejectionReason ?? null,
+                calendarLink: options?.calendarLink ?? null,
+            });
         });
 
         const rejectRes = createResponseDouble();
@@ -289,7 +318,10 @@ describe('routes/events', () => {
         expect(statusCalls.at(-1)).toEqual({
             id: 'event-2',
             status: 'rejected',
-            options: { rejectionReason: 'Ajuste a descrição do público-alvo.' },
+            options: {
+                rejectionReason: 'Ajuste a descrição do público-alvo.',
+                calendarLink: null,
+            },
         });
         expect(rejectRes.body.message).toBe('Evento rejeitado.');
 
@@ -320,11 +352,24 @@ describe('routes/events', () => {
         expect(nonAdminNext.mock.calls[0][0].status).toBe(403);
 
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'user-2' }));
+        trackReplacement(restores, GoogleCalendarPublisher, 'publishApprovedEvent', async () => {
+            throw new Error('calendar failed');
+        });
+        const calendarErrorNext = jest.fn();
+        await runRouteHandlers(moderationDecisionHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'published' } }), createResponseDouble(), calendarErrorNext);
+        expect(calendarErrorNext.mock.calls[0][0].status).toBe(500);
+
+        trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'user-2' }));
+        trackReplacement(restores, GoogleCalendarPublisher, 'publishApprovedEvent', async () => ({
+            id: 'calendar-event-rollback',
+            htmlLink: 'https://calendar.google.com/calendar/event?eid=rollback',
+        }));
         trackReplacement(restores, Event, 'updateStatus', async () => {
             throw new Error('write failed');
         });
         const errorNext = jest.fn();
-        await runRouteHandlers(moderationDecisionHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'rejected' } }), createResponseDouble(), errorNext);
+        await runRouteHandlers(moderationDecisionHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'published' } }), createResponseDouble(), errorNext);
         expect(errorNext.mock.calls[0][0].status).toBe(500);
+        expect(deleteCalls).toEqual(['calendar-event-rollback']);
     });
 });

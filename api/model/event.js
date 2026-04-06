@@ -16,6 +16,7 @@ export class Event extends Model {
         'location',
         'status',
         'rejection_reason',
+        'calendar_link',
         'organizer_id',
         'created_at',
     ];
@@ -36,6 +37,7 @@ export class Event extends Model {
         location,
         status,
         rejectionReason,
+        calendarLink,
         organizerId,
         organizerName,
         createdAt,
@@ -49,6 +51,7 @@ export class Event extends Model {
         this.location = location || 'A definir';
         this.status = Event.normalizeStatus(status);
         this.rejectionReason = Event.normalizeRejectionReason(rejectionReason);
+        this.calendarLink = Event.normalizeCalendarLink(calendarLink);
         this.organizerId = organizerId;
         this.organizerName = typeof organizerName === 'string' ? organizerName.trim() || undefined : undefined;
         this.createdAt = createdAt || new Date().toISOString();
@@ -68,6 +71,7 @@ export class Event extends Model {
             location: this.location,
             status: this.status,
             rejectionReason: this.rejectionReason,
+            calendarLink: this.calendarLink,
             organizerId: this.organizerId,
             organizerName: this.organizerName,
             createdAt: this.createdAt,
@@ -90,6 +94,14 @@ export class Event extends Model {
     static normalizeRejectionReason(reason) {
         const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
         return normalizedReason || null;
+    }
+
+    /**
+     * Normalizes the stored Google Calendar link for one event.
+     */
+    static normalizeCalendarLink(link) {
+        const normalizedLink = typeof link === 'string' ? link.trim() : '';
+        return normalizedLink || null;
     }
 
     /**
@@ -124,6 +136,7 @@ export class Event extends Model {
             location: row.location,
             status: Event.normalizeStatus(row.status),
             rejectionReason: Event.normalizeRejectionReason(row.rejectionReason || row.rejection_reason),
+            calendarLink: Event.normalizeCalendarLink(row.calendarLink || row.calendar_link),
             organizerId: row.organizerId || row.organizer_id,
             organizerName: typeof (row.organizerName || row.organizer_name) === 'string'
                 ? (row.organizerName || row.organizer_name).trim() || undefined
@@ -148,6 +161,7 @@ export class Event extends Model {
             location: event.location,
             status: this.normalizeStatus(event.status),
             rejection_reason: this.normalizeRejectionReason(event.rejectionReason),
+            calendar_link: this.normalizeCalendarLink(event.calendarLink),
             organizer_id: event.organizerId,
             created_at: this.driver.toDateTime(event.createdAt || Date.now()),
         };
@@ -168,6 +182,10 @@ export class Event extends Model {
 
         if (Object.prototype.hasOwnProperty.call(payload, 'rejectionReason')) {
             serialized.rejection_reason = this.normalizeRejectionReason(payload.rejectionReason);
+        }
+
+        if (Object.prototype.hasOwnProperty.call(payload, 'calendarLink')) {
+            serialized.calendar_link = this.normalizeCalendarLink(payload.calendarLink);
         }
 
         return serialized;
@@ -325,7 +343,7 @@ export class Event extends Model {
     /**
      * Updates the moderation status for an event and returns the persisted event.
      */
-    static async updateStatus(id, status, { rejectionReason } = {}) {
+    static async updateStatus(id, status, { rejectionReason, calendarLink } = {}) {
         if (!id) {
             return null;
         }
@@ -333,6 +351,7 @@ export class Event extends Model {
         await this.driver.update(this.table, {
             status: this.normalizeStatus(status),
             rejection_reason: this.normalizeRejectionReason(rejectionReason),
+            calendar_link: this.normalizeCalendarLink(calendarLink),
         }, id);
         return this.get(id);
     }
