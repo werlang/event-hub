@@ -47,11 +47,8 @@ function createStatusPill(icon, label, modifier = '') {
 	* Creates the timeline pill rendered beside the public event title.
 	*/
 function createTimelinePill(event) {
-	if (event.isPast()) {
-		return createStatusPill('clock-rotate-left', 'Passado', 'past');
-	}
-
-	return createStatusPill('clock', 'Próximo', 'upcoming');
+	const timeline = event.readTimelineMeta();
+	return createStatusPill(timeline.icon, timeline.label, timeline.modifier);
 }
 
 /**

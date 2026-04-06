@@ -713,15 +713,16 @@ function createDashboardEventElement(event, { mode = DASHBOARD_VIEW_BROWSE } = {
     statusPill.append(tooltipPending.get(), statusMeta.label);
     statusGroup.appendChild(statusPill);
 
+    const timelineMeta = eventRecord.readTimelineMeta();
     const tooltipTimeline = new Tooltip({
-        content: isPastEvent ? 'Este evento já ocorreu.' : 'Este evento ainda vai acontecer.',
-        label: `Timeline: ${isPastEvent ? 'Passado' : 'Próximo'}`,
-        icon: isPastEvent ? 'clock-rotate-left' : 'clock',
+        content: timelineMeta.tooltipContent,
+        label: timelineMeta.tooltipLabel,
+        icon: timelineMeta.icon,
     });
 
     const timelinePill = document.createElement('span');
     timelinePill.className = 'dashboard-status-pill dashboard-status-pill--neutral';
-    timelinePill.append(tooltipTimeline.get(), isPastEvent ? 'Passado' : 'Próximo');
+    timelinePill.append(tooltipTimeline.get(), timelineMeta.label);
     statusGroup.appendChild(timelinePill);
 
     headline.append(titleBlock, statusGroup);
