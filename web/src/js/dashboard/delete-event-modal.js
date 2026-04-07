@@ -233,11 +233,19 @@ export class DashboardDeleteEventModal {
         const cancelButton = this.#modal.getAction('dashboard-delete-cancel');
 
         if (confirmButton) {
-            confirmButton.disabled = Boolean(disabled);
+            if (disabled) {
+                confirmButton.disable({ showBusy: true });
+            } else {
+                confirmButton.enable();
+            }
         }
 
         if (cancelButton) {
-            cancelButton.disabled = Boolean(disabled);
+            if (disabled) {
+                cancelButton.disable();
+            } else {
+                cancelButton.enable();
+            }
         }
     }
 

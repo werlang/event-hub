@@ -12,7 +12,6 @@ new Header();
 
 const LOGIN_TAB = 'login';
 const REGISTER_TAB = 'register';
-const SUBMIT_STATE_KEY = 'submitting';
 const AUTH_TOAST_GROUP = 'auth-status';
 const AUTH_REDIRECT_TOAST_GROUP = 'auth-redirect';
 
@@ -107,38 +106,33 @@ function configureSubmitButton(form, label) {
 async function submitLogin({ form, values }) {
     const email = String(values.email || '').trim();
     const password = String(values.password || '');
-    form.disable({ stateKey: SUBMIT_STATE_KEY });
     clearAuthToasts();
 
-    try {
-        const response = await requestApi('/auth/login', {
-            method: 'POST',
-            body: {
-                email,
-                password,
-            },
-        });
+    const response = await requestApi('/auth/login', {
+        method: 'POST',
+        body: {
+            email,
+            password,
+        },
+    });
 
-        if (!response.ok) {
-            showAuthToast(response.message || 'Não foi possível autenticar.');
-            return;
-        }
-
-        const token = response.data?.token;
-        if (!token) {
-            showAuthToast('Resposta de autenticação inválida.');
-            return;
-        }
-
-        storeToken(token);
-        Toast.flash('Login realizado com sucesso.', {
-            tone: 'success',
-            group: AUTH_REDIRECT_TOAST_GROUP,
-        });
-        window.location.assign(readRedirectTarget());
-    } finally {
-        form.enable({ stateKey: SUBMIT_STATE_KEY });
+    if (!response.ok) {
+        showAuthToast(response.message || 'Não foi possível autenticar.');
+        return;
     }
+
+    const token = response.data?.token;
+    if (!token) {
+        showAuthToast('Resposta de autenticação inválida.');
+        return;
+    }
+
+    storeToken(token);
+    Toast.flash('Login realizado com sucesso.', {
+        tone: 'success',
+        group: AUTH_REDIRECT_TOAST_GROUP,
+    });
+    window.location.assign(readRedirectTarget());
 }
 
 /**
@@ -161,39 +155,34 @@ async function submitRegister({ form, values }) {
         return;
     }
 
-    form.disable({ stateKey: SUBMIT_STATE_KEY });
     clearAuthToasts();
 
-    try {
-        const response = await requestApi('/auth/register', {
-            method: 'POST',
-            body: {
-                name,
-                email,
-                password,
-            },
-        });
+    const response = await requestApi('/auth/register', {
+        method: 'POST',
+        body: {
+            name,
+            email,
+            password,
+        },
+    });
 
-        if (!response.ok) {
-            showAuthToast(response.message || 'Não foi possível concluir o registro.');
-            return;
-        }
-
-        const token = response.data?.token;
-        if (!token) {
-            showAuthToast('Resposta de autenticação inválida.');
-            return;
-        }
-
-        storeToken(token);
-        Toast.flash('Conta criada com sucesso. Redirecionando...', {
-            tone: 'success',
-            group: AUTH_REDIRECT_TOAST_GROUP,
-        });
-        window.location.assign(readRedirectTarget());
-    } finally {
-        form.enable({ stateKey: SUBMIT_STATE_KEY });
+    if (!response.ok) {
+        showAuthToast(response.message || 'Não foi possível concluir o registro.');
+        return;
     }
+
+    const token = response.data?.token;
+    if (!token) {
+        showAuthToast('Resposta de autenticação inválida.');
+        return;
+    }
+
+    storeToken(token);
+    Toast.flash('Conta criada com sucesso. Redirecionando...', {
+        tone: 'success',
+        group: AUTH_REDIRECT_TOAST_GROUP,
+    });
+    window.location.assign(readRedirectTarget());
 }
 
 /**

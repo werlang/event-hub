@@ -165,7 +165,7 @@ export class Button extends BaseComponent {
 			this.get().dataset.buttonBusy = 'true';
 
 			const spinner = document.createElement('i');
-			spinner.className = 'fa-solid fa-spinner fa-spin';
+			spinner.className = 'fa-solid fa-spinner fa-spin-pulse';
 			spinner.setAttribute('aria-hidden', 'true');
 
 			const label = document.createElement('span');

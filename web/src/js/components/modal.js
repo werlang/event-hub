@@ -1,4 +1,5 @@
 import { BaseComponent } from './base-component.js';
+import { Button } from './button.js';
 
 let activeModal = null;
 let modalSequence = 0;
@@ -92,6 +93,14 @@ function setActionButtonContent(button, label, icon) {
     const labelElement = document.createElement('span');
     labelElement.textContent = normalizedLabel;
     button.appendChild(labelElement);
+}
+
+/**
+ * Returns the busy-state label used by one modal footer action.
+ */
+function readActionLoadingLabel(label) {
+    const normalizedLabel = typeof label === 'string' ? label.trim() : '';
+    return normalizedLabel ? `${normalizedLabel}...` : 'Carregando...';
 }
 
 /**
@@ -520,26 +529,30 @@ export class Modal extends BaseComponent {
         title,
         disabled = false,
     } = {}) {
-        const button = document.createElement('button');
-        button.type = type;
-        button.className = `button ${readActionToneClass(tone)}`;
-        setActionButtonContent(button, label, icon);
-        button.disabled = Boolean(disabled);
+        const button = new Button({
+            element: document.createElement('button'),
+            loadingLabel: readActionLoadingLabel(label),
+        });
+
+        button.get().type = type;
+        button.get().className = `button ${readActionToneClass(tone)}`;
+        setActionButtonContent(button.get(), label, icon);
+        button.setDisabled(disabled);
 
         if (typeof id === 'string' && id.trim()) {
-            button.id = id.trim();
-            this.#actionMap.set(button.id, button);
+            button.get().id = id.trim();
+            this.#actionMap.set(button.get().id, button);
         }
 
         if (typeof title === 'string' && title.trim()) {
-            button.setAttribute('title', title.trim());
+            button.get().setAttribute('title', title.trim());
         }
 
         if (autofocus) {
-            button.autofocus = true;
+            button.get().autofocus = true;
         }
 
-        this.on(button, 'click', async (event) => {
+        button.click(async (event) => {
             let shouldClose = Boolean(closeOnClick);
 
             if (typeof callback === 'function') {
@@ -552,9 +565,9 @@ export class Modal extends BaseComponent {
             if (shouldClose) {
                 this.close();
             }
-        });
+        }, { manageBusy: typeof callback === 'function' });
 
-        this.#actions.appendChild(button);
+        this.#actions.appendChild(button.get());
         this.#syncActionsVisibility();
         return this;
     }

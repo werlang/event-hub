@@ -295,35 +295,29 @@ export class DashboardSettingsPanels extends BaseComponent {
             return;
         }
 
-        form.disable({ stateKey: 'submit' });
+        const response = await requestApi('/auth/me', {
+            method: 'PUT',
+            token: this.#readSessionToken(),
+            body: { name, email },
+        });
 
-        try {
-            const response = await requestApi('/auth/me', {
-                method: 'PUT',
-                token: this.#readSessionToken(),
-                body: { name, email },
-            });
-
-            if (!response.ok) {
-                this.#showToast(response.message || 'Não foi possível atualizar o perfil agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
-                return;
-            }
-
-            if (!response.data?.user || !response.data?.token) {
-                this.#showToast('A resposta do servidor não trouxe a sessão atualizada.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
-                return;
-            }
-
-            const nextSession = createUpdatedSession(this.#session, response);
-            storeToken(nextSession.token);
-            resetCurrentSession();
-            this.#session = nextSession;
-            this.render();
-            await this.#emitSessionChange(nextSession, response);
-            this.#showToast(response.message || 'Perfil atualizado.', 'success', DASHBOARD_ACTION_TOAST_GROUP);
-        } finally {
-            form.enable({ stateKey: 'submit' });
+        if (!response.ok) {
+            this.#showToast(response.message || 'Não foi possível atualizar o perfil agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
+            return;
         }
+
+        if (!response.data?.user || !response.data?.token) {
+            this.#showToast('A resposta do servidor não trouxe a sessão atualizada.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
+            return;
+        }
+
+        const nextSession = createUpdatedSession(this.#session, response);
+        storeToken(nextSession.token);
+        resetCurrentSession();
+        this.#session = nextSession;
+        this.render();
+        await this.#emitSessionChange(nextSession, response);
+        this.#showToast(response.message || 'Perfil atualizado.', 'success', DASHBOARD_ACTION_TOAST_GROUP);
     }
 
     /**
@@ -361,25 +355,19 @@ export class DashboardSettingsPanels extends BaseComponent {
             return;
         }
 
-        form.disable({ stateKey: 'submit' });
+        const response = await requestApi('/auth/password', {
+            method: 'PUT',
+            token: this.#readSessionToken(),
+            body: { currentPassword, newPassword },
+        });
 
-        try {
-            const response = await requestApi('/auth/password', {
-                method: 'PUT',
-                token: this.#readSessionToken(),
-                body: { currentPassword, newPassword },
-            });
-
-            if (!response.ok) {
-                this.#showToast(response.message || 'Não foi possível atualizar a senha agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
-                return;
-            }
-
-            form.reset();
-            this.#showToast(response.message || 'Senha atualizada.', 'success', DASHBOARD_ACTION_TOAST_GROUP);
-        } finally {
-            form.enable({ stateKey: 'submit' });
+        if (!response.ok) {
+            this.#showToast(response.message || 'Não foi possível atualizar a senha agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
+            return;
         }
+
+        form.reset();
+        this.#showToast(response.message || 'Senha atualizada.', 'success', DASHBOARD_ACTION_TOAST_GROUP);
     }
 
     /**
@@ -404,25 +392,19 @@ export class DashboardSettingsPanels extends BaseComponent {
             return;
         }
 
-        form.disable({ stateKey: 'submit' });
+        const response = await requestApi('/auth/users/password/reset', {
+            method: 'PUT',
+            token: this.#readSessionToken(),
+            body: { email, newPassword },
+        });
 
-        try {
-            const response = await requestApi('/auth/users/password/reset', {
-                method: 'PUT',
-                token: this.#readSessionToken(),
-                body: { email, newPassword },
-            });
-
-            if (!response.ok) {
-                this.#showToast(response.message || 'Não foi possível redefinir a senha agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
-                return;
-            }
-
-            form.reset();
-            this.#showToast(response.message || 'Senha do usuário atualizada.', 'success', DASHBOARD_ACTION_TOAST_GROUP);
-        } finally {
-            form.enable({ stateKey: 'submit' });
+        if (!response.ok) {
+            this.#showToast(response.message || 'Não foi possível redefinir a senha agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
+            return;
         }
+
+        form.reset();
+        this.#showToast(response.message || 'Senha do usuário atualizada.', 'success', DASHBOARD_ACTION_TOAST_GROUP);
     }
 
     /**
@@ -442,41 +424,35 @@ export class DashboardSettingsPanels extends BaseComponent {
             return;
         }
 
-        form.disable({ stateKey: 'submit' });
+        const lookup = await this.#findUserByEmail(email);
 
-        try {
-            const lookup = await this.#findUserByEmail(email);
-
-            if (!lookup.ok) {
-                this.#showToast(lookup.message || 'Não foi possível consultar os usuários agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
-                return;
-            }
-
-            if (!lookup.user) {
-                this.#showToast('Nenhum usuário correspondente ao e-mail informado foi encontrado.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
-                return;
-            }
-
-            if (isAdminRole(lookup.user.role)) {
-                this.#showToast('Este usuário já é administrador.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
-                return;
-            }
-
-            const response = await requestApi(`/auth/users/${lookup.user.id}/promote`, {
-                method: 'PUT',
-                token: this.#readSessionToken(),
-            });
-
-            if (!response.ok) {
-                this.#showToast(response.message || 'Não foi possível promover o usuário agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
-                return;
-            }
-
-            form.reset();
-            this.#showToast(response.message || 'Usuário promovido a administrador.', 'success', DASHBOARD_ACTION_TOAST_GROUP);
-        } finally {
-            form.enable({ stateKey: 'submit' });
+        if (!lookup.ok) {
+            this.#showToast(lookup.message || 'Não foi possível consultar os usuários agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
+            return;
         }
+
+        if (!lookup.user) {
+            this.#showToast('Nenhum usuário correspondente ao e-mail informado foi encontrado.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
+            return;
+        }
+
+        if (isAdminRole(lookup.user.role)) {
+            this.#showToast('Este usuário já é administrador.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
+            return;
+        }
+
+        const response = await requestApi(`/auth/users/${lookup.user.id}/promote`, {
+            method: 'PUT',
+            token: this.#readSessionToken(),
+        });
+
+        if (!response.ok) {
+            this.#showToast(response.message || 'Não foi possível promover o usuário agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
+            return;
+        }
+
+        form.reset();
+        this.#showToast(response.message || 'Usuário promovido a administrador.', 'success', DASHBOARD_ACTION_TOAST_GROUP);
     }
 
     /**

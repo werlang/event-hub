@@ -294,7 +294,7 @@ export class Form extends BaseComponent {
 	/**
 	 * Binds the form submit lifecycle to an async callback.
 	 */
-	submit(callback, { reset = false } = {}) {
+	submit(callback, { reset = false, manageDisabledState = true, stateKey = 'submit' } = {}) {
 		if (!this.isReady() || typeof callback !== 'function') {
 			return this;
 		}
@@ -307,7 +307,13 @@ export class Form extends BaseComponent {
 			event.preventDefault();
 
 			const submitButton = this.getSubmitButton();
+			const shouldManageDisabledState = Boolean(manageDisabledState);
+			const normalizedStateKey = normalizeDisabledStateKey(stateKey);
 			try {
+				if (shouldManageDisabledState) {
+					this.disable({ stateKey: normalizedStateKey });
+				}
+
 				submitButton?.disable({ showBusy: true });
 				await callback(this.readData(), this, event);
 
@@ -317,6 +323,10 @@ export class Form extends BaseComponent {
 
 				this.clearAutoSave();
 			} finally {
+				if (shouldManageDisabledState) {
+					this.enable({ stateKey: normalizedStateKey });
+				}
+
 				submitButton?.enable();
 				if (this.isDisabled()) {
 					submitButton?.disable();

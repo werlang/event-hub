@@ -108,6 +108,8 @@ test('week template references the dedicated standalone bundle', async () => {
     assert.match(template, /id="week-page-title"/i);
     assert.match(template, /id="week-range-label"/i);
     assert.match(template, /id="events-grid"/i);
+    assert.match(template, /id="week-events-pagination"/i);
+    assert.match(template, /id="week-events-pagination-controls"/i);
 });
 
 test('week route renders the current public week range into the template vars', async (t) => {

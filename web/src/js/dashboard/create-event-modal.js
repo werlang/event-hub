@@ -1,4 +1,5 @@
 import { Form } from '../components/form.js';
+import { Button } from '../components/button.js';
 import { Modal } from '../components/modal.js';
 import { Toast } from '../components/toast.js';
 import { requestApi } from '../helpers/api.js';
@@ -9,6 +10,7 @@ const DASHBOARD_EVENT_FORM_TOAST_GROUP = 'dashboard-event-form';
 const DASHBOARD_ACTION_TOAST_GROUP = 'dashboard-action';
 const DASHBOARD_EVENT_FORM_MODE_CREATE = 'create';
 const DASHBOARD_EVENT_FORM_MODE_EDIT = 'edit';
+const triggerButtonMap = new WeakMap();
 
 const DASHBOARD_EVENT_FORM_COPY = {
     [DASHBOARD_EVENT_FORM_MODE_CREATE]: {
@@ -109,6 +111,24 @@ function syncSelectValue(selectField, value, fallbackValue = '') {
     selectField.value = normalizedValue;
 }
 
+/**
+ * Returns the reusable Button wrapper associated with one modal trigger.
+ */
+function getTriggerButton(trigger) {
+    if (!(trigger instanceof HTMLButtonElement)) {
+        return null;
+    }
+
+    if (!triggerButtonMap.has(trigger)) {
+        triggerButtonMap.set(trigger, new Button({
+            element: trigger,
+            loadingLabel: `${readText(trigger.textContent, 'Carregando')}...`,
+        }));
+    }
+
+    return triggerButtonMap.get(trigger);
+}
+
 export class DashboardEventFormModal {
     #modal;
     #form = null;
@@ -118,14 +138,21 @@ export class DashboardEventFormModal {
     #trigger = null;
     #activeEvent = null;
     #activeMode = DASHBOARD_EVENT_FORM_MODE_CREATE;
-    #triggerClickHandler = () => {
-        void this.open().catch(() => {
+    #triggerClickHandler = async (event) => {
+        const triggerButton = getTriggerButton(event?.currentTarget);
+
+        try {
+            triggerButton?.disable({ showBusy: true });
+            await this.open();
+        } catch {
             this.#showToast(
                 'Não foi possível abrir o formulário do evento agora.',
                 'error',
                 { group: DASHBOARD_EVENT_FORM_TOAST_GROUP },
             );
-        });
+        } finally {
+            triggerButton?.enable();
+        }
     };
 
     /**
@@ -296,41 +323,36 @@ export class DashboardEventFormModal {
         }
 
         Toast.dismissGroup(DASHBOARD_EVENT_FORM_TOAST_GROUP);
-        formComponent.disable({ stateKey: 'submit' });
 
-        try {
-            const response = await requestApi(this.#readRequestPath(), {
-                method: this.#readRequestMethod(),
-                token: this.#sessionToken,
-                body: payload,
-            });
+        const response = await requestApi(this.#readRequestPath(), {
+            method: this.#readRequestMethod(),
+            token: this.#sessionToken,
+            body: payload,
+        });
 
-            if (!response.ok) {
-                this.#showToast(
-                    response.message || copy.requestMessage,
-                    'error',
-                    { group: DASHBOARD_EVENT_FORM_TOAST_GROUP },
-                );
-                return;
-            }
-
-            const mode = this.#activeMode;
-            const previousEventId = this.#activeEvent?.id || null;
-            this.close();
-            await this.#emitSubmitSuccess({
-                event: response.data?.event || null,
-                mode,
-                previousEventId,
-                response,
-            });
+        if (!response.ok) {
             this.#showToast(
-                response.message || copy.successMessage,
-                'success',
-                { group: DASHBOARD_ACTION_TOAST_GROUP },
+                response.message || copy.requestMessage,
+                'error',
+                { group: DASHBOARD_EVENT_FORM_TOAST_GROUP },
             );
-        } finally {
-            formComponent.enable({ stateKey: 'submit' });
+            return;
         }
+
+        const mode = this.#activeMode;
+        const previousEventId = this.#activeEvent?.id || null;
+        this.close();
+        await this.#emitSubmitSuccess({
+            event: response.data?.event || null,
+            mode,
+            previousEventId,
+            response,
+        });
+        this.#showToast(
+            response.message || copy.successMessage,
+            'success',
+            { group: DASHBOARD_ACTION_TOAST_GROUP },
+        );
     }
 
     /**

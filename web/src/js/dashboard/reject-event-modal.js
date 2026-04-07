@@ -144,37 +144,32 @@ export class DashboardRejectEventModal {
 
         const payload = this.#readPayload(formData);
         Toast.dismissGroup(DASHBOARD_REJECT_EVENT_TOAST_GROUP);
-        formComponent.disable({ stateKey: 'submit' });
 
-        try {
-            const response = await requestApi(`/events/${this.#activeEvent.id}/moderation`, {
-                method: 'PUT',
-                token: this.#sessionToken,
-                body: payload,
-            });
+        const response = await requestApi(`/events/${this.#activeEvent.id}/moderation`, {
+            method: 'PUT',
+            token: this.#sessionToken,
+            body: payload,
+        });
 
-            if (!response.ok) {
-                this.#showToast(
-                    response.message || 'Não foi possível rejeitar o evento agora.',
-                    'error',
-                    { group: DASHBOARD_REJECT_EVENT_TOAST_GROUP },
-                );
-                return;
-            }
-
-            this.close();
-            await this.#emitRejectSuccess({
-                event: response.data?.event || null,
-                response,
-            });
+        if (!response.ok) {
             this.#showToast(
-                response.message || 'Evento rejeitado com sucesso.',
-                'success',
-                { group: DASHBOARD_ACTION_TOAST_GROUP },
+                response.message || 'Não foi possível rejeitar o evento agora.',
+                'error',
+                { group: DASHBOARD_REJECT_EVENT_TOAST_GROUP },
             );
-        } finally {
-            formComponent.enable({ stateKey: 'submit' });
+            return;
         }
+
+        this.close();
+        await this.#emitRejectSuccess({
+            event: response.data?.event || null,
+            response,
+        });
+        this.#showToast(
+            response.message || 'Evento rejeitado com sucesso.',
+            'success',
+            { group: DASHBOARD_ACTION_TOAST_GROUP },
+        );
     }
 
     /**

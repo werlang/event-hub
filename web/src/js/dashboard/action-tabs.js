@@ -1,4 +1,25 @@
 import { BaseComponent } from '../components/base-component.js';
+import { Button } from '../components/button.js';
+
+const actionTabButtonMap = new WeakMap();
+
+/**
+ * Returns the reusable Button wrapper associated with one dashboard action tab.
+ */
+function getActionTabButton(button) {
+    if (!(button instanceof HTMLButtonElement)) {
+        return null;
+    }
+
+    if (!actionTabButtonMap.has(button)) {
+        actionTabButtonMap.set(button, new Button({
+            element: button,
+            loadingLabel: `${button.textContent?.trim() || 'Carregando'}...`,
+        }));
+    }
+
+    return actionTabButtonMap.get(button);
+}
 
 /**
  * Returns the configured tab name for one dashboard action button.
@@ -73,7 +94,7 @@ export class DashboardActionTabs extends BaseComponent {
                 return;
             }
 
-            void this.activate(button.dataset.dashboardActionTab);
+            void this.#activateFromButton(button);
         });
 
         this.on(this.get(), 'keydown', (event) => {
@@ -106,7 +127,7 @@ export class DashboardActionTabs extends BaseComponent {
             case 'Enter':
             case ' ':
                 event.preventDefault();
-                void this.activate(button.dataset.dashboardActionTab);
+                void this.#activateFromButton(button);
                 break;
             default:
                 break;
@@ -139,6 +160,40 @@ export class DashboardActionTabs extends BaseComponent {
         const currentIndex = Math.max(visibleTabs.indexOf(currentButton), 0);
         const nextIndex = (currentIndex + direction + visibleTabs.length) % visibleTabs.length;
         visibleTabs[nextIndex]?.focus();
+    }
+
+    /**
+     * Runs one dashboard tab action while keeping the tab row temporarily disabled.
+     */
+    async #activateFromButton(button) {
+        const activeButton = getActionTabButton(button);
+
+        this.#tabs.forEach((currentButton) => {
+            const buttonComponent = getActionTabButton(currentButton);
+
+            if (!buttonComponent) {
+                return;
+            }
+
+            if (currentButton === button) {
+                buttonComponent.disable({ showBusy: true });
+                return;
+            }
+
+            buttonComponent.disable();
+        });
+
+        try {
+            await this.activate(button.dataset.dashboardActionTab);
+        } finally {
+            this.#tabs.forEach((currentButton) => {
+                getActionTabButton(currentButton)?.enable();
+            });
+
+            if (!this.#tabs.includes(button)) {
+                activeButton?.enable();
+            }
+        }
     }
 
     /**
