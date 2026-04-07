@@ -37,7 +37,7 @@ function mountWeekTooltips(elements) {
 
     new Tooltip({
         element: elements.calendarTooltip,
-        label: 'Ver ajuda sobre o botão do Google Calendar',
+        label: 'Ver ajuda sobre o botão do Google Agenda',
         placement: 'bottom',
         useHostTrigger: true,
     });
