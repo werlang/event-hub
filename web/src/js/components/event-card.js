@@ -85,6 +85,24 @@ function createDateMetaItem(event) {
 	return item;
 }
 
+/**
+	* Creates the Google Calendar action chip for approved public events.
+	*/
+function createGoogleCalendarMetaItem(event) {
+	const calendar = event.readCalendarPresentation();
+	if (!calendar.isLink) {
+		return null;
+	}
+
+	return createMetaItem(
+		'calendar-check',
+		event.createCalendarContent({
+			linkClass: 'card__meta-link card__meta-link--calendar',
+		}),
+		'calendar',
+	);
+}
+
 export class EventCard extends BaseComponent {
 	#event = new Event();
 
@@ -161,9 +179,15 @@ export class EventCard extends BaseComponent {
 
 		const meta = document.createElement('div');
 		meta.className = 'card__meta';
+		const calendarMetaItem = createGoogleCalendarMetaItem(this.#event);
+
+		meta.append(createCategoryMetaItem(this.#event));
+
+		if (calendarMetaItem) {
+			meta.append(calendarMetaItem);
+		}
 
 		meta.append(
-			createCategoryMetaItem(this.#event),
 			createMetaItem('location-dot', this.#event.createLocationContent({
 				fallback: 'A definir',
 				linkClass: 'card__meta-link',

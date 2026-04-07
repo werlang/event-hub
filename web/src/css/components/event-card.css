@@ -121,6 +121,32 @@
         background: color-mix(in srgb, var(--color-main-alt), transparent 90%);
         color: color-mix(in srgb, var(--color-main-alt), var(--color-text) 24%);
     }
+
+    & :is(.card__meta-item--calendar, .dashboard-meta-pill--calendar) {
+        border-color: color-mix(in srgb, var(--color-info), transparent 54%);
+        background: linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--color-info), #ffffff 74%) 0%,
+            color-mix(in srgb, var(--color-main), #ffffff 84%) 100%
+        );
+        color: color-mix(in srgb, var(--color-info), var(--color-text) 18%);
+        box-shadow: 0 8px 18px color-mix(in srgb, var(--color-info), transparent 88%);
+    }
+
+    & :is(.card__meta-item--calendar, .dashboard-meta-pill--calendar) :is(.card__meta-link, .dashboard-meta-pill__link) {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-decoration: none;
+        text-transform: uppercase;
+
+        &:hover,
+        &:focus-visible {
+            color: color-mix(in srgb, var(--color-link), var(--color-text) 12%);
+            text-decoration: underline;
+        }
+    }
 }
 
 .card {

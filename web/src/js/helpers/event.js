@@ -187,10 +187,10 @@ function createEventDate(value) {
  * Returns the pt-BR weekday abbreviation used in compact date chips.
  */
 function formatDateChipDay(value) {
-    return new Intl.DateTimeFormat('pt-BR', { weekday: 'short' })
+    const day = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' })
         .format(value)
-        .replace('.', '')
-        .toUpperCase();
+        .replace('.', '');
+    return day.charAt(0).toUpperCase() + day.slice(1);
 }
 
 /**
@@ -654,6 +654,46 @@ export class Event {
         link.textContent = location.linkLabel || 'Abrir link';
         link.title = location.title;
         link.setAttribute('aria-label', `${link.textContent}: ${location.title}`);
+
+        if (typeof linkClass === 'string' && linkClass.trim()) {
+            link.className = linkClass.trim();
+        }
+
+        return link;
+    }
+
+    /**
+     * Returns the Google Calendar link metadata used by UI renderers.
+     */
+    readCalendarPresentation() {
+        const href = readLocationHref(this.#data?.calendarLink);
+        const eventTitle = this.readTitle('evento');
+
+        return {
+            href,
+            label: 'Google Agenda',
+            isLink: Boolean(href),
+            title: href ? `Abrir "${eventTitle}" no Google Agenda` : '',
+        };
+    }
+
+    /**
+     * Creates the DOM node used to render the current Google Calendar action.
+     */
+    createCalendarContent({ linkClass = '' } = {}) {
+        const calendar = this.readCalendarPresentation();
+
+        if (!calendar.isLink) {
+            return document.createTextNode(calendar.label);
+        }
+
+        const link = document.createElement('a');
+        link.href = calendar.href;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = calendar.label;
+        link.title = calendar.title;
+        link.setAttribute('aria-label', calendar.title);
 
         if (typeof linkClass === 'string' && linkClass.trim()) {
             link.className = linkClass.trim();
