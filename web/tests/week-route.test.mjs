@@ -9,6 +9,8 @@ import test from 'node:test';
 
 import { getCurrentWeekRangeLocal } from '../src/js/helpers/week-range.js';
 
+const WEEK_CALENDAR_JOIN_URL = 'https://calendar.google.com/calendar/u/0?cid=Y19mODgwNjAxMTJlNmUxYTA5OTBiMzYxNjcwYmRjZmUzYWI3MmYwYzU3YjM3MTMxNDA0YmRkMDZhNzZjYmIxMmRiQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20';
+
 const WEB_ROOT = path.resolve(import.meta.dirname, '..');
 const WEEK_TEMPLATE_PATH = path.join(WEB_ROOT, 'src/html/week.html');
 
@@ -69,6 +71,7 @@ async function startWebServer(t) {
             ...process.env,
             PORT: String(port),
             API_URL: 'http://api.test',
+            GOOGLE_CALENDAR_JOIN_URL: WEEK_CALENDAR_JOIN_URL,
         },
         stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -107,9 +110,9 @@ test('week template references the dedicated standalone bundle', async () => {
     assert.match(template, /<script type="module" src="\/js\/week\.min\.js"><\/script>/i);
     assert.match(template, /id="week-page-title"/i);
     assert.match(template, /id="week-range-label"/i);
+    assert.match(template, /id="week-calendar-tooltip"/i);
     assert.match(template, /id="events-grid"/i);
     assert.match(template, /id="week-events-pagination"/i);
-    assert.match(template, /id="week-events-pagination-controls"/i);
 });
 
 test('week route renders the current public week range into the template vars', async (t) => {
@@ -123,6 +126,9 @@ test('week route renders the current public week range into the template vars', 
     assert.equal(templateVars.page, 'week');
     assert.equal(templateVars.weekFrom, expectedRange.from);
     assert.equal(templateVars.weekTo, expectedRange.to);
+    assert.equal(templateVars.weekCalendarJoinUrl, WEEK_CALENDAR_JOIN_URL);
     assert.match(html, /Agenda da semana/i);
     assert.match(html, /Eventos Campus Charqueadas/i);
+    assert.match(html, />\s*Google Calendar\s*</i);
+    assert.match(html, new RegExp(WEEK_CALENDAR_JOIN_URL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 });

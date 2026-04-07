@@ -4,6 +4,7 @@ import { Header } from './components/header.js';
 import { EventList } from './components/event-list.js';
 import { Pagination } from './components/pagination.js';
 import { Toast } from './components/toast.js';
+import { Tooltip } from './components/tooltip.js';
 import { apiClient } from './helpers/api.js';
 import { TemplateVar } from './helpers/template-var.js';
 import { getCurrentWeekRangeLocal } from './helpers/week-range.js';
@@ -19,10 +20,27 @@ new Header();
 function createElements() {
     return {
         rangeLabel: document.querySelector('#week-range-label'),
+        calendarTooltip: document.querySelector('#week-calendar-tooltip'),
         grid: document.querySelector('#events-grid'),
         emptyState: document.querySelector('#events-empty'),
         pagination: document.querySelector('#week-events-pagination'),
     };
+}
+
+/**
+ * Mounts the compact help cue for the Google Calendar action.
+ */
+function mountWeekTooltips(elements) {
+    if (!elements.calendarTooltip) {
+        return;
+    }
+
+    new Tooltip({
+        element: elements.calendarTooltip,
+        label: 'Ver ajuda sobre o botão do Google Calendar',
+        placement: 'bottom',
+        useHostTrigger: true,
+    });
 }
 
 /**
@@ -119,11 +137,13 @@ export function initWeekPage() {
         return;
     }
 
+    mountWeekTooltips(elements);
+
     const weekRange = readCurrentWeekRange();
     const rangeLabel = createWeekRangeLabel(weekRange);
 
     if (elements.rangeLabel) {
-        elements.rangeLabel.textContent = rangeLabel;
+        elements.rangeLabel.innerHTML = `<i class="fas fa-calendar-week"></i> ${rangeLabel}`;
     }
 
     pagination.onPageChange(({ page }) => {

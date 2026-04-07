@@ -23,19 +23,6 @@ function formatCalendarDatePtBr(value) {
     return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(new Date(year, month - 1, day));
 }
 
-/**
- * Builds the template variables used by the public current-week page.
- */
-function createCurrentWeekViewModel(referenceDate = new Date()) {
-    const weekRange = getCurrentWeekRangeLocal(referenceDate);
-
-    return {
-        weekFrom: weekRange.from,
-        weekTo: weekRange.to,
-        weekRangeLabel: `${formatCalendarDatePtBr(weekRange.from)} a ${formatCalendarDatePtBr(weekRange.to)}`,
-    };
-}
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -67,8 +54,12 @@ app.get('/login', (req, res) => {
  * Renders the public page listing approved events scheduled for the current week.
  */
 app.get('/week', (req, res) => {
+    const weekRange = getCurrentWeekRangeLocal();
     res.templateRender('week', {
-        ...createCurrentWeekViewModel(),
+        weekFrom: weekRange.from,
+        weekTo: weekRange.to,
+        weekRangeLabel: `${formatCalendarDatePtBr(weekRange.from)} a ${formatCalendarDatePtBr(weekRange.to)}`,
+        weekCalendarJoinUrl: process.env.GOOGLE_CALENDAR_JOIN_URL,
     });
 });
 

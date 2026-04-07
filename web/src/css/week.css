@@ -17,12 +17,18 @@
 }
 
 .week-shell__header {
-    grid-template-columns: minmax(0, 1.7fr) minmax(240px, 0.9fr);
-    gap: 24px;
+    display: block;
 }
 
 .week-shell__intro {
     display: grid;
+    gap: 10px;
+}
+
+.week-shell__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 10px;
 }
 
@@ -53,12 +59,26 @@
     max-width: 58ch;
 }
 
+.week-shell__calendar-link {
+    width: fit-content;
+    white-space: nowrap;
+    min-height: 42px;
+    padding: 10px 16px;
+    border-radius: var(--radius-pill);
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+}
+
+.week-shell__calendar-tooltip {
+    display: inline-flex;
+}
+
 .week-events-pagination {
     margin-top: 8px;
 }
 
 @media (max-width: 840px) {
-    .week-shell__header {
-        grid-template-columns: 1fr;
+    .week-shell__meta {
+        align-items: flex-start;
     }
 }
