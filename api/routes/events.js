@@ -225,16 +225,25 @@ router.put('/:id/moderation',
         assertAdminCanModerateEvent(currentEvent, req.user, { allowSelfModeration: ALLOW_SELF_MODERATION });
 
         const moderationDecision = parseModerationDecisionPayload(req.body);
-        let createdCalendarEntry = null;
 
         try {
             if (moderationDecision.status === Event.STATUS_PUBLISHED) {
-                createdCalendarEntry = await GoogleCalendarPublisher.publishApprovedEvent(currentEvent);
+                GoogleCalendarPublisher.publishApprovedEvent(currentEvent).then((calendarEntry) => {
+                    Event.linkCalendarEntry(currentEvent.id, calendarEntry.htmlLink).catch((err) => {
+                        // Best-effort cleanup to avoid orphan calendar entries after persistence failures.
+                        try {
+                            GoogleCalendarPublisher.deleteEvent(calendarEntry.id);
+                        } catch {
+                            // Ignore cleanup failures.
+                        }
+
+                        throw err;
+                    });
+                });
             }
 
             const updatedEvent = await Event.updateStatus(currentEvent.id, moderationDecision.status, {
                 rejectionReason: moderationDecision.rejectionReason,
-                calendarLink: createdCalendarEntry?.htmlLink ?? null,
             });
             const message = moderationDecision.status === Event.STATUS_PUBLISHED
                 ? 'Evento aprovado e publicado.'
@@ -247,7 +256,7 @@ router.put('/:id/moderation',
         } catch (error) {
             if (createdCalendarEntry?.id) {
                 try {
-                    await GoogleCalendarPublisher.deleteEvent(createdCalendarEntry.id);
+                    GoogleCalendarPublisher.deleteEvent(createdCalendarEntry.id);
                 } catch {
                     // Best-effort cleanup to avoid orphan calendar entries after persistence failures.
                 }

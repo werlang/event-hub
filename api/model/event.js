@@ -89,6 +89,19 @@ export class Event extends Model {
     }
 
     /**
+     * Links a published event to its corresponding Google Calendar entry through the stored calendar entry id.
+     */
+    static linkCalendarEntry(eventId, calendarEntryId) {
+        if (!eventId || !calendarEntryId) {
+            return null;
+        }
+
+        return this.driver.update(this.table, {
+            calendar_link: calendarEntryId,
+        }, eventId);
+    }
+
+    /**
      * Normalizes optional moderation feedback stored for rejected events.
      */
     static normalizeRejectionReason(reason) {

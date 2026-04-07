@@ -1,15 +1,10 @@
 import { google } from 'googleapis';
+import fs from 'fs';
+import path from 'path';
+import { CustomError } from './error.js';
 
 const DEFAULT_EVENT_DURATION_MINUTES = 60;
-
-/**
- * Reads one environment variable as a trimmed string.
- */
-function readEnvValue(name) {
-    return typeof process.env[name] === 'string'
-        ? process.env[name].trim()
-        : '';
-}
+const CREDENTIALS_PATH = path.resolve(process.cwd(), 'config', 'google-credentials.json');
 
 /**
  * Normalizes a service-account private key loaded from environment variables.
@@ -50,30 +45,39 @@ function buildCalendarDescription(event) {
 }
 
 /**
- * Reads the Google Calendar runtime configuration from the environment.
+ * Reads the Google Calendar service-account credentials JSON file.
  */
-function readRuntimeConfig() {
-    const calendarId = readEnvValue('GOOGLE_CALENDAR_ID');
-    const serviceAccountEmail = readEnvValue('GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL');
-    const serviceAccountPrivateKey = readEnvValue('GOOGLE_CALENDAR_SERVICE_ACCOUNT_PRIVATE_KEY');
-
-    const configuredValues = [calendarId, serviceAccountEmail, serviceAccountPrivateKey].filter(Boolean);
-    if (configuredValues.length === 0) {
+function readCredentialsFile() {
+    if (!fs.existsSync(CREDENTIALS_PATH)) {
         return null;
     }
 
-    if (configuredValues.length !== 3) {
-        throw new Error(
-            'Google Calendar integration is partially configured. Set GOOGLE_CALENDAR_ID, GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL, and GOOGLE_CALENDAR_SERVICE_ACCOUNT_PRIVATE_KEY together.',
-        );
+    const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, 'utf-8'));
+    const calendarId = String(credentials.calendar_id || credentials.calendarId || '').trim();
+    const serviceAccountEmail = String(credentials.client_email || '').trim();
+    const serviceAccountPrivateKey = normalizePrivateKey(String(credentials.private_key || '').trim());
+
+    if (!calendarId || !serviceAccountEmail || !serviceAccountPrivateKey) {
+        throw new CustomError('Google Calendar credentials JSON must include calendar_id, client_email, and private_key.', {
+            calendarId,
+            serviceAccountEmail,
+            hasPrivateKey: Boolean(serviceAccountPrivateKey),
+        });
     }
 
     return {
         calendarId,
         serviceAccountEmail,
-        serviceAccountPrivateKey: normalizePrivateKey(serviceAccountPrivateKey),
-        defaultDurationMinutes: parseEventDurationMinutes(process.env.GOOGLE_CALENDAR_EVENT_DURATION_MINUTES),
+        serviceAccountPrivateKey,
+        defaultDurationMinutes: parseEventDurationMinutes(credentials.event_duration_minutes),
     };
+}
+
+/**
+ * Reads the Google Calendar runtime configuration from the credentials JSON file.
+ */
+function readRuntimeConfig() {
+    return readCredentialsFile();
 }
 
 /**
@@ -82,7 +86,10 @@ function readRuntimeConfig() {
 function buildCalendarEventPayload(event, durationMinutes) {
     const startDate = new Date(event?.date);
     if (Number.isNaN(startDate.getTime())) {
-        throw new Error('Approved event has an invalid date and cannot be published to Google Calendar.');
+        throw new CustomError('Approved event has an invalid date and cannot be published to Google Calendar.', {
+            eventId: event?.id,
+            eventDate: event?.date,
+        });
     }
 
     const endDate = new Date(startDate.getTime() + (durationMinutes * 60 * 1000));

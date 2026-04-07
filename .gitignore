@@ -3,6 +3,7 @@
 
 # Environment variables and dependencies
 .env
+api/config/*
 node_modules
 
 # Jest coverage outputs

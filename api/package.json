@@ -6,7 +6,7 @@
   "scripts": {
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --config ./jest.unit.config.mjs --runInBand --coverage",
     "production": "node app.js",
-    "development": "node --watch app.js"
+    "development": "node --inspect=0.0.0.0 --watch app.js"
   },
   "keywords": [],
   "author": "Pablo Werlang",
