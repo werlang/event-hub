@@ -1,0 +1,60 @@
+<mjml>
+    <mj-head>
+        <mj-title>{{emailTitle}}</mj-title>
+        <mj-attributes>
+            <mj-all font-family="Arial, sans-serif" />
+        </mj-attributes>
+    </mj-head>
+    <mj-body background-color="#f4f6fb">
+        <mj-section background-color="#0d3b66" padding="24px 20px">
+            <mj-column>
+                <mj-text font-size="24px" color="#ffffff" align="center" font-weight="bold">
+                    {{emailTitle}}
+                </mj-text>
+                <mj-text font-size="14px" color="#dbeafe" align="center">
+                    {{weekRangeLabel}}
+                </mj-text>
+            </mj-column>
+        </mj-section>
+
+        <mj-section background-color="#ffffff" padding="24px 20px 8px">
+            <mj-column>
+                <mj-text font-size="16px" color="#1f2937" padding="0 0 10px">
+                    {{greeting}}
+                </mj-text>
+                <mj-text font-size="14px" color="#475467" padding="0 0 10px">
+                    {{introText}}
+                </mj-text>
+                <mj-text font-size="13px" color="#667085" padding="0 0 4px">
+                    {{recipientPolicyText}}
+                </mj-text>
+            </mj-column>
+        </mj-section>
+
+        {{eventBlocks}}
+
+        <mj-section background-color="#ffffff" padding="12px 20px 4px">
+            <mj-column>
+                <mj-text font-size="14px" color="#475467" padding="0">
+                    {{reviewText}}
+                </mj-text>
+            </mj-column>
+        </mj-section>
+
+        <mj-section background-color="#ffffff" padding="16px 20px 4px">
+            <mj-column>
+                <mj-button background-color="#1e5dbf" color="#ffffff" href="{{actionUrl}}" font-size="15px" padding="12px 18px" border-radius="6px">
+                    {{buttonText}}
+                </mj-button>
+            </mj-column>
+        </mj-section>
+
+        <mj-section background-color="#f1f5f9" padding="16px 20px">
+            <mj-column>
+                <mj-text font-size="12px" color="#64748b" align="center">
+                    {{footerText}}
+                </mj-text>
+            </mj-column>
+        </mj-section>
+    </mj-body>
+</mjml>

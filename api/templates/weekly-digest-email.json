@@ -1,0 +1,21 @@
+{
+    "subject": "Agenda da semana · {{weekRangeLabel}}",
+    "emailTitle": "Agenda da Semana",
+    "greetingWithName": "Olá {{name}},",
+    "greetingWithoutName": "Olá,",
+    "introText": "Estes são os eventos aprovados para {{weekRangeLabel}}, no mesmo recorte exibido na página pública /week.",
+    "recipientPolicyText": "Como o Event Hub ainda não possui uma lista de assinantes separada, este resumo semanal é enviado para todos os endereços de e-mail persistidos no sistema.",
+    "reviewText": "Se preferir, você também pode acompanhar a agenda atualizada diretamente na página pública da semana.",
+    "buttonText": "Abrir página da semana",
+    "footerText": "Mensagem automática do Event Hub.",
+    "emptyStateTitle": "Nenhum evento aprovado nesta semana",
+    "emptyStateText": "A página pública /week também exibiria um estado vazio para este período.",
+    "eventDateLabel": "Quando",
+    "categoryLabel": "Categoria",
+    "locationLabel": "Local",
+    "organizerLabel": "Responsável",
+    "categoryFallback": "Outro",
+    "locationFallback": "A definir",
+    "organizerFallback": "Organização não informada",
+    "calendarLinkText": "Abrir no Google Agenda"
+}

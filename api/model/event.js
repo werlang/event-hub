@@ -3,6 +3,7 @@ import { Model } from './model.js';
 import { Relation } from './relation.js';
 import { User } from './user.js';
 import { normalizeEventCategoryId, readEventCategoryLabel } from '../helpers/event-category.js';
+import { getCurrentWeekRangeLocal } from '../helpers/week-range.js';
 
 export class Event extends Model {
 
@@ -309,6 +310,13 @@ export class Event extends Model {
         });
 
             return this.#hydrateOrganizerNames(filteredEvents);
+    }
+
+    /**
+     * Lists the approved events scheduled for the same local Sunday-to-Saturday window used by the public week page.
+     */
+    static async listCurrentWeek(referenceDate = new Date()) {
+        return this.list(getCurrentWeekRangeLocal(referenceDate));
     }
 
     /**

@@ -1,0 +1,136 @@
+import { describe, expect, jest, test } from '@jest/globals';
+import { EmailTemplateManager } from '../../helpers/email-template-manager.js';
+import { WeeklyDigestManager } from '../../helpers/weekly-digest-manager.js';
+import { buildEvent, buildUser } from './support/fixtures.js';
+
+describe('helpers/weekly-digest-manager', () => {
+    test('getCurrentWeekDigest renders the same Sunday-to-Saturday window used by the week page', async () => {
+        const eventModel = {
+            listCurrentWeek: jest.fn(async () => ([
+                buildEvent({
+                    title: 'Semana Acadêmica de Robótica',
+                    description: 'Oficinas, painéis e demonstrações abertas.',
+                    date: '2026-04-08T19:30:00.000Z',
+                    status: 'published',
+                    location: 'Laboratório Maker',
+                    organizerName: 'Equipe de Extensão',
+                    calendarLink: 'https://calendar.google.com/calendar/event?eid=robotica',
+                }),
+            ])),
+        };
+        const manager = new WeeklyDigestManager({
+            emailHelper: { send: jest.fn() },
+            eventModel,
+            templateManager: new EmailTemplateManager(),
+            userModel: { list: jest.fn(async () => []) },
+            webBaseUrl: 'https://event-hub.test',
+        });
+        const referenceDate = new Date(2026, 3, 6, 9, 0, 0, 0);
+
+        const digest = await manager.getCurrentWeekDigest(referenceDate);
+        const message = manager.renderDigestEmail(buildUser(), digest);
+
+        expect(eventModel.listCurrentWeek).toHaveBeenCalledWith(referenceDate);
+        expect(digest.weekRange).toEqual({
+            from: '2026-04-05',
+            to: '2026-04-11',
+        });
+        expect(digest.weekRangeLabel).toBe('5 de abril de 2026 a 11 de abril de 2026');
+        expect(message.subject).toBe('Agenda da semana · 5 de abril de 2026 a 11 de abril de 2026');
+        expect(message.content).toContain('Semana Acadêmica de Robótica');
+        expect(message.content).toContain('Oficinas, painéis e demonstrações abertas.');
+        expect(message.content).toContain('Equipe de Extensão');
+        expect(message.content).toContain('Laboratório Maker');
+        expect(message.content).toContain('Abrir página da semana');
+        expect(message.content).toContain('https://event-hub.test/week');
+    });
+
+    test('sendCurrentWeekDigest sends one message per persisted user email address with no hidden audience fallback', async () => {
+        const emailHelper = {
+            send: jest.fn(async ([email]) => ({
+                messageId: `msg:${email}`,
+            })),
+        };
+        const userModel = {
+            list: jest.fn(async () => ([
+                buildUser({ email: 'ADA@example.com' }),
+                buildUser({ id: 'user-2', name: 'Grace Hopper', email: 'grace@example.com' }),
+                buildUser({ id: 'user-3', name: 'Ada Duplicada', email: 'ada@example.com' }),
+                buildUser({ id: 'user-4', name: 'Sem email', email: '   ' }),
+            ])),
+        };
+        const manager = new WeeklyDigestManager({
+            emailHelper,
+            eventModel: {
+                listCurrentWeek: jest.fn(async () => ([
+                    buildEvent({
+                        title: 'Feira de Ciências',
+                        status: 'published',
+                    }),
+                ])),
+            },
+            templateManager: new EmailTemplateManager(),
+            userModel,
+        });
+
+        const result = await manager.sendCurrentWeekDigest(new Date(2026, 3, 7, 18, 0, 0, 0));
+
+        expect(userModel.list).toHaveBeenCalledWith({
+            view: ['id', 'name', 'email'],
+        });
+        expect(emailHelper.send).toHaveBeenCalledTimes(2);
+        expect(emailHelper.send.mock.calls.map((call) => call[0])).toEqual([
+            ['ada@example.com'],
+            ['grace@example.com'],
+        ]);
+        expect(result).toMatchObject({
+            eventCount: 1,
+            recipientCount: 2,
+            sentCount: 2,
+        });
+    });
+
+    test('renderDigestEmail escapes plain text fields while preserving intended MJML fragments', async () => {
+        const manager = new WeeklyDigestManager({
+            emailHelper: { send: jest.fn() },
+            eventModel: { listCurrentWeek: jest.fn(async () => []) },
+            templateManager: new EmailTemplateManager(),
+            userModel: { list: jest.fn(async () => []) },
+            webBaseUrl: 'https://event-hub.test',
+        });
+        const digest = {
+            actionUrl: 'https://event-hub.test/week',
+            events: [
+                buildEvent({
+                    title: '<script>alert(1)</script>',
+                    description: 'Linha 1\n<script>alert(2)</script>',
+                    date: '2026-04-08T19:30:00.000Z',
+                    category: 'Extensão <x>',
+                    location: 'Lab <B>',
+                    organizerName: 'Equipe <script>',
+                    calendarLink: 'https://calendar.google.com/calendar/event?eid=<bad>',
+                }),
+            ],
+            strings: new EmailTemplateManager().loadJsonTemplate('weekly-digest-email'),
+            weekRange: {
+                from: '2026-04-05',
+                to: '2026-04-11',
+            },
+            weekRangeLabel: '5 de abril <2026> a 11 de abril de 2026',
+        };
+
+        const message = manager.renderDigestEmail(buildUser({ name: 'Ada <script>' }), digest);
+
+        expect(message.subject).toBe('Agenda da semana · 5 de abril <2026> a 11 de abril de 2026');
+        expect(message.content).toContain('Olá Ada &lt;script&gt;,');
+        expect(message.content).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+        expect(message.content).toContain('Linha 1<br />&lt;script&gt;alert(2)&lt;/script&gt;');
+        expect(message.content).toContain('Extensão &lt;x&gt;');
+        expect(message.content).toContain('Lab &lt;B&gt;');
+        expect(message.content).toContain('Equipe &lt;script&gt;');
+        expect(message.content).toContain('https://calendar.google.com/calendar/event?eid=&lt;bad&gt;');
+        expect(message.content).toContain('Mensagem automática do Event Hub.');
+        expect(message.content).not.toContain('&lt;mj-section');
+        expect(message.content).toContain('<mj-section');
+    });
+});

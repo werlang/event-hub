@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from '@jest/globals';
+import { afterEach, describe, expect, jest, test } from '@jest/globals';
 import { Event } from '../../model/event.js';
 import { Relation } from '../../model/relation.js';
 import { buildEvent } from './support/fixtures.js';
@@ -243,6 +243,18 @@ describe('model/event', () => {
             { fieldValues: ['user-1'], options: { view: ['id', 'name'] } },
             { fieldValues: ['user-1'], options: { view: ['id', 'name'] } },
         ]);
+    });
+
+    test('listCurrentWeek delegates to the public Sunday-to-Saturday week range', async () => {
+        const listSpy = jest.spyOn(Event, 'list').mockResolvedValue([]);
+        const referenceDate = new Date(2026, 3, 7, 18, 0, 0, 0);
+
+        await expect(Event.listCurrentWeek(referenceDate)).resolves.toEqual([]);
+
+        expect(listSpy).toHaveBeenCalledWith({
+            from: '2026-04-05',
+            to: '2026-04-11',
+        });
     });
 
     test('listByOrganizer delegates with the right filters', async () => {
