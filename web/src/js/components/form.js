@@ -309,13 +309,14 @@ export class Form extends BaseComponent {
 			const submitButton = this.getSubmitButton();
 			const shouldManageDisabledState = Boolean(manageDisabledState);
 			const normalizedStateKey = normalizeDisabledStateKey(stateKey);
+			const values = this.readData();
 			try {
 				if (shouldManageDisabledState) {
 					this.disable({ stateKey: normalizedStateKey });
 				}
 
 				submitButton?.disable({ showBusy: true });
-				await callback(this.readData(), this, event);
+				await callback(values, this, event);
 
 				if (reset) {
 					this.reset();
