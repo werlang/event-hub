@@ -1,11 +1,19 @@
 ---
 name: skill-updater
-description: Update the repository skill guides when a task establishes or clarifies durable coding principles, project styles, structure rules, patterns, or best practices. Use when the user asks to rework code according to maintainability or architecture goals, or when new long-lived conventions should become future guidance.
+description: Update the repository skill guides when a task establishes or clarifies durable coding principles, project styles, structure rules, patterns, or best practices. Use when a user asks for maintainability, architecture, readability, OOP, refactoring, code review guidance, or any new long-lived convention that should become future guidance.
 ---
 
 # Skill Updater
 
 Use this skill when a task does more than change code: it also establishes a durable rule that should influence future work.
+
+Use it by default when the task is about any of these:
+
+- updating project-wide coding standards or agent instructions
+- writing or revising skill files, prompt files, or Copilot instructions
+- turning a repeated implementation preference into a documented convention
+- clarifying where logic should live, how code should be structured, or what style future work should follow
+- recording a maintainability or readability decision that should survive beyond the current diff
 
 ## When to Use It
 
@@ -15,6 +23,7 @@ Use this skill when the user asks for any of the following:
 - align implementation with project style, structure, patterns, or architectural rules
 - make a convention explicit so it can guide future tasks
 - create or revise a repository skill because the current guidance is missing, outdated, or too weak
+- update the repository instruction set so future agents are less likely to repeat the same mistake or omission
 
 Do not use this skill for one-off implementation details, temporary workarounds, or task-specific decisions that are unlikely to matter again.
 
@@ -51,6 +60,7 @@ Create a new skill only when the guidance is cross-cutting but still coherent as
 
 - Keep guidance short, direct, and action-oriented.
 - Record rules, not narratives.
+- Prefer direct code over tiny helpers when a 1-2 line function does not clearly improve reuse, clarity, or maintainability.
 - Prefer repository facts over generic textbook advice.
 - Tie guidance to actual files, flows, or constraints in this repository.
 - Avoid duplicating the same rule across many skills unless the overlap is necessary for discoverability.
@@ -75,3 +85,5 @@ Create a new skill only when the guidance is cross-cutting but still coherent as
 ## Expected Outcome
 
 After the main task work is complete, the relevant skill guides should reflect the new durable rules so future tasks inherit them without re-discovering the same conclusions.
+
+If the work produces a repeatable preference but not a new implementation, still update the narrowest applicable skill and, when repository-wide, `.github/copilot-instructions.md`.

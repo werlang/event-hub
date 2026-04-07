@@ -11,6 +11,7 @@
 - **Private class fields**: prefer `#field` / `#method` where state should be encapsulated.
 - **Related behavior in classes**: prefer small focused classes that unify related behavior over scattering the same domain logic across standalone helper exports.
 - **Single responsibility first**: keep files, classes, and helpers focused on one primary job. When a file exists to export a class, move reusable standalone helpers into companion modules instead of mixing multiple responsibilities in the same file.
+- **Prefer direct code over tiny helpers**: do not extract 1-2 line functions when the call site stays clearer and the helper does not materially improve reuse, testability, or maintainability.
 - **Readable over clever**: prefer descriptive names, small methods, guard clauses, explicit data flow, and predictable public APIs over compact but opaque implementations.
 - **Scalable structure**: extend existing abstractions or compose smaller collaborators before adding more branching to bloated modules, controllers, or UI entrypoints.
 - **Cross-table data loading**: when API code needs related records from another table, compose that through `api/model/relation.js`. Do not add direct SQL joins in models or expose a public raw-query method from the MySQL driver.
