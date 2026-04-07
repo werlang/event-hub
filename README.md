@@ -39,6 +39,14 @@ Configuração necessária no ambiente da API:
 
 The API reads only this JSON file for the Google Calendar flow; there is no environment-variable fallback for the integration.
 
+## Tarefas em background da API
+
+- A API instancia tarefas em background diretamente no boot normal da aplicação, sem um módulo de bootstrap separado.
+- A primeira tarefa recorrente é `weekly-sunday-foo`, criada com uma regra textual como `every sunday at 18:00` e executada no relógio local do processo.
+- A classe `BackgroundTask` também aceita expressões cron quando for mais conveniente do que a regra textual.
+- Em produção, o callback configurado em `api/background/foo.js` será executado a cada ocorrência.
+- Fora de produção, a infraestrutura recalcula os próximos disparos, mas apenas registra em log quando a tarefa chegaria ao horário configurado.
+
 ## Fluxos principais
 
 - **Páginas web**: `/` opera em dois modos (neutro sem carregar eventos por padrão, ou agenda-only quando acessada com query de filtro); `/login` renderiza a troca visual entre abas de entrada e registro; `/publish` renderiza o formulário de publicação.

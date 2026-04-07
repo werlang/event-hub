@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import { runFooTask } from './background/foo.js';
+import { BackgroundTask } from './background/task-host.js';
 import { router as auth } from './routes/auth.js';
 import { router as events } from './routes/events.js';
 import { HttpError } from './helpers/error.js';
@@ -9,6 +11,9 @@ import { errorMiddleware } from './middleware/error.js';
 const app = express();
 const port = process.env.PORT || 3000;
 const host = '0.0.0.0';
+const weeklySundayFooTask = new BackgroundTask('every sunday at 18:00', runFooTask, {
+    name: 'weekly-sunday-foo',
+});
 
 app.use(cors());
 app.use(express.json());
@@ -43,6 +48,7 @@ app.use(errorMiddleware);
 async function start() {
     try {
         if (process.env.NODE_ENV !== 'test') {
+            weeklySundayFooTask.start();
             app.listen(port, host, () => {
                 console.log(`Academic Events API running on http://${host}:${port}`);
             });
@@ -55,4 +61,4 @@ async function start() {
 
 start();
 
-export { app };
+export { app, start };

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals';
-import { BackgroundTaskHost } from '../../background/task-host.js';
+import { BackgroundTask } from '../../background/task-host.js';
 
 describe('background/task-host', () => {
     let logger;
@@ -17,66 +17,69 @@ describe('background/task-host', () => {
         jest.useRealTimers();
     });
 
-    test('registerTask stores metadata and start schedules recurring production callbacks', async () => {
+    test('start schedules a human-friendly weekly rule in production', async () => {
         const callback = jest.fn().mockResolvedValue(undefined);
-        const host = new BackgroundTaskHost({ environment: 'production', logger });
-
-        const registeredTask = host.registerTask({
-            name: 'sync-approved-events',
-            callback,
-            timer: { intervalMs: 1000 },
+        const task = new BackgroundTask('every sunday at 18:00', callback, {
+            environment: 'production',
+            logger,
+            timers: globalThis,
+            getNow: () => new Date(2026, 3, 12, 17, 59, 59, 0),
+            name: 'weekly-sunday-foo',
         });
 
-        host.start();
-        await jest.advanceTimersByTimeAsync(3000);
+        task.start();
+        await jest.advanceTimersByTimeAsync(999);
 
-        expect(registeredTask).toEqual({
-            name: 'sync-approved-events',
-            timer: {
-                intervalMs: 1000,
-                initialDelayMs: 1000,
-            },
-        });
-        expect(host.getRegisteredTasks()).toEqual([registeredTask]);
-        expect(callback).toHaveBeenCalledTimes(3);
+        expect(callback).not.toHaveBeenCalled();
+
+        await jest.advanceTimersByTimeAsync(1);
+
+        expect(callback).toHaveBeenCalledTimes(1);
+
+        task.stop();
     });
 
-    test('registerTask supports a custom initial delay before the recurring interval', async () => {
+    test('start schedules cron expressions directly', async () => {
         const callback = jest.fn().mockResolvedValue(undefined);
-        const host = new BackgroundTaskHost({ environment: 'production', logger });
-
-        host.registerTask({
-            name: 'weekly-preview',
-            callback,
-            timer: {
-                intervalMs: 1000,
-                initialDelayMs: 500,
-            },
+        const task = new BackgroundTask('0 18 * * 0', callback, {
+            environment: 'production',
+            logger,
+            timers: globalThis,
+            getNow: () => new Date(2026, 3, 12, 17, 59, 59, 0),
+            name: 'weekly-cron-sync',
         });
 
-        host.start();
-        await jest.advanceTimersByTimeAsync(2400);
+        task.start();
+        await jest.advanceTimersByTimeAsync(999);
 
-        expect(callback).toHaveBeenCalledTimes(2);
+        expect(callback).not.toHaveBeenCalled();
+
+        await jest.advanceTimersByTimeAsync(1);
+
+        expect(callback).toHaveBeenCalledTimes(1);
+
+        task.stop();
     });
 
     test('start logs scheduled activity instead of invoking callbacks outside production', async () => {
         const callback = jest.fn().mockResolvedValue(undefined);
-        const host = new BackgroundTaskHost({ environment: 'development', logger });
-
-        host.registerTask({
+        const task = new BackgroundTask('every sunday at 18:00', callback, {
+            environment: 'development',
+            logger,
+            timers: globalThis,
+            getNow: () => new Date(2026, 3, 12, 17, 59, 59, 0),
             name: 'preview-sync',
-            callback,
-            timer: { intervalMs: 1000 },
         });
 
-        host.start();
-        await jest.advanceTimersByTimeAsync(2500);
+        task.start();
+        await jest.advanceTimersByTimeAsync(1000);
 
         expect(callback).not.toHaveBeenCalled();
-        expect(logger.info).toHaveBeenCalledTimes(2);
+        expect(logger.info).toHaveBeenCalledTimes(1);
         expect(logger.info.mock.calls[0][0]).toContain('preview-sync');
         expect(logger.info.mock.calls[0][0]).toContain('development');
+
+        task.stop();
     });
 
     test('running tasks are not invoked again while a previous execution is still in progress', async () => {
@@ -84,16 +87,17 @@ describe('background/task-host', () => {
         const callback = jest.fn(() => new Promise(resolve => {
             resolveCallback = resolve;
         }));
-        const host = new BackgroundTaskHost({ environment: 'production', logger });
-
-        host.registerTask({
+        const task = new BackgroundTask('*/1 * * * * *', callback, {
+            environment: 'production',
+            logger,
+            timers: globalThis,
+            timeZone: 'UTC',
+            getNow: () => new Date('2026-04-07T12:00:00.500Z'),
             name: 'slow-sync',
-            callback,
-            timer: { intervalMs: 1000 },
         });
 
-        host.start();
-        await jest.advanceTimersByTimeAsync(2000);
+        task.start();
+        await jest.advanceTimersByTimeAsync(1500);
 
         expect(callback).toHaveBeenCalledTimes(1);
         expect(logger.warn).toHaveBeenCalledTimes(1);
@@ -101,35 +105,28 @@ describe('background/task-host', () => {
 
         resolveCallback();
         await Promise.resolve();
+
+        task.stop();
     });
 
-    test('stop clears active schedules and registerTask rejects invalid definitions', async () => {
+    test('stop clears the pending schedule and invalid rules are rejected', async () => {
         const callback = jest.fn().mockResolvedValue(undefined);
-        const host = new BackgroundTaskHost({ environment: 'production', logger });
 
-        expect(() => host.registerTask({
-            name: 'broken-task',
-            callback,
-            timer: { intervalMs: 0 },
-        })).toThrow('positive integer');
+        expect(() => new BackgroundTask('nonsense', callback)).toThrow('cron expression or a supported human-friendly rule');
 
-        host.registerTask({
-            name: 'once-started',
-            callback,
-            timer: { intervalMs: 1000 },
+        const task = new BackgroundTask('*/1 * * * * *', callback, {
+            environment: 'production',
+            logger,
+            timers: globalThis,
+            timeZone: 'UTC',
+            getNow: () => new Date('2026-04-07T12:00:00.500Z'),
+            name: 'stop-me',
         });
 
-        expect(() => host.registerTask({
-            name: 'once-started',
-            callback,
-            timer: { intervalMs: 1000 },
-        })).toThrow('already registered');
+        task.start();
+        task.stop();
+        await jest.advanceTimersByTimeAsync(5000);
 
-        host.start();
-        await jest.advanceTimersByTimeAsync(1000);
-        host.stop();
-        await jest.advanceTimersByTimeAsync(2000);
-
-        expect(callback).toHaveBeenCalledTimes(1);
+        expect(callback).not.toHaveBeenCalled();
     });
 });
