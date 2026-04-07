@@ -307,6 +307,7 @@ export class BackgroundTask {
 
         this.#started = true;
         this.#scheduleNext(this.#getNow());
+        this.#logger.info(`[${new Date().toISOString()}] Started background task "${this.#name}" with rule "${this.#rule}".`);
         return this;
     }
 
@@ -353,12 +354,12 @@ export class BackgroundTask {
      */
     async #run() {
         if (!this.#isProduction()) {
-            this.#logger.info(`Skipping background task "${this.#name}" for rule "${this.#rule}" because NODE_ENV is "${this.#environment}".`);
+            this.#logger.info(`[${new Date().toISOString()}] Skipping background task "${this.#name}" for rule "${this.#rule}" because NODE_ENV is "${this.#environment}".`);
             return;
         }
 
         if (this.#running) {
-            this.#logger.warn(`Skipping overlapping background task "${this.#name}" because the previous run is still in progress.`);
+            this.#logger.warn(`[${new Date().toISOString()}] Skipping overlapping background task "${this.#name}" because the previous run is still in progress.`);
             return;
         }
 
@@ -367,7 +368,7 @@ export class BackgroundTask {
         try {
             await this.#callback();
         } catch (error) {
-            this.#logger.error(`Background task "${this.#name}" failed.`, error);
+            this.#logger.error(`[${new Date().toISOString()}] Background task "${this.#name}" failed.`, error);
         } finally {
             this.#running = false;
         }
