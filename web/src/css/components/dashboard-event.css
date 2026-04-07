@@ -89,6 +89,19 @@
         font-family: var(--font-body);
     }
 
+    & .dashboard-meta-pill__date-content {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    & .dashboard-meta-pill__tooltip .tooltip__trigger {
+        width: 20px;
+        height: 20px;
+        box-shadow: none;
+    }
+
     & .dashboard-event__note {
         color: var(--color-text-secondary);
         line-height: 1.6;

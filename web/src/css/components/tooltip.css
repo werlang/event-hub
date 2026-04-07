@@ -6,6 +6,15 @@
     flex-shrink: 0;
 }
 
+.tooltip--host-trigger {
+    cursor: help;
+}
+
+.tooltip--host-trigger:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-main), transparent 86%);
+}
+
 .tooltip__trigger {
     display: flex;
     align-items: center;

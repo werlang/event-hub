@@ -71,6 +71,7 @@ export class Tooltip extends BaseComponent {
     #content;
     #placement;
     #root;
+    #usesHostTrigger = false;
     #standalone = false;
     #visible = false;
     #hasContent = false;
@@ -87,8 +88,10 @@ export class Tooltip extends BaseComponent {
         icon = 'circle-info',
         placement = 'top',
         customClass,
+        useHostTrigger = false,
     } = {}) {
         const hasExistingElement = element instanceof HTMLElement;
+        const shouldUseHostTrigger = hasExistingElement && Boolean(useHostTrigger);
 
         if (element instanceof HTMLElement && element.hasAttribute('title')) {
             content = readText(element.getAttribute('title'), '');
@@ -102,17 +105,25 @@ export class Tooltip extends BaseComponent {
         super(rootElement);
         this.#standalone = !hasExistingElement;
         this.#root = rootElement;
+        this.#usesHostTrigger = shouldUseHostTrigger;
 
-        rootElement.classList.add('tooltip');
+        rootElement.classList.add(shouldUseHostTrigger ? 'tooltip--host-trigger' : 'tooltip');
 
-        const trigger = document.createElement('button');
-        trigger.type = 'button';
-        trigger.className = 'tooltip__trigger';
+        const trigger = shouldUseHostTrigger
+            ? rootElement
+            : document.createElement('button');
 
-        const iconElement = document.createElement('i');
-        iconElement.classList.add(...normalizeIconClasses(icon));
-        iconElement.setAttribute('aria-hidden', 'true');
-        trigger.appendChild(iconElement);
+        if (!shouldUseHostTrigger) {
+            trigger.type = 'button';
+            trigger.className = 'tooltip__trigger';
+
+            const iconElement = document.createElement('i');
+            iconElement.classList.add(...normalizeIconClasses(icon));
+            iconElement.setAttribute('aria-hidden', 'true');
+            trigger.appendChild(iconElement);
+        } else if (!trigger.hasAttribute('tabindex')) {
+            trigger.tabIndex = 0;
+        }
 
         const bubble = document.createElement('span');
         bubble.className = 'tooltip__bubble';
@@ -123,7 +134,9 @@ export class Tooltip extends BaseComponent {
         contentElement.className = 'tooltip__content';
         bubble.appendChild(contentElement);
 
-        rootElement.appendChild(trigger);
+        if (!shouldUseHostTrigger) {
+            rootElement.appendChild(trigger);
+        }
 
         this.#trigger = trigger;
         this.#bubble = bubble;
@@ -180,7 +193,9 @@ export class Tooltip extends BaseComponent {
         const normalizedContent = readText(content);
         this.#hasContent = Boolean(normalizedContent);
         this.#content.textContent = normalizedContent;
-        this.#trigger.hidden = !this.#hasContent;
+        if (!this.#usesHostTrigger) {
+            this.#trigger.hidden = !this.#hasContent;
+        }
 
         if (this.#standalone) {
             this.get().hidden = !this.#hasContent;
@@ -197,8 +212,12 @@ export class Tooltip extends BaseComponent {
      * Updates the accessible label announced for the tooltip cue.
      */
     setLabel(label = 'Mostrar ajuda') {
-        this.#trigger.setAttribute('aria-label', readText(label, 'Mostrar ajuda'));
         this.#trigger.setAttribute('aria-describedby', this.#bubble.id);
+
+        if (!this.#usesHostTrigger) {
+            this.#trigger.setAttribute('aria-label', readText(label, 'Mostrar ajuda'));
+        }
+
         return this;
     }
 
@@ -240,7 +259,9 @@ export class Tooltip extends BaseComponent {
      */
     destroy() {
         this.close();
-        this.#trigger.remove();
+        if (!this.#usesHostTrigger) {
+            this.#trigger.remove();
+        }
         this.#bubble.remove();
         return super.destroy();
     }

@@ -528,6 +528,23 @@ function createCategoryMetaContent(event) {
 }
 
 /**
+ * Creates the dashboard date pill with an integrated full-date tooltip.
+ */
+function createDateMetaPill(event) {
+    const eventRecord = Event.from(event);
+    const pill = createMetaPill(document.createTextNode(eventRecord.formatDateTimePtBr()), 'date');
+
+    new Tooltip({
+        element: pill,
+        content: eventRecord.formatDateTimeTooltipPtBr(),
+        label: 'Ver data completa',
+        useHostTrigger: true,
+    });
+
+    return pill;
+}
+
+/**
  * Creates one dashboard action button for manageable event cards.
  */
 function createEventActionButton({ action, label, icon, modifier = '' } = {}) {
@@ -747,7 +764,7 @@ function createDashboardEventElement(event, { mode = DASHBOARD_VIEW_BROWSE } = {
             fallback: 'A definir',
             linkClass: 'dashboard-meta-pill__link',
         }), 'location'),
-        createMetaPill(document.createTextNode(eventRecord.formatDateTimePtBr()), 'date'),
+        createDateMetaPill(eventRecord),
     );
 
     article.append(header, description);

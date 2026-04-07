@@ -1,4 +1,5 @@
 import { BaseComponent } from './base-component.js';
+import { Tooltip } from './tooltip.js';
 import { Event } from '../helpers/event.js';
 
 /**
@@ -48,7 +49,16 @@ function createStatusPill(icon, label, modifier = '') {
 	*/
 function createTimelinePill(event) {
 	const timeline = event.readTimelineMeta();
-	return createStatusPill(timeline.icon, timeline.label, timeline.modifier);
+	const pill = createStatusPill(timeline.icon, timeline.label, timeline.modifier);
+
+	new Tooltip({
+		element: pill,
+		content: timeline.tooltipContent,
+		label: timeline.tooltipLabel,
+		useHostTrigger: true,
+	});
+
+	return pill;
 }
 
 /**
@@ -57,6 +67,22 @@ function createTimelinePill(event) {
 function createCategoryMetaItem(event) {
 	const category = event.readCategoryMeta();
 	return createMetaItem('tag', document.createTextNode(category.label), 'category');
+}
+
+/**
+ * Creates the compact date meta item with a hover tooltip.
+ */
+function createDateMetaItem(event) {
+	const item = createMetaItem('calendar-days', document.createTextNode(event.formatDateTimePtBr()), 'date');
+
+	new Tooltip({
+		element: item,
+		content: event.formatDateTimeTooltipPtBr(),
+		label: 'Ver data completa',
+		useHostTrigger: true,
+	});
+
+	return item;
 }
 
 export class EventCard extends BaseComponent {
@@ -142,7 +168,7 @@ export class EventCard extends BaseComponent {
 				fallback: 'A definir',
 				linkClass: 'card__meta-link',
 			}), 'location'),
-			createMetaItem('calendar-days', document.createTextNode(this.#event.formatDateTimePtBr()), 'date'),
+			createDateMetaItem(this.#event),
 		);
 
 		fragment.appendChild(meta);

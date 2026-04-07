@@ -9,6 +9,7 @@
 @import './components/event-card.css';
 @import './components/pagination.css';
 @import './components/toast.css';
+@import './components/tooltip.css';
 
 .week-shell {
     display: grid;

@@ -169,6 +169,44 @@ function toDayKey(value) {
 }
 
 /**
+ * Converts one supported event date value into a Date instance or null.
+ */
+function createEventDate(value) {
+    const normalizedValue = typeof value === 'string' ? value.trim() : value;
+    if (!normalizedValue) {
+        return null;
+    }
+
+    const dateOnlyDay = readDateOnlyDay(normalizedValue);
+    const date = dateOnlyDay ? createLocalDate(dateOnlyDay) : new Date(normalizedValue);
+
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * Returns the pt-BR weekday abbreviation used in compact date chips.
+ */
+function formatDateChipDay(value) {
+    return new Intl.DateTimeFormat('pt-BR', { weekday: 'short' })
+        .format(value)
+        .replace('.', '')
+        .toUpperCase();
+}
+
+/**
+ * Returns the pt-BR full-date label used in event date tooltips.
+ */
+function formatDateChipTooltip(value) {
+    const weekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(value);
+    const day = new Intl.DateTimeFormat('pt-BR', { day: '2-digit' }).format(value);
+    const month = new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(value);
+    const year = new Intl.DateTimeFormat('pt-BR', { year: 'numeric' }).format(value);
+    const time = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false }).format(value);
+
+    return `${weekday}, ${day} de ${month} de ${year}, ${time}`;
+}
+
+/**
 * Limits one relative-time chip to at most two compact units.
 */
 function formatRelativeDuration(totalMinutes) {
@@ -544,22 +582,35 @@ export class Event {
      * Formats the current event date-time value using the pt-BR locale.
      */
     formatDateTimePtBr() {
-        const normalizedValue = typeof this.#data?.date === 'string' ? this.#data.date.trim() : this.#data?.date;
-        const isDateOnly = isDateOnlyValue(normalizedValue) || isDateOnlyIsoValue(normalizedValue);
-        const date = isDateOnly
-            ? createLocalDate(String(normalizedValue).slice(0, 10))
-            : new Date(normalizedValue);
-
-        if (Number.isNaN(date.getTime())) {
+        const date = createEventDate(this.#data?.date);
+        if (!date) {
             return 'Data não informada';
         }
 
-        return new Intl.DateTimeFormat('pt-BR', isDateOnly
-            ? { dateStyle: 'short' }
-            : {
-                dateStyle: 'short',
-                timeStyle: 'short',
-            }).format(date);
+        const day = formatDateChipDay(date);
+        const datePart = new Intl.DateTimeFormat('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+        }).format(date);
+        const time = new Intl.DateTimeFormat('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+        }).format(date);
+
+        return `${day} ${datePart} ${time}`;
+    }
+
+    /**
+     * Returns the full event date-time label used in hover tooltips.
+     */
+    formatDateTimeTooltipPtBr() {
+        const date = createEventDate(this.#data?.date);
+        if (!date) {
+            return 'Data não informada';
+        }
+
+        return formatDateChipTooltip(date);
     }
 
     /**
