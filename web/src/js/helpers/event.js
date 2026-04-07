@@ -676,29 +676,4 @@ export class Event {
             title: href ? `Abrir "${eventTitle}" no Google Agenda` : '',
         };
     }
-
-    /**
-     * Creates the DOM node used to render the current Google Calendar action.
-     */
-    createCalendarContent({ linkClass = '' } = {}) {
-        const calendar = this.readCalendarPresentation();
-
-        if (!calendar.isLink) {
-            return document.createTextNode(calendar.label);
-        }
-
-        const link = document.createElement('a');
-        link.href = calendar.href;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.textContent = calendar.label;
-        link.title = calendar.title;
-        link.setAttribute('aria-label', calendar.title);
-
-        if (typeof linkClass === 'string' && linkClass.trim()) {
-            link.className = linkClass.trim();
-        }
-
-        return link;
-    }
 }

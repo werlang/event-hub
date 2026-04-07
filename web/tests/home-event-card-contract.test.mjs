@@ -16,11 +16,12 @@ test('public event card source follows the dashboard-inspired header and metadat
     assert.match(source, /headline\.className\s*=\s*'card__headline';/);
     assert.match(source, /statusGroup\.className\s*=\s*'card__status-group';/);
     assert.match(source, /createTimelinePill\(this\.#event\)/);
+    assert.match(source, /createGoogleCalendarStatusAction\(this\.#event\)/);
     assert.match(source, /createCategoryMetaItem\(this\.#event\)/);
-    assert.match(source, /createGoogleCalendarMetaItem\(this\.#event\)/);
     assert.match(source, /createMetaItem\('location-dot',[\s\S]*'location'\)/);
     assert.match(source, /createMetaItem\('calendar-days',[\s\S]*'date'\)/);
-    assert.match(source, /card__meta-link card__meta-link--calendar/);
+    assert.match(source, /card__status--calendar-action/);
+    assert.match(source, /fa-brands fa-google/);
 });
 
 test('public event card stylesheet defines the shared card hierarchy and pill variants', async () => {
@@ -31,8 +32,8 @@ test('public event card stylesheet defines the shared card hierarchy and pill va
     assert.match(css, /\.card__status-group/);
     assert.match(css, /\.card__status--upcoming/);
     assert.match(css, /\.card__status--past/);
+    assert.match(css, /\.card__status--calendar-action/);
     assert.match(css, /\.card__meta-item--category/);
-    assert.match(css, /\.card__meta-item--calendar/);
     assert.match(css, /\.card__meta-item--location/);
     assert.match(css, /\.card__meta-item--date/);
 });
@@ -45,10 +46,11 @@ test('compiled home bundles keep the updated public card structure markers', asy
 
     assert.match(indexBundle, /card__header/);
     assert.match(indexBundle, /card__status-group/);
+    assert.match(indexBundle, /card__status--calendar-action/);
     assert.match(indexBundle, /card__meta-item/);
     assert.match(indexBundle, /Google Agenda/);
     assert.match(indexCssBundle, /card__header/);
     assert.match(indexCssBundle, /\.card__status-group/);
+    assert.match(indexCssBundle, /\.card__status--calendar-action/);
     assert.match(indexCssBundle, /\.card__meta-item--category/);
-    assert.match(indexCssBundle, /\.card__meta-item--calendar/);
 });

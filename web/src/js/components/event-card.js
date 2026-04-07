@@ -19,7 +19,10 @@ function readText(value, fallback) {
  */
 function createCardIcon(icon) {
 	const iconElement = document.createElement('i');
-	iconElement.classList.add('fa-solid', `fa-${icon}`);
+	const iconClasses = typeof icon === 'string' && icon.includes(' ')
+		? icon.trim().split(/\s+/)
+		: ['fa-solid', `fa-${icon}`];
+	iconElement.classList.add(...iconClasses);
 	iconElement.setAttribute('aria-hidden', 'true');
 	return iconElement;
 }
@@ -62,6 +65,34 @@ function createTimelinePill(event) {
 }
 
 /**
+	* Creates the compact Google Calendar action rendered beside the timeline pill.
+	*/
+function createGoogleCalendarStatusAction(event) {
+	const calendar = event.readCalendarPresentation();
+	if (!calendar.isLink) {
+		return null;
+	}
+
+	const link = document.createElement('a');
+	link.className = 'card__status card__status--calendar-action';
+	link.href = calendar.href;
+	link.target = '_blank';
+	link.rel = 'noopener noreferrer';
+	link.title = calendar.title || calendar.label;
+	link.setAttribute('aria-label', calendar.title || calendar.label);
+	link.appendChild(createCardIcon('fa-brands fa-google'));
+
+	new Tooltip({
+		element: link,
+		content: calendar.title || calendar.label,
+		label: 'Abrir no Google Agenda',
+		useHostTrigger: true,
+	});
+
+	return link;
+}
+
+/**
 	* Creates the category pill shown in the public card metadata row.
 	*/
 function createCategoryMetaItem(event) {
@@ -83,24 +114,6 @@ function createDateMetaItem(event) {
 	});
 
 	return item;
-}
-
-/**
-	* Creates the Google Calendar action chip for approved public events.
-	*/
-function createGoogleCalendarMetaItem(event) {
-	const calendar = event.readCalendarPresentation();
-	if (!calendar.isLink) {
-		return null;
-	}
-
-	return createMetaItem(
-		'calendar-check',
-		event.createCalendarContent({
-			linkClass: 'card__meta-link card__meta-link--calendar',
-		}),
-		'calendar',
-	);
 }
 
 export class EventCard extends BaseComponent {
@@ -166,6 +179,11 @@ export class EventCard extends BaseComponent {
 
 		const statusGroup = document.createElement('div');
 		statusGroup.className = 'card__status-group';
+		const calendarStatusAction = createGoogleCalendarStatusAction(this.#event);
+
+		if (calendarStatusAction) {
+			statusGroup.appendChild(calendarStatusAction);
+		}
 		statusGroup.appendChild(createTimelinePill(this.#event));
 
 		headline.appendChild(titleBlock);
@@ -179,13 +197,8 @@ export class EventCard extends BaseComponent {
 
 		const meta = document.createElement('div');
 		meta.className = 'card__meta';
-		const calendarMetaItem = createGoogleCalendarMetaItem(this.#event);
 
 		meta.append(createCategoryMetaItem(this.#event));
-
-		if (calendarMetaItem) {
-			meta.append(calendarMetaItem);
-		}
 
 		meta.append(
 			createMetaItem('location-dot', this.#event.createLocationContent({
