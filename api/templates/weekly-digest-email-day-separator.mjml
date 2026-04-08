@@ -1,0 +1,13 @@
+<mj-section padding="12px 20px 4px" background-color="#ffffff">
+    <mj-column>
+        <mj-table width="100%" padding="0">
+            <tr>
+                <td style="border-top: 1px solid #dcadc6; font-size: 0; line-height: 0; width: 28%;">&nbsp;</td>
+                <td style="padding: 0 12px; color: #542740; font-size: 12px; font-weight: bold; letter-spacing: 0.2px; text-align: center; white-space: nowrap;">
+                    {{separatorLabel}}
+                </td>
+                <td style="border-top: 1px solid #dcadc6; font-size: 0; line-height: 0; width: 28%;">&nbsp;</td>
+            </tr>
+        </mj-table>
+    </mj-column>
+</mj-section>

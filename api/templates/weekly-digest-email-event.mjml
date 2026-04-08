@@ -1,12 +1,22 @@
 <mj-section padding="8px 20px" background-color="#ffffff">
-    <mj-column background-color="#f8fafc" padding="16px" border="1px solid #dbe4f0" border-radius="12px">
-        <mj-text font-size="18px" color="#0f172a" font-weight="bold" padding="0 0 8px">
+    <mj-column background-color="#eaf2e9" padding="16px" border="1px solid #deeedc" border-radius="12px">
+        <mj-text font-size="18px" color="#474c54" font-weight="bold" padding="0 0 4px">
             {{eventTitle}}
         </mj-text>
-        <mj-text font-size="14px" color="#334155" padding="0 0 12px">
+        <mj-text font-size="13px" color="#6c7068" padding="2px 0 12px">
+            {{organizer}}
+        </mj-text>
+        <mj-text font-size="15px" color="#474c54" padding="0 0 16px">
             {{eventDescription}}
         </mj-text>
-        {{metaHtml}}
-        {{calendarHtml}}
+        <mj-text font-size="13px" color="#6c7068" padding="2px 0">
+            <strong>{{eventDateLabel}}:</strong> {{eventDateValue}}
+        </mj-text>
+        <mj-text font-size="13px" color="#6c7068" padding="2px 0">
+            <strong>{{locationLabel}}:</strong> {{locationValue}}
+        </mj-text>
+        <mj-text font-size="13px" color="#6c7068" padding="2px 0">
+            <strong>{{categoryLabel}}:</strong> {{categoryValue}}
+        </mj-text>
     </mj-column>
 </mj-section>

@@ -6,6 +6,7 @@ import { User } from '../model/user.js';
 
 const DIGEST_TEMPLATE_KEY = 'weekly-digest-email';
 const DIGEST_EVENT_TEMPLATE_KEY = 'weekly-digest-email-event';
+const DIGEST_DAY_SEPARATOR_TEMPLATE_KEY = 'weekly-digest-email-day-separator';
 
 /**
  * Normalizes one persisted email address for audience resolution.
@@ -43,6 +44,43 @@ function createWeekRangeLabel(weekRange) {
 }
 
 /**
+ * Builds one stable local day key for digest grouping.
+ */
+function createEventDayKey(value) {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return 'invalid-date';
+    }
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
+
+/**
+ * Formats one digest day separator label.
+ */
+function formatEventDaySeparatorPtBr(value) {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return 'Data a definir';
+    }
+
+    const day = new Intl.DateTimeFormat('pt-BR', {
+        weekday: 'long',
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+    }).format(date);
+
+    return day[0].toUpperCase() + day.slice(1);
+}
+
+/**
  * Formats one event date the same way the public UI explains the full date and time.
  */
 function formatEventDateTimePtBr(value) {
@@ -52,7 +90,7 @@ function formatEventDateTimePtBr(value) {
         return 'Data a definir';
     }
 
-    return new Intl.DateTimeFormat('pt-BR', {
+    const dateTime = new Intl.DateTimeFormat('pt-BR', {
         weekday: 'long',
         day: '2-digit',
         month: 'long',
@@ -61,6 +99,32 @@ function formatEventDateTimePtBr(value) {
         minute: '2-digit',
         hour12: false,
     }).format(date);
+    
+    // capitalize the first letter
+    return dateTime[0].toUpperCase() + dateTime.slice(1);
+}
+
+/**
+ * Formats one event location. If the location is a link format it as an anchor, otherwise return the text or a fallback.
+ */
+function formatEventLocation(location) {
+    const normalized = typeof location === 'string' ? location.trim() : '';
+
+    if (!normalized) {
+        return { label: 'Local a definir', href: null };
+    }
+
+    try {
+        const url = new URL(normalized);
+        const websiteName = url.hostname.replace(/^www\./iu, '');
+        return {
+            label: websiteName,
+            href: url.href,
+        };
+    } catch {
+        // not a valid URL, return as plain text
+        return { label: normalized, href: null };
+    }
 }
 
 /**
@@ -159,7 +223,8 @@ export class WeeklyDigestManager {
         const events = await this.#eventModel.listCurrentWeek(referenceDate);
 
         return {
-            actionUrl: buildWeekPageUrl(this.#webBaseUrl),
+            pageUrl: buildWeekPageUrl(this.#webBaseUrl),
+            calendarUrl: process.env.GOOGLE_CALENDAR_JOIN_URL || '',
             events,
             strings,
             weekRange,
@@ -185,27 +250,27 @@ export class WeeklyDigestManager {
      * Renders the weekly digest email for one recipient.
      */
     renderDigestEmail(recipient, digest) {
-        const safeName = typeof recipient?.name === 'string' ? recipient.name.trim() : '';
         const strings = digest.strings || this.#templateManager.loadJsonTemplate(DIGEST_TEMPLATE_KEY);
-        const greeting = safeName
-            ? this.#templateManager.interpolateString(strings.greetingWithName || '', {
-                name: safeName,
-            })
-            : this.#templateManager.interpolateString(strings.greetingWithoutName || '');
         const subject = this.#templateManager.interpolateString(strings.subject || '', {
             weekRangeLabel: digest.weekRangeLabel,
         });
+        const signature = this.#templateManager.interpolateString(strings.signature || '', {
+            year: new Date().getFullYear(),
+        });
         const content = this.#templateManager.loadTemplate(DIGEST_TEMPLATE_KEY, {
-            actionUrl: this.#templateManager.escapeHtml(digest.actionUrl) || '',
-            buttonText: this.#templateManager.escapeHtml(strings.buttonText || ''),
+            pageUrl: this.#templateManager.escapeHtml(digest.pageUrl) || '',
+            calendarUrl: this.#templateManager.escapeHtml(digest.calendarUrl) || '',
+            pageButtonText: strings.pageButtonText || '',
+            calendarButtonText: strings.calendarButtonText || '',
             emailTitle: strings.emailTitle || '',
             eventBlocks: this.#templateManager.raw(this.#buildEventBlocks(digest.events || [], strings)),
             footerText: strings.footerText || '',
-            greeting,
+            signature,
+            greeting: strings.greeting || '',
             introText: this.#templateManager.interpolateString(strings.introText || '', {
                 weekRangeLabel: digest.weekRangeLabel,
             }),
-            recipientPolicyText: strings.recipientPolicyText || '',
+            eventDescriptionText: strings.eventDescriptionText || '',
             reviewText: strings.reviewText || '',
             weekRangeLabel: digest.weekRangeLabel || '',
         });
@@ -266,58 +331,38 @@ export class WeeklyDigestManager {
             });
         }
 
-        return events.map((event) => this.#templateManager.loadTemplate(DIGEST_EVENT_TEMPLATE_KEY, {
-            calendarHtml: this.#templateManager.raw(this.#buildCalendarHtml(event, strings)),
-            eventDescription: this.#templateManager.raw(
-                this.#templateManager.escapeHtml(String(event?.description || '').trim()),
-            ),
-            eventTitle: String(event?.title || '').trim() || 'Sem título',
-            metaHtml: this.#templateManager.raw(this.#buildMetaHtml(event, strings)),
-        })).join('');
-    }
+        let previousDayKey = null;
 
-    /**
-     * Builds the MJML metadata rows shown for one event block.
-     */
-    #buildMetaHtml(event, strings) {
-        const metaRows = [
-            {
-                label: strings.eventDateLabel,
-                value: formatEventDateTimePtBr(event?.date),
-            },
-            {
-                label: strings.categoryLabel,
-                value: String(event?.categoryLabel || event?.category || strings.categoryFallback || '').trim(),
-            },
-            {
-                label: strings.locationLabel,
-                value: String(event?.location || strings.locationFallback || '').trim() || strings.locationFallback || '',
-            },
-            {
-                label: strings.organizerLabel,
-                value: String(event?.organizerName || strings.organizerFallback || '').trim() || strings.organizerFallback || '',
-            },
-        ].filter((row) => row.label && row.value);
+        return events.map((event) => {
+            const eventDayKey = createEventDayKey(event?.date);
+            const separatorBlock = previousDayKey === eventDayKey
+                ? ''
+                : this.#templateManager.loadTemplate(DIGEST_DAY_SEPARATOR_TEMPLATE_KEY, {
+                    separatorLabel: formatEventDaySeparatorPtBr(event?.date),
+                });
 
-        return metaRows.map((row) => `
-        <mj-text font-size="13px" color="#344054" padding="2px 0">
-            <strong>${this.#templateManager.escapeHtml(row.label)}:</strong> ${this.#templateManager.escapeHtml(row.value)}
-        </mj-text>`).join('');
-    }
+            const location = formatEventLocation(event?.location);
+            const localtionValue = location.href ? this.#templateManager.interpolateString(strings.locationLinkText || '', {
+                location: location.label,
+            }) : location.label;
+            const locationHtml = location.href ? this.#templateManager.raw(`<a href="${this.#templateManager.escapeHtml(location.href)}" target="_blank" rel="noopener noreferrer">${this.#templateManager.escapeHtml(localtionValue)}</a>`) : this.#templateManager.escapeHtml(localtionValue);
+            previousDayKey = eventDayKey;
 
-    /**
-     * Builds the optional Google Calendar link block for one published event.
-     */
-    #buildCalendarHtml(event, strings) {
-        const calendarLink = String(event?.calendarLink || '').trim();
-
-        if (!calendarLink) {
-            return '';
-        }
-
-        return `
-        <mj-button align="left" background-color="#edf4ff" color="#1d4ed8" href="${this.#templateManager.escapeHtml(calendarLink)}" inner-padding="10px 14px" font-size="13px" border-radius="999px">
-            ${this.#templateManager.escapeHtml(strings.calendarLinkText || '')}
-        </mj-button>`;
+            return separatorBlock + this.#templateManager.loadTemplate(DIGEST_EVENT_TEMPLATE_KEY, {
+                eventDescription: this.#templateManager.raw(
+                    this.#templateManager.escapeHtml(String(event?.description || '').trim()),
+                ),
+                eventTitle: String(event?.title || '').trim() || 'Sem título',
+                eventDateLabel: strings.eventDateLabel || '',
+                eventDateValue: formatEventDateTimePtBr(event?.date),
+                categoryLabel: strings.categoryLabel || '',
+                categoryValue: String(event?.categoryLabel || event?.category || strings.categoryFallback || '').trim(),
+                locationLabel: strings.locationLabel || '',
+                locationValue: locationHtml,
+                organizer: strings.organizer ? this.#templateManager.interpolateString(strings.organizer, {
+                    organizerName: String(event?.organizerName || strings.organizerFallback || '').trim() || strings.organizerFallback || '',
+                }) : '',
+            });
+        }).join('');
     }
 }
