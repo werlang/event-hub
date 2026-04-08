@@ -246,36 +246,19 @@ export class PendingEventNotificationManager {
      * @returns {string} The rendered MJML summary blocks.
      */
     #buildSummaryBlocks({ event, organizer, strings }) {
-        const summaryItems = [
-            {
-                label: strings.eventTitleLabel || '',
-                value: event?.title || strings.valueUnavailable || '',
-            },
-            {
-                label: strings.organizerLabel || '',
-                value: organizer?.name || event?.organizerName || strings.valueUnavailable || '',
-            },
-            {
-                label: strings.dateLabel || '',
-                value: formatEventDateTimePtBr(event?.date, strings.dateFallback || strings.valueUnavailable || ''),
-            },
-            {
-                label: strings.categoryLabel || '',
-                value: event?.categoryLabel || event?.category || strings.valueUnavailable || '',
-            },
-            {
-                label: strings.locationLabel || '',
-                value: event?.location || strings.valueUnavailable || '',
-            },
-            {
-                label: strings.descriptionLabel || '',
-                value: event?.description || strings.valueUnavailable || '',
-            },
-        ];
+        const actorName = organizer?.name || event?.organizerName || strings.valueUnavailable || '';
 
-        return summaryItems.map((item) => this.#templateManager.loadTemplate(NOTIFICATION_SECTION_TEMPLATE_KEY, {
-            label: item.label,
-            value: item.value,
-        })).join('\n');
+        return this.#templateManager.loadTemplate(NOTIFICATION_SECTION_TEMPLATE_KEY, {
+            cardLabel: strings.summaryLabel || '',
+            eventTitle: event?.title || strings.valueUnavailable || '',
+            actorText: `${strings.organizerLabel || ''}: ${actorName}`,
+            eventDescription: event?.description || strings.valueUnavailable || '',
+            eventDateLabel: strings.dateLabel || '',
+            eventDateValue: formatEventDateTimePtBr(event?.date, strings.dateFallback || strings.valueUnavailable || ''),
+            locationLabel: strings.locationLabel || '',
+            locationValue: event?.location || strings.valueUnavailable || '',
+            categoryLabel: strings.categoryLabel || '',
+            categoryValue: event?.categoryLabel || event?.category || strings.valueUnavailable || '',
+        });
     }
 }
