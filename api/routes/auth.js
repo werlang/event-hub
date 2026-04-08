@@ -75,13 +75,16 @@ function parseEmailPreferencesPayload(payload = {}) {
         throw new HttpError(400, 'Informe as preferências de e-mail.');
     }
 
-    for (const preferenceKey of Object.values(User.EMAIL_PREFERENCE_KEYS)) {
-        if (typeof preferences[preferenceKey] !== 'boolean') {
-            throw new HttpError(400, 'Informe todas as preferências de e-mail como verdadeiro ou falso.');
-        }
+    if (typeof preferences[User.EMAIL_PREFERENCE_KEYS.eventUpdates] !== 'boolean') {
+        throw new HttpError(400, 'Informe todas as preferências de e-mail como verdadeiro ou falso.');
     }
 
-    return preferences;
+    if (Object.hasOwn(preferences, User.EMAIL_PREFERENCE_KEYS.adminPendingRequests)
+        && typeof preferences[User.EMAIL_PREFERENCE_KEYS.adminPendingRequests] !== 'boolean') {
+        throw new HttpError(400, 'Informe todas as preferências de e-mail como verdadeiro ou falso.');
+    }
+
+    return User.normalizeEmailPreferences(preferences);
 }
 
 /**
@@ -235,7 +238,10 @@ router.put('/me/preferences',
     async (req, res, next) => {
     try {
         const currentUser = await loadAuthenticatedUser(req.user.id);
-        const emailPreferences = parseEmailPreferencesPayload(req.body);
+        const emailPreferences = {
+            ...User.normalizeEmailPreferences(currentUser?.emailPreferences || currentUser),
+            ...parseEmailPreferencesPayload(req.body),
+        };
         const updatedUser = await User.updateEmailPreferences(currentUser.id, emailPreferences);
 
         return sendSuccess(res, {

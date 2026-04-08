@@ -401,7 +401,6 @@ export class DashboardSettingsPanels extends BaseComponent {
         }
 
         const emailPreferences = {
-            weeklyDigest: Boolean(form.getField('dashboard-settings-email-weekly')?.getValue()),
             eventUpdates: Boolean(form.getField('dashboard-settings-email-event-updates')?.getValue()),
         };
 
@@ -605,7 +604,6 @@ export class DashboardSettingsPanels extends BaseComponent {
         }
 
         this.#renderedPreferenceKey = preferenceKey;
-        this.#forms.preferences.getField('dashboard-settings-email-weekly')?.setValue(emailPreferences.weeklyDigest ?? true);
         this.#forms.preferences.getField('dashboard-settings-email-event-updates')?.setValue(emailPreferences.eventUpdates ?? true);
         this.#forms.preferences.getField('dashboard-settings-email-admin-pending')?.setValue(
             this.#isAdmin()

@@ -3,19 +3,16 @@ import bcrypt from 'bcrypt';
 import { Model } from './model.js';
 
 const EMAIL_PREFERENCE_KEYS = Object.freeze({
-    weeklyDigest: 'weeklyDigest',
     eventUpdates: 'eventUpdates',
     adminPendingRequests: 'adminPendingRequests',
 });
 
 const EMAIL_PREFERENCE_COLUMNS = Object.freeze({
-    [EMAIL_PREFERENCE_KEYS.weeklyDigest]: 'email_weekly_enabled',
     [EMAIL_PREFERENCE_KEYS.eventUpdates]: 'email_event_updates_enabled',
     [EMAIL_PREFERENCE_KEYS.adminPendingRequests]: 'email_admin_pending_requests_enabled',
 });
 
 const DEFAULT_EMAIL_PREFERENCES = Object.freeze({
-    [EMAIL_PREFERENCE_KEYS.weeklyDigest]: true,
     [EMAIL_PREFERENCE_KEYS.eventUpdates]: true,
     [EMAIL_PREFERENCE_KEYS.adminPendingRequests]: true,
 });
@@ -105,10 +102,6 @@ export class User extends Model {
             : {};
 
         return {
-            [EMAIL_PREFERENCE_KEYS.weeklyDigest]: this.normalizeEmailPreferenceValue(
-                source[EMAIL_PREFERENCE_KEYS.weeklyDigest] ?? source[EMAIL_PREFERENCE_COLUMNS[EMAIL_PREFERENCE_KEYS.weeklyDigest]],
-                DEFAULT_EMAIL_PREFERENCES[EMAIL_PREFERENCE_KEYS.weeklyDigest],
-            ),
             [EMAIL_PREFERENCE_KEYS.eventUpdates]: this.normalizeEmailPreferenceValue(
                 source[EMAIL_PREFERENCE_KEYS.eventUpdates] ?? source[EMAIL_PREFERENCE_COLUMNS[EMAIL_PREFERENCE_KEYS.eventUpdates]],
                 DEFAULT_EMAIL_PREFERENCES[EMAIL_PREFERENCE_KEYS.eventUpdates],
@@ -141,7 +134,6 @@ export class User extends Model {
         const normalized = this.normalizeEmailPreferences(preferences);
 
         return {
-            [EMAIL_PREFERENCE_COLUMNS[EMAIL_PREFERENCE_KEYS.weeklyDigest]]: normalized[EMAIL_PREFERENCE_KEYS.weeklyDigest],
             [EMAIL_PREFERENCE_COLUMNS[EMAIL_PREFERENCE_KEYS.eventUpdates]]: normalized[EMAIL_PREFERENCE_KEYS.eventUpdates],
             [EMAIL_PREFERENCE_COLUMNS[EMAIL_PREFERENCE_KEYS.adminPendingRequests]]: normalized[EMAIL_PREFERENCE_KEYS.adminPendingRequests],
         };

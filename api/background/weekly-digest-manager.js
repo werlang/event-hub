@@ -34,13 +34,13 @@ function formatCalendarDatePtBr(value) {
 /**
  * Builds the public-facing label for one Sunday-to-Saturday range.
  */
-function createWeekRangeLabel(weekRange) {
+function createWeekRangeLabel(weekRange, fallback = '') {
     const fromLabel = formatCalendarDatePtBr(weekRange?.from);
     const toLabel = formatCalendarDatePtBr(weekRange?.to);
 
     return fromLabel && toLabel
         ? `${fromLabel} a ${toLabel}`
-        : 'Semana atual';
+    : fallback;
 }
 
 /**
@@ -63,11 +63,11 @@ function createEventDayKey(value) {
 /**
  * Formats one digest day separator label.
  */
-function formatEventDaySeparatorPtBr(value) {
+function formatEventDaySeparatorPtBr(value, fallback = '') {
     const date = new Date(value);
 
     if (Number.isNaN(date.getTime())) {
-        return 'Data a definir';
+        return fallback;
     }
 
     const day = new Intl.DateTimeFormat('pt-BR', {
@@ -83,11 +83,11 @@ function formatEventDaySeparatorPtBr(value) {
 /**
  * Formats one event date the same way the public UI explains the full date and time.
  */
-function formatEventDateTimePtBr(value) {
+function formatEventDateTimePtBr(value, fallback = '') {
     const date = new Date(value);
 
     if (Number.isNaN(date.getTime())) {
-        return 'Data a definir';
+        return fallback;
     }
 
     const dateTime = new Intl.DateTimeFormat('pt-BR', {
@@ -107,11 +107,11 @@ function formatEventDateTimePtBr(value) {
 /**
  * Formats one event location. If the location is a link format it as an anchor, otherwise return the text or a fallback.
  */
-function formatEventLocation(location) {
+function formatEventLocation(location, fallback = '') {
     const normalized = typeof location === 'string' ? location.trim() : '';
 
     if (!normalized) {
-        return { label: 'Local a definir', href: null };
+        return { label: fallback, href: null };
     }
 
     try {
@@ -228,7 +228,7 @@ export class WeeklyDigestManager {
             events,
             strings,
             weekRange,
-            weekRangeLabel: createWeekRangeLabel(weekRange),
+            weekRangeLabel: createWeekRangeLabel(weekRange, strings.currentWeekFallback || ''),
         };
     }
 
@@ -236,15 +236,14 @@ export class WeeklyDigestManager {
      * Returns the explicit weekly digest audience.
      */
     async listRecipients() {
-        const preferenceFilteredUsers = await this.#userModel.listEmailPreferenceRecipients(User.EMAIL_PREFERENCE_KEYS.weeklyDigest, {
+        const persistedUsers = await this.#userModel.list({
             view: ['id', 'name', 'email'],
         });
         if (this.#mailList && Array.isArray(this.#mailList) && this.#mailList.length > 0) {
-            const emailsFromMailList = this.#mailList.map((entry) => normalizeEmailAddress(entry?.email)).filter((email) => !!email);
-            return normalizeRecipientAudience(preferenceFilteredUsers.filter((user) => emailsFromMailList.includes(normalizeEmailAddress(user?.email))));
+            return normalizeRecipientAudience(this.#mailList);
         }
 
-        return normalizeRecipientAudience(preferenceFilteredUsers);
+        return normalizeRecipientAudience(persistedUsers);
     }
 
     /**
@@ -259,11 +258,13 @@ export class WeeklyDigestManager {
             year: new Date().getFullYear(),
         });
         const content = this.#templateManager.loadTemplate(DIGEST_TEMPLATE_KEY, {
+            brandName: strings.brandName || '',
             pageUrl: this.#templateManager.escapeHtml(digest.pageUrl) || '',
             calendarUrl: this.#templateManager.escapeHtml(digest.calendarUrl) || '',
             pageButtonText: strings.pageButtonText || '',
             calendarButtonText: strings.calendarButtonText || '',
             emailTitle: strings.emailTitle || '',
+            eyebrowText: strings.eyebrowText || '',
             eventBlocks: this.#templateManager.raw(this.#buildEventBlocks(digest.events || [], strings)),
             footerText: strings.footerText || '',
             signature,
@@ -273,6 +274,7 @@ export class WeeklyDigestManager {
             }),
             eventDescriptionText: strings.eventDescriptionText || '',
             reviewText: strings.reviewText || '',
+            weekRangeTitle: strings.weekRangeTitle || '',
             weekRangeLabel: digest.weekRangeLabel || '',
         });
 
@@ -327,6 +329,7 @@ export class WeeklyDigestManager {
             return this.#templateManager.loadTemplate(DIGEST_EVENT_TEMPLATE_KEY, {
                 calendarHtml: '',
                 eventDescription: strings.emptyStateText || '',
+                eventCardLabel: strings.eventCardLabel || '',
                 eventTitle: strings.emptyStateTitle || '',
                 metaHtml: '',
             });
@@ -339,23 +342,24 @@ export class WeeklyDigestManager {
             const separatorBlock = previousDayKey === eventDayKey
                 ? ''
                 : this.#templateManager.loadTemplate(DIGEST_DAY_SEPARATOR_TEMPLATE_KEY, {
-                    separatorLabel: formatEventDaySeparatorPtBr(event?.date),
+                    separatorLabel: formatEventDaySeparatorPtBr(event?.date, strings.dateFallback || ''),
                 });
 
-            const location = formatEventLocation(event?.location);
-            const localtionValue = location.href ? this.#templateManager.interpolateString(strings.locationLinkText || '', {
+            const location = formatEventLocation(event?.location, strings.locationFallback || '');
+            const locationValue = location.href ? this.#templateManager.interpolateString(strings.locationLinkText || '', {
                 location: location.label,
             }) : location.label;
-            const locationHtml = location.href ? this.#templateManager.raw(`<a href="${this.#templateManager.escapeHtml(location.href)}" target="_blank" rel="noopener noreferrer">${this.#templateManager.escapeHtml(localtionValue)}</a>`) : this.#templateManager.escapeHtml(localtionValue);
+            const locationHtml = location.href ? this.#templateManager.raw(`<a href="${this.#templateManager.escapeHtml(location.href)}" target="_blank" rel="noopener noreferrer">${this.#templateManager.escapeHtml(locationValue)}</a>`) : this.#templateManager.escapeHtml(locationValue);
             previousDayKey = eventDayKey;
 
             return separatorBlock + this.#templateManager.loadTemplate(DIGEST_EVENT_TEMPLATE_KEY, {
                 eventDescription: this.#templateManager.raw(
                     this.#templateManager.escapeHtml(String(event?.description || '').trim()),
                 ),
-                eventTitle: String(event?.title || '').trim() || 'Sem título',
+                eventCardLabel: strings.eventCardLabel || '',
+                eventTitle: String(event?.title || '').trim() || strings.untitledEventTitle || '',
                 eventDateLabel: strings.eventDateLabel || '',
-                eventDateValue: formatEventDateTimePtBr(event?.date),
+                eventDateValue: formatEventDateTimePtBr(event?.date, strings.dateFallback || ''),
                 categoryLabel: strings.categoryLabel || '',
                 categoryValue: String(event?.categoryLabel || event?.category || strings.categoryFallback || '').trim(),
                 locationLabel: strings.locationLabel || '',

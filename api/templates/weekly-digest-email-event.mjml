@@ -1,7 +1,7 @@
 <mj-section padding="0 24px 12px" background-color="#ffffff">
     <mj-column background-color="#f3f7f1" padding="18px" border="1px solid #dbe6d8" border-radius="16px">
         <mj-text font-size="11px" color="#5b775a" font-weight="bold" letter-spacing="1px" text-transform="uppercase" padding="0 0 6px">
-            Evento
+            {{eventCardLabel}}
         </mj-text>
         <mj-text font-size="21px" color="#2f3b33" font-weight="bold" line-height="28px" padding="0 0 6px">
             {{eventTitle}}

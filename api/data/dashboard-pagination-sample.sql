@@ -2,7 +2,7 @@
 -- Login: membro.paginacao@example.com
 -- Password: senha123456
 
-INSERT INTO users (id, name, email, role, password_hash, email_weekly_enabled, email_event_updates_enabled, email_admin_pending_requests_enabled, created_at)
+INSERT INTO users (id, name, email, role, password_hash, email_event_updates_enabled, email_admin_pending_requests_enabled, created_at)
 VALUES (
     '11111111-1111-4111-8111-111111111111',
     'Membro Paginação',
@@ -11,14 +11,12 @@ VALUES (
     '$2b$12$br.eY08/507owLT7Cl8YveewKYtXMHkZB5l4RWbmNmmPgzuh3dvjS',
     1,
     1,
-    1,
     '2026-04-02 12:00:00'
 )
 ON DUPLICATE KEY UPDATE
     name = VALUES(name),
     role = VALUES(role),
     password_hash = VALUES(password_hash),
-    email_weekly_enabled = VALUES(email_weekly_enabled),
     email_event_updates_enabled = VALUES(email_event_updates_enabled),
     email_admin_pending_requests_enabled = VALUES(email_admin_pending_requests_enabled);
 
