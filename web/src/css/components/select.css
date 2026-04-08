@@ -1,0 +1,60 @@
+.select-field {
+    position: relative;
+
+    &::after {
+        content: '\f078';
+        position: absolute;
+        right: 18px;
+        bottom: 20px;
+        font: var(--fa-font-solid);
+        font-size: 0.9rem;
+        color: color-mix(in srgb, var(--color-main), var(--color-text) 22%);
+        pointer-events: none;
+        transition: color 0.2s ease;
+    }
+
+    &:focus-within::after {
+        color: var(--color-main);
+    }
+
+    & select {
+        width: 100%;
+        padding: 16px 18px;
+        padding-right: 48px;
+        border-radius: var(--radius-sm);
+        border: 2px solid color-mix(in srgb, var(--color-main), transparent 78%);
+        background: var(--color-background);
+        color: var(--color-text);
+        font-size: 1rem;
+        line-height: 1.4;
+        box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text), transparent 92%);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, transform 0.2s ease;
+        cursor: pointer;
+        appearance: none;
+        background-image: none;
+
+        &:hover {
+            border-color: color-mix(in srgb, var(--color-main), transparent 58%);
+            box-shadow: 0 6px 14px color-mix(in srgb, var(--color-text), transparent 92%);
+        }
+
+        &:focus {
+            outline: none;
+            border-color: var(--color-main);
+            background: var(--color-background);
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-main), transparent 88%), 0 10px 20px color-mix(in srgb, var(--color-text), transparent 92%);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            background: color-mix(in srgb, var(--color-background), var(--color-text) 6%);
+            color: color-mix(in srgb, var(--color-text-secondary), #ffffff 12%);
+            box-shadow: none;
+        }
+
+        &.error {
+            border-color: color-mix(in srgb, #ab3b2f, var(--color-main) 18%);
+            box-shadow: 0 0 0 4px color-mix(in srgb, #ab3b2f, transparent 88%);
+        }
+    }
+}

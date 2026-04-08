@@ -26,7 +26,6 @@
     }
 
     & input:not([type='hidden']):not([type='checkbox']):not([type='radio']),
-    & select,
     & textarea {
         width: 100%;
         padding: 16px 18px;
@@ -69,64 +68,9 @@
         color: color-mix(in srgb, var(--color-text-secondary), #ffffff 12%);
     }
 
-    & select {
-        padding-right: 48px;
-        cursor: pointer;
-        appearance: none;
-        background-image: none;
-    }
-
-    & label.select-field {
-        position: relative;
-    }
-
-    & label.select-field::after {
-        content: '\f078';
-        position: absolute;
-        right: 18px;
-        bottom: 20px;
-        font: var(--fa-font-solid);
-        font-size: 0.9rem;
-        color: color-mix(in srgb, var(--color-main), var(--color-text) 22%);
-        pointer-events: none;
-        transition: color 0.2s ease;
-    }
-
-    & label.select-field:focus-within::after {
-        color: var(--color-main);
-    }
-
     & textarea {
         min-height: 140px;
         resize: vertical;
-    }
-
-    & label.checkbox-field {
-        flex-direction: row;
-        align-items: center;
-        gap: 12px;
-        min-height: 56px;
-        padding: 0 6px 0 0;
-        color: var(--color-text);
-    }
-
-    & label.checkbox-field input[type='checkbox'] {
-        width: 20px;
-        height: 20px;
-        margin: 0;
-        padding: 0;
-        accent-color: var(--color-main);
-        border: none;
-        box-shadow: none;
-
-        &.error {
-            outline: 2px solid color-mix(in srgb, #ab3b2f, var(--color-main) 18%);
-            outline-offset: 2px;
-        }
-    }
-
-    & label.checkbox-field.disabled {
-        opacity: 0.72;
     }
 
     & .button {

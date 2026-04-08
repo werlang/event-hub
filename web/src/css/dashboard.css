@@ -9,6 +9,8 @@
 @import './components/form.css';
 @import './components/modal.css';
 @import './components/filter-surface.css';
+@import './components/checkbox.css';
+@import './components/select.css';
 @import './components/pagination.css';
 @import './components/toast.css';
 @import './components/tooltip.css';

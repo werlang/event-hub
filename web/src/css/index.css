@@ -11,6 +11,7 @@
 @import './components/event-card.css';
 @import './components/form.css';
 @import './components/filter-surface.css';
+@import './components/select.css';
 @import './components/pagination.css';
 @import './components/toast.css';
 @import './components/tooltip.css';
