@@ -11,7 +11,7 @@
         <mj-section background-color="#f5efe8" padding="28px 20px 0">
             <mj-column>
                 <mj-text align="center" font-size="11px" color="#7d6d63" font-weight="bold" letter-spacing="1.4px" text-transform="uppercase" padding="0 0 10px">
-                    Event Hub
+                    {{brandName}}
                 </mj-text>
             </mj-column>
         </mj-section>
@@ -19,7 +19,7 @@
         <mj-section background-color="#5b775a" padding="26px 24px 24px" border-radius="28px 28px 0 0">
             <mj-column>
                 <mj-text font-size="13px" color="#e3efe0" align="center" font-weight="bold" letter-spacing="1px" text-transform="uppercase" padding="0 0 8px">
-                    Central de notifica&ccedil;&otilde;es
+                    {{eyebrowText}}
                 </mj-text>
                 <mj-text font-size="28px" color="#ffffff" align="center" font-weight="bold" line-height="1.25" padding="0">
                     {{emailTitle}}
@@ -44,7 +44,7 @@
                     {{summaryTitle}}
                 </mj-text>
                 <mj-text font-size="14px" color="#6a727b" line-height="22px" padding="0 0 8px">
-                    Informa&ccedil;&otilde;es principais para revis&atilde;o r&aacute;pida.
+                    {{summaryDescriptionText}}
                 </mj-text>
             </mj-column>
         </mj-section>

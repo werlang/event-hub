@@ -2,15 +2,20 @@ import express from 'express';
 import { Event } from '../model/event.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { requireAdminUser } from '../middleware/authorization.js';
-import { assertAdminCanModerateEvent, assertOwnerCanManageEvent } from '../middleware/event-authorization.js';
+import { assertAdminCanModerateEvent, assertOwnerCanDeleteEvent, assertOwnerCanEditEvent } from '../middleware/event-authorization.js';
 import { HttpError } from '../helpers/error.js';
 import { normalizeEventCategoryId } from '../helpers/event-category.js';
 import { GoogleCalendarPublisher } from '../helpers/google-calendar.js';
+import { EventUpdateNotificationManager } from '../helpers/event-update-notification-manager.js';
+import { PendingEventNotificationManager } from '../helpers/pending-event-notification-manager.js';
 import { sendCreated, sendSuccess } from '../helpers/response.js';
+import { User } from '../model/user.js';
 
 export const router = express.Router();
 
 const ALLOW_SELF_MODERATION = true;
+const pendingEventNotificationManager = new PendingEventNotificationManager();
+const eventUpdateNotificationManager = new EventUpdateNotificationManager();
 
 /**
  * Validates and normalizes the editable event fields required by create and update flows.
@@ -86,6 +91,21 @@ function parseModerationDecisionPayload(payload = {}) {
 }
 
 /**
+ * Attempts to notify opted-in administrators that an event entered the moderation queue.
+ */
+async function notifyPendingApproval(event, organizer) {
+    try {
+        await pendingEventNotificationManager.notifyPendingApproval({
+            event,
+            organizer,
+        });
+    } catch (error) {
+        console.error('Failed to send pending-event admin notification:', error);
+    }
+}
+
+
+/**
  * Lists public events using the supported query-string filters.
  */
 router.get('/', async (req, res, next) => {
@@ -158,6 +178,10 @@ router.post('/', authMiddleware, async (req, res, next) => {
         const createdEvent = await Event.create({
             ...event,
             organizerId: req.user.id,
+        });
+
+        notifyPendingApproval(createdEvent, req.user).catch((error) => {
+            console.error('Failed to send pending-event admin notification after event creation:', error);
         });
 
         return sendCreated(res, {
