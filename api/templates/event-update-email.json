@@ -1,0 +1,17 @@
+{
+    "subject": "Atualização do seu evento no Event Hub",
+    "emailTitle": "Seu evento precisa de nova aprovação",
+    "greetingWithName": "Olá {{name}},",
+    "introText": "Um administrador atualizou um dos seus eventos no Event Hub. Antes de voltar para a agenda pública, ele precisa passar novamente pela revisão administrativa.",
+    "reviewText": "Abra o painel do Event Hub para conferir os dados atualizados e acompanhar o novo status de aprovação do evento.",
+    "buttonText": "Abrir meu painel",
+    "footerText": "Mensagem automática do Event Hub.",
+    "summaryLabel": "Resumo do evento",
+    "eventTitleLabel": "Evento",
+    "editorLabel": "Atualizado por",
+    "dateLabel": "Quando",
+    "categoryLabel": "Categoria",
+    "locationLabel": "Local",
+    "descriptionLabel": "Descrição",
+    "valueUnavailable": "Não informado"
+}

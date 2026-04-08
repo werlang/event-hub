@@ -19,13 +19,10 @@
         <mj-section background-color="#5b775a" padding="26px 24px 24px" border-radius="28px 28px 0 0">
             <mj-column>
                 <mj-text font-size="13px" color="#e3efe0" align="center" font-weight="bold" letter-spacing="1px" text-transform="uppercase" padding="0 0 8px">
-                    Agenda semanal
+                    Central de notifica&ccedil;&otilde;es
                 </mj-text>
-                <mj-text font-size="28px" color="#ffffff" align="center" font-weight="bold" line-height="1.25" padding="0 0 8px">
+                <mj-text font-size="28px" color="#ffffff" align="center" font-weight="bold" line-height="1.25" padding="0">
                     {{emailTitle}}
-                </mj-text>
-                <mj-text font-size="14px" color="#f5fff4" align="center" line-height="22px" padding="0">
-                    {{weekRangeLabel}}
                 </mj-text>
             </mj-column>
         </mj-section>
@@ -35,29 +32,26 @@
                 <mj-text font-size="18px" color="#2f3b33" font-weight="bold" padding="0 0 10px">
                     {{greeting}}
                 </mj-text>
-                <mj-text font-size="15px" color="#5a6169" line-height="24px" padding="0 0 10px">
+                <mj-text font-size="15px" color="#5a6169" line-height="24px" padding="0">
                     {{introText}}
                 </mj-text>
-                <mj-text font-size="15px" color="#5a6169" line-height="24px" padding="0">
-                    {{eventDescriptionText}}
-                </mj-text>
             </mj-column>
         </mj-section>
 
-        <mj-section background-color="#ffffff" padding="8px 24px 14px">
-            <mj-column background-color="#fbf7f2" border="1px solid #eadfce" border-radius="20px" padding="18px">
+        <mj-section background-color="#ffffff" padding="8px 24px 10px">
+            <mj-column background-color="#fbf7f2" border="1px solid #eadfce" border-radius="20px" padding="18px 18px 8px">
                 <mj-text font-size="12px" color="#7d6d63" font-weight="bold" letter-spacing="1px" text-transform="uppercase" padding="0 0 4px">
-                    Per&iacute;odo desta edi&ccedil;&atilde;o
+                    {{summaryTitle}}
                 </mj-text>
-                <mj-text font-size="16px" color="#474c54" font-weight="bold" line-height="24px" padding="0">
-                    {{weekRangeLabel}}
+                <mj-text font-size="14px" color="#6a727b" line-height="22px" padding="0 0 8px">
+                    Informa&ccedil;&otilde;es principais para revis&atilde;o r&aacute;pida.
                 </mj-text>
             </mj-column>
         </mj-section>
 
-        {{eventBlocks}}
+        {{summaryBlocks}}
 
-        <mj-section background-color="#ffffff" padding="8px 24px 6px">
+        <mj-section background-color="#ffffff" padding="6px 24px 4px">
             <mj-column>
                 <mj-text font-size="15px" color="#5a6169" line-height="24px" padding="0">
                     {{reviewText}}
@@ -67,13 +61,8 @@
 
         <mj-section background-color="#ffffff" padding="22px 24px 30px" border-radius="0 0 28px 28px">
             <mj-column>
-                <mj-button background-color="#542740" color="#ffffff" href="{{pageUrl}}" font-size="15px" align="center" padding="0 0 12px">
-                    {{pageButtonText}}
-                </mj-button>
-            </mj-column>
-            <mj-column>
-                <mj-button background-color="#ffffff" color="#542740" border="1px solid #d6c4cf" href="{{calendarUrl}}" font-size="15px" align="center">
-                    {{calendarButtonText}}
+                <mj-button background-color="#542740" color="#ffffff" href="{{actionUrl}}" font-size="15px" align="center">
+                    {{buttonText}}
                 </mj-button>
             </mj-column>
         </mj-section>

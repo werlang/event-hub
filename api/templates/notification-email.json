@@ -1,0 +1,17 @@
+{
+    "subject": "Event Hub - Novo evento aguardando revisão",
+    "emailTitle": "Evento aguardando revisão",
+    "greetingWithName": "Olá {{name}},",
+    "introText": "Um novo evento foi enviado para moderação e já está aguardando revisão na central administrativa.",
+    "reviewText": "Abra o painel do Event Hub para revisar os detalhes do envio e decidir pela aprovação ou rejeição.",
+    "buttonText": "Abrir Event Hub",
+    "footerText": "Mensagem automática do Event Hub.",
+    "summaryLabel": "Resumo do evento",
+    "eventTitleLabel": "Evento",
+    "organizerLabel": "Organizador",
+    "dateLabel": "Quando",
+    "categoryLabel": "Categoria",
+    "locationLabel": "Local",
+    "descriptionLabel": "Descrição",
+    "valueUnavailable": "Não informado"
+}

@@ -1,0 +1,17 @@
+{
+    "subject": "Seu evento foi removido do Event Hub",
+    "emailTitle": "Um administrador excluiu um dos seus eventos",
+    "greetingWithName": "Olá {{name}},",
+    "introText": "Um administrador removeu um dos seus eventos no Event Hub. Os detalhes abaixo servem como registro do envio excluído.",
+    "reviewText": "Se precisar entender o motivo da exclusão ou publicar uma nova versão, abra o painel do Event Hub e entre em contato com a administração responsável.",
+    "buttonText": "Abrir meu painel",
+    "footerText": "Mensagem automática do Event Hub.",
+    "summaryLabel": "Resumo do evento",
+    "eventTitleLabel": "Evento",
+    "editorLabel": "Excluído por",
+    "dateLabel": "Quando",
+    "categoryLabel": "Categoria",
+    "locationLabel": "Local",
+    "descriptionLabel": "Descrição",
+    "valueUnavailable": "Não informado"
+}

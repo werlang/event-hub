@@ -1,0 +1,10 @@
+<mj-section padding="0 20px 10px" background-color="#ffffff">
+    <mj-column background-color="#f3f7f1" padding="14px 16px" border="1px solid #dbe6d8" border-radius="16px">
+        <mj-text font-size="11px" color="#5b775a" font-weight="bold" letter-spacing="1px" text-transform="uppercase" padding="0 0 6px">
+            {{label}}
+        </mj-text>
+        <mj-text font-size="15px" line-height="22px" color="#474c54" padding="0">
+            {{value}}
+        </mj-text>
+    </mj-column>
+</mj-section>
