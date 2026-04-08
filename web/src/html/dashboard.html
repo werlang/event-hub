@@ -100,7 +100,7 @@
 
                     <div class="dashboard-events-filters filter-surface" id="dashboard-events-filters" aria-label="Filtros da lista de eventos">
                         <div class="dashboard-events-filters__grid filter-surface__grid">
-                            <label class="select-field" for="dashboard-events-filter-status">
+                            <label class="select-field" for="dashboard-events-filter-status" id="dashboard-events-filter-status-field">
                                 <span><i class="fa-solid fa-tag"></i> Status</span>
                                 <select id="dashboard-events-filter-status" name="dashboard-events-filter-status">
                                     <option value="all">Todos os status</option>
@@ -110,14 +110,14 @@
                                 </select>
                             </label>
 
-                            <label class="select-field" for="dashboard-events-filter-category">
+                            <label class="select-field" for="dashboard-events-filter-category" id="dashboard-events-filter-category-field">
                                 <span><i class="fa-solid fa-list"></i> Categoria</span>
                                 <select id="dashboard-events-filter-category" name="dashboard-events-filter-category">
                                     <option value="all">Todas as categorias</option>
                                 </select>
                             </label>
 
-                            <label class="select-field" for="dashboard-events-filter-order">
+                            <label class="select-field" for="dashboard-events-filter-order" id="dashboard-events-filter-order-field">
                                 <span><i class="fa-solid fa-sort"></i> Ordenação</span>
                                 <select id="dashboard-events-filter-order" name="dashboard-events-filter-order">
                                     <option value="desc">Mais recentes primeiro</option>
@@ -125,7 +125,16 @@
                                 </select>
                             </label>
 
-                            <div class="checkbox-field" title="Por padrão, a lista destaca apenas eventos futuros ou em andamento.">
+                            <label class="select-field" for="dashboard-events-filter-moderation-scope" id="dashboard-events-filter-moderation-scope-field" hidden>
+                                <span><i class="fa-solid fa-compass"></i> Exibir</span>
+                                <select id="dashboard-events-filter-moderation-scope" name="dashboard-events-filter-moderation-scope">
+                                    <option value="queue">Fila de revisão</option>
+                                    <option value="rejected">Rejeitados de outras contas</option>
+                                    <option value="published">Publicados de outras contas</option>
+                                </select>
+                            </label>
+
+                            <div class="checkbox-field" id="dashboard-events-filter-show-past-field" title="Por padrão, a lista destaca apenas eventos futuros ou em andamento.">
                                 <label class="checkbox-label" for="filter-show-past">
                                     <input id="filter-show-past" name="filter-show-past" type="checkbox">
                                     <span class="checkbox-label-text">Mostrar eventos passados</span>
@@ -150,7 +159,7 @@
                         <p class="dashboard-section__eyebrow">Configurações</p>
                         <h2>Conta e acessos</h2>
                         <p class="dashboard-section__description" id="dashboard-settings-description">
-                            Atualize seus dados, fortaleça sua senha e, se você administra a agenda, gerencie acessos da equipe por aqui.
+                            Atualize seus dados, escolha os avisos por e-mail e, se você administra a agenda, gerencie acessos da equipe por aqui.
                         </p>
                     </div>
 
@@ -166,7 +175,7 @@
                             <p class="dashboard-settings-overview__eyebrow">Sua sessão</p>
                             <h3 class="dashboard-settings-overview__title" id="dashboard-settings-account-name">Conta ativa</h3>
                             <p class="dashboard-settings-overview__intro" id="dashboard-settings-intro">
-                                Organize seus dados de acesso e mantenha a central pronta para o próximo envio.
+                                Organize seus dados de acesso, os alertas recebidos e mantenha a central pronta para o próximo envio.
                             </p>
 
                             <dl class="dashboard-settings-overview__facts">
@@ -195,6 +204,11 @@
                                 <button class="button button--ghost dashboard-settings-nav__button" type="button" data-dashboard-settings-anchor="password">
                                     <i class="fa-solid fa-key" aria-hidden="true"></i>
                                     <span>Senha</span>
+                                </button>
+
+                                <button class="button button--ghost dashboard-settings-nav__button" type="button" data-dashboard-settings-anchor="emails">
+                                    <i class="fa-solid fa-envelope-open-text" aria-hidden="true"></i>
+                                    <span>E-mails</span>
                                 </button>
 
                                 <button class="button button--ghost dashboard-settings-nav__button" type="button" data-dashboard-settings-anchor="admin" id="dashboard-settings-admin-nav" hidden>
@@ -263,6 +277,49 @@
                                     <button class="button" id="dashboard-settings-password-submit" type="submit">
                                         <i class="fa-solid fa-key" aria-hidden="true"></i>
                                         <span>Atualizar senha</span>
+                                    </button>
+                                </form>
+                            </article>
+
+                            <article class="dashboard-settings-panel" id="dashboard-settings-panel-emails" data-dashboard-settings-panel="emails" tabindex="-1">
+                                <div class="dashboard-settings-panel__header">
+                                    <p class="dashboard-settings-panel__eyebrow">Comunicações</p>
+                                    <h3>Controle seus avisos por e-mail</h3>
+                                    <p class="dashboard-settings-panel__description">
+                                        Escolha quais mensagens o Event Hub pode enviar para você, como alertas de atualizações dos seus eventos ou um resumo semanal da agenda pública.
+                                    </p>
+                                </div>
+
+                                <form class="form form--visible dashboard-settings-form" id="dashboard-settings-preferences-form">
+                                    <div class="dashboard-settings-preferences-list">
+                                        <label class="checkbox-field dashboard-settings-preferences-item">
+                                            <input id="dashboard-settings-email-weekly" name="weeklyDigest" type="checkbox">
+                                            <span class="dashboard-settings-preferences-copy">
+                                                <strong>Resumo semanal</strong>
+                                                <small>Receba por e-mail a agenda pública da semana com os eventos já publicados.</small>
+                                            </span>
+                                        </label>
+
+                                        <label class="checkbox-field dashboard-settings-preferences-item">
+                                            <input id="dashboard-settings-email-event-updates" name="eventUpdates" type="checkbox">
+                                            <span class="dashboard-settings-preferences-copy">
+                                                <strong>Atualizações dos seus eventos</strong>
+                                                <small>Autorize avisos sobre revisões, decisões e outros retornos ligados aos eventos da sua conta.</small>
+                                            </span>
+                                        </label>
+
+                                        <label class="checkbox-field dashboard-settings-preferences-item" hidden>
+                                            <input id="dashboard-settings-email-admin-pending" name="adminPendingRequests" type="checkbox">
+                                            <span class="dashboard-settings-preferences-copy">
+                                                <strong>Pedidos pendentes para admins</strong>
+                                                <small>Receba notificações sobre novos envios aguardando revisão na fila de moderação.</small>
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    <button class="button" id="dashboard-settings-preferences-submit" type="submit">
+                                        <i class="fa-solid fa-envelope-circle-check" aria-hidden="true"></i>
+                                        <span>Salvar preferências</span>
                                     </button>
                                 </form>
                             </article>

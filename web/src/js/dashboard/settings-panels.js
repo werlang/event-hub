@@ -59,6 +59,7 @@ export class DashboardSettingsPanels extends BaseComponent {
     #session = null;
     #sessionChangeHandlers = new Set();
     #renderedProfileKey = '';
+    #renderedPreferenceKey = '';
 
     /**
      * Creates the inline settings controller used inside the dashboard.
@@ -74,6 +75,7 @@ export class DashboardSettingsPanels extends BaseComponent {
         this.#forms = {
             profile: new Form(this.#elements.profileForm),
             password: new Form(this.#elements.passwordForm),
+            preferences: new Form(this.#elements.preferencesForm),
             adminReset: new Form(this.#elements.adminResetForm),
             adminPromote: new Form(this.#elements.adminPromoteForm),
         };
@@ -93,6 +95,7 @@ export class DashboardSettingsPanels extends BaseComponent {
             && this.#elements.summary
             && this.#elements.profileForm
             && this.#elements.passwordForm
+            && this.#elements.preferencesForm
             && this.#elements.adminResetForm
             && this.#elements.adminPromoteForm
         );
@@ -153,8 +156,8 @@ export class DashboardSettingsPanels extends BaseComponent {
 
         if (this.#elements.intro) {
             this.#elements.intro.textContent = isAdmin
-                ? 'Gerencie sua conta e os usuários do dashboard.'
-                : 'Gerencie os dados da sua conta e mantenha sua senha atualizada.';
+                ? 'Gerencie sua conta, os alertas recebidos e os usuários do dashboard.'
+                : 'Gerencie os dados da sua conta, seus alertas por e-mail e mantenha sua senha atualizada.';
         }
 
         if (this.#elements.factName) {
@@ -171,8 +174,8 @@ export class DashboardSettingsPanels extends BaseComponent {
 
         if (this.#elements.description) {
             this.#elements.description.textContent = isAdmin
-                ? 'Atualize seus dados e gerencie as contas dos usuários.'
-                : 'Gerencie e atualize seus dados.';
+                ? 'Atualize seus dados, ajuste os avisos por e-mail e gerencie as contas dos usuários.'
+                : 'Gerencie seus dados e escolha quais avisos por e-mail deseja receber.';
         }
 
         if (this.#elements.badge) {
@@ -187,7 +190,16 @@ export class DashboardSettingsPanels extends BaseComponent {
             this.#elements.adminNavButton.hidden = !isAdmin;
         }
 
+        if (this.#elements.adminPendingPreferenceItem) {
+            this.#elements.adminPendingPreferenceItem.hidden = !isAdmin;
+        }
+
+        if (this.#elements.adminPendingPreferenceField) {
+            this.#elements.adminPendingPreferenceField.disabled = !isAdmin;
+        }
+
         this.#syncProfileFields();
+        this.#syncPreferenceFields();
         return this;
     }
 
@@ -220,10 +232,14 @@ export class DashboardSettingsPanels extends BaseComponent {
             adminNavButton: section?.querySelector('#dashboard-settings-admin-nav') || null,
             profilePanel: section?.querySelector('#dashboard-settings-panel-profile') || null,
             passwordPanel: section?.querySelector('#dashboard-settings-panel-password') || null,
+            preferencesPanel: section?.querySelector('#dashboard-settings-panel-emails') || null,
             adminPanel: section?.querySelector('#dashboard-settings-panel-admin') || null,
             adminGroup: section?.querySelector('#dashboard-settings-admin-group') || null,
             profileForm: section?.querySelector('#dashboard-settings-profile-form') || null,
             passwordForm: section?.querySelector('#dashboard-settings-password-form') || null,
+            preferencesForm: section?.querySelector('#dashboard-settings-preferences-form') || null,
+            adminPendingPreferenceField: section?.querySelector('#dashboard-settings-email-admin-pending') || null,
+            adminPendingPreferenceItem: section?.querySelector('#dashboard-settings-email-admin-pending')?.closest('.dashboard-settings-preferences-item') || null,
             adminResetForm: section?.querySelector('#dashboard-settings-admin-reset-form') || null,
             adminPromoteForm: section?.querySelector('#dashboard-settings-admin-promote-form') || null,
         };
@@ -235,6 +251,7 @@ export class DashboardSettingsPanels extends BaseComponent {
     #configureButtons() {
         this.#forms.profile.getSubmitButton()?.setLoadingLabel('Salvando perfil...');
         this.#forms.password.getSubmitButton()?.setLoadingLabel('Atualizando senha...');
+        this.#forms.preferences.getSubmitButton()?.setLoadingLabel('Salvando preferências...');
         this.#forms.adminReset.getSubmitButton()?.setLoadingLabel('Redefinindo...');
         this.#forms.adminPromote.getSubmitButton()?.setLoadingLabel('Promovendo...');
     }
@@ -266,6 +283,10 @@ export class DashboardSettingsPanels extends BaseComponent {
 
         this.#forms.password.submit(async (values, form) => {
             await this.#handlePasswordSubmit(values, form);
+        });
+
+        this.#forms.preferences.submit(async (_values, form) => {
+            await this.#handlePreferencesSubmit(form);
         });
 
         this.#forms.adminReset.submit(async (values, form) => {
@@ -368,6 +389,51 @@ export class DashboardSettingsPanels extends BaseComponent {
 
         form.reset();
         this.#showToast(response.message || 'Senha atualizada.', 'success', DASHBOARD_ACTION_TOAST_GROUP);
+    }
+
+    /**
+     * Submits the authenticated e-mail preference update flow.
+     */
+    async #handlePreferencesSubmit(form) {
+        if (!this.#readSessionToken()) {
+            this.#showToast('Não foi possível validar a sua sessão agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
+            return;
+        }
+
+        const emailPreferences = {
+            weeklyDigest: Boolean(form.getField('dashboard-settings-email-weekly')?.getValue()),
+            eventUpdates: Boolean(form.getField('dashboard-settings-email-event-updates')?.getValue()),
+        };
+
+        if (this.#isAdmin()) {
+            emailPreferences.adminPendingRequests = Boolean(form.getField('dashboard-settings-email-admin-pending')?.getValue());
+        }
+
+        const response = await requestApi('/auth/me/preferences', {
+            method: 'PUT',
+            token: this.#readSessionToken(),
+            body: {
+                emailPreferences,
+            },
+        });
+
+        if (!response.ok) {
+            this.#showToast(response.message || 'Não foi possível atualizar as preferências agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
+            return;
+        }
+
+        if (!response.data?.user) {
+            this.#showToast('A resposta do servidor não trouxe as preferências atualizadas.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
+            return;
+        }
+
+        const nextSession = createUpdatedSession(this.#session, response);
+        storeToken(nextSession.token);
+        resetCurrentSession();
+        this.#session = nextSession;
+        this.render();
+        await this.#emitSessionChange(nextSession, response);
+        this.#showToast(response.message || 'Preferências de e-mail atualizadas.', 'success', DASHBOARD_ACTION_TOAST_GROUP);
     }
 
     /**
@@ -525,13 +591,39 @@ export class DashboardSettingsPanels extends BaseComponent {
     }
 
     /**
+     * Keeps the preference checkboxes aligned with the last known session payload.
+     */
+    #syncPreferenceFields() {
+        const emailPreferences = this.#session?.user?.emailPreferences || {};
+        const preferenceKey = JSON.stringify({
+            ...emailPreferences,
+            isAdmin: this.#isAdmin(),
+        });
+
+        if (preferenceKey === this.#renderedPreferenceKey) {
+            return;
+        }
+
+        this.#renderedPreferenceKey = preferenceKey;
+        this.#forms.preferences.getField('dashboard-settings-email-weekly')?.setValue(emailPreferences.weeklyDigest ?? true);
+        this.#forms.preferences.getField('dashboard-settings-email-event-updates')?.setValue(emailPreferences.eventUpdates ?? true);
+        this.#forms.preferences.getField('dashboard-settings-email-admin-pending')?.setValue(
+            this.#isAdmin()
+                ? (emailPreferences.adminPendingRequests ?? true)
+                : false
+        );
+    }
+
+    /**
      * Focuses one settings panel and updates the local navigation state.
      */
     #focusPanel(panelName) {
         const normalizedPanel = readText(panelName, 'profile').toLowerCase();
         const panel = normalizedPanel === 'password'
             ? this.#elements.passwordPanel
-            : (normalizedPanel === 'admin' ? this.#elements.adminPanel : this.#elements.profilePanel);
+            : (normalizedPanel === 'emails'
+                ? this.#elements.preferencesPanel
+                : (normalizedPanel === 'admin' ? this.#elements.adminPanel : this.#elements.profilePanel));
 
         if (!panel) {
             return;

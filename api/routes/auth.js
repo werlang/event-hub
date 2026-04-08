@@ -21,6 +21,7 @@ function publicUser(user) {
         name: user.name,
         email: user.email,
         role: user.role,
+        emailPreferences: User.normalizeEmailPreferences(user?.emailPreferences || user),
     };
 }
 
@@ -62,6 +63,25 @@ function parseProfileUpdatePayload(payload = {}) {
     }
 
     return { name, email };
+}
+
+/**
+ * Validates the authenticated e-mail preference update payload.
+ */
+function parseEmailPreferencesPayload(payload = {}) {
+    const preferences = payload?.emailPreferences;
+
+    if (!preferences || typeof preferences !== 'object' || Array.isArray(preferences)) {
+        throw new HttpError(400, 'Informe as preferências de e-mail.');
+    }
+
+    for (const preferenceKey of Object.values(User.EMAIL_PREFERENCE_KEYS)) {
+        if (typeof preferences[preferenceKey] !== 'boolean') {
+            throw new HttpError(400, 'Informe todas as preferências de e-mail como verdadeiro ou falso.');
+        }
+    }
+
+    return preferences;
 }
 
 /**
@@ -204,6 +224,26 @@ router.put('/me',
         });
     } catch (err) {
         return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível atualizar o perfil.', err));
+    }
+});
+
+/**
+ * Updates the authenticated user's e-mail preference settings.
+ */
+router.put('/me/preferences',
+    authMiddleware,
+    async (req, res, next) => {
+    try {
+        const currentUser = await loadAuthenticatedUser(req.user.id);
+        const emailPreferences = parseEmailPreferencesPayload(req.body);
+        const updatedUser = await User.updateEmailPreferences(currentUser.id, emailPreferences);
+
+        return sendSuccess(res, {
+            data: { user: publicUser(updatedUser) },
+            message: 'Preferências de e-mail atualizadas.',
+        });
+    } catch (err) {
+        return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível atualizar as preferências de e-mail.', err));
     }
 });
 

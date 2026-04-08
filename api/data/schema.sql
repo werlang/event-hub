@@ -4,6 +4,9 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) NOT NULL UNIQUE,
     role VARCHAR(32) NOT NULL DEFAULT 'member',
     password_hash VARCHAR(255) NOT NULL,
+    email_weekly_enabled TINYINT(1) NOT NULL DEFAULT 1,
+    email_event_updates_enabled TINYINT(1) NOT NULL DEFAULT 1,
+    email_admin_pending_requests_enabled TINYINT(1) NOT NULL DEFAULT 1,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -17,6 +20,7 @@ CREATE TABLE IF NOT EXISTS events (
     status VARCHAR(32) NOT NULL DEFAULT 'pending',
     rejection_reason TEXT DEFAULT NULL,
     calendar_link VARCHAR(255) DEFAULT NULL,
+    calendar_event_id VARCHAR(255) DEFAULT NULL,
     organizer_id CHAR(36),
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (organizer_id) REFERENCES users(id) ON DELETE SET NULL
