@@ -11,7 +11,6 @@
     "calendarButtonText": "Abrir no Google Agenda",
     "footerText": "Mensagem automática do Event Hub.",
     "signature": "{{year}} · Pablo Werlang",
-    "weekRangeTitle": "Período desta edição",
     "eventCardLabel": "Evento",
     "emptyStateTitle": "Nenhum evento aprovado nesta semana",
     "emptyStateText": "A página pública /week também exibiria um estado vazio para este período.",

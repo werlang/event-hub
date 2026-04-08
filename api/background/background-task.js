@@ -353,7 +353,7 @@ export class BackgroundTask {
      * Executes the scheduled callback or logs the skipped run outside production.
      */
     async #run() {
-        if (!this.#isProduction()) {
+        if (!this.#isProduction() && process.env.EMAIL_TESTING !== 'true') {
             this.#logger.info(`[${new Date().toISOString()}] Skipping background task "${this.#name}" for rule "${this.#rule}" because NODE_ENV is "${this.#environment}".`);
             return;
         }

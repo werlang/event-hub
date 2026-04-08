@@ -274,7 +274,6 @@ export class WeeklyDigestManager {
             }),
             eventDescriptionText: strings.eventDescriptionText || '',
             reviewText: strings.reviewText || '',
-            weekRangeTitle: strings.weekRangeTitle || '',
             weekRangeLabel: digest.weekRangeLabel || '',
         });
 

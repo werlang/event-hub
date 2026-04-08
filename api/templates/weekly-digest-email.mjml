@@ -44,17 +44,6 @@
             </mj-column>
         </mj-section>
 
-        <mj-section background-color="#ffffff" padding="8px 24px 14px">
-            <mj-column background-color="#fbf7f2" border="1px solid #eadfce" border-radius="20px" padding="18px">
-                <mj-text font-size="12px" color="#7d6d63" font-weight="bold" letter-spacing="1px" text-transform="uppercase" padding="0 0 4px">
-                    {{weekRangeTitle}}
-                </mj-text>
-                <mj-text font-size="16px" color="#474c54" font-weight="bold" line-height="24px" padding="0">
-                    {{weekRangeLabel}}
-                </mj-text>
-            </mj-column>
-        </mj-section>
-
         {{eventBlocks}}
 
         <mj-section background-color="#ffffff" padding="8px 24px 6px">
