@@ -236,14 +236,15 @@ export class WeeklyDigestManager {
      * Returns the explicit weekly digest audience.
      */
     async listRecipients() {
-        if (this.#mailList) {
-            return normalizeRecipientAudience(this.#mailList);
-        }
-
-        const persistedUsers = await this.#userModel.list({
+        const preferenceFilteredUsers = await this.#userModel.listEmailPreferenceRecipients(User.EMAIL_PREFERENCE_KEYS.weeklyDigest, {
             view: ['id', 'name', 'email'],
         });
-        return normalizeRecipientAudience(persistedUsers);
+        if (this.#mailList && Array.isArray(this.#mailList) && this.#mailList.length > 0) {
+            const emailsFromMailList = this.#mailList.map((entry) => normalizeEmailAddress(entry?.email)).filter((email) => !!email);
+            return normalizeRecipientAudience(preferenceFilteredUsers.filter((user) => emailsFromMailList.includes(normalizeEmailAddress(user?.email))));
+        }
+
+        return normalizeRecipientAudience(preferenceFilteredUsers);
     }
 
     /**
