@@ -138,7 +138,7 @@ describe('helpers/weekly-digest-manager', () => {
         expect(message.content).toContain('&lt;script&gt;alert(2)&lt;/script&gt;');
         expect(message.content).toContain('Extensão &lt;x&gt;');
         expect(message.content).toContain('Equipe &lt;script&gt;');
-        expect(message.content).toContain('Mensagem automática da Agenda CH.');
+        expect(message.content).toContain('Mensagem automática da AgendaCharq.');
         expect(message.content).not.toContain('&lt;mj-section');
         expect(message.content).toContain('<mj-section');
     });

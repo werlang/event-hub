@@ -76,7 +76,7 @@ describe('helpers/pending-event-notification-manager', () => {
             ['admin@example.com'],
             ['grace@example.com'],
         ]);
-        expect(emailHelper.send.mock.calls[0][1]).toBe('Agenda CH - Novo evento aguardando moderação');
+        expect(emailHelper.send.mock.calls[0][1]).toBe('AgendaCharq - Novo evento aguardando moderação');
         expect(emailHelper.send.mock.calls[0][2]).toContain('Feira de Ciências');
         expect(emailHelper.send.mock.calls[0][2]).toContain('Ada Lovelace');
         expect(emailHelper.send.mock.calls[0][2]).toContain('https://agenda-ch.test/dashboard');
@@ -179,7 +179,7 @@ describe('helpers/pending-event-notification-manager', () => {
             organizer: buildUser({ name: 'Ada <script>' }),
         });
 
-        expect(message.subject).toBe('Agenda CH - Novo evento aguardando moderação');
+        expect(message.subject).toBe('AgendaCharq - Novo evento aguardando moderação');
         expect(message.content).toContain('Olá Grace &lt;admin&gt;,');
         expect(message.content).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
         expect(message.content).toContain('Linha 1 &lt;b&gt;forte&lt;/b&gt;');

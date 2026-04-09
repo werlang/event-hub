@@ -1,6 +1,6 @@
 {
     "name": "Agenda Acadêmica - IFSul Campus Charqueadas",
-    "short_name": "Agenda CH",
+    "short_name": "AgendaCharq",
     "description": "Acompanhe os eventos acadêmicos do Campus Charqueadas do Instituto Federal Sul-Rio-Grandense.",
     "start_url": "/",
     "display": "standalone",

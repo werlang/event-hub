@@ -8,11 +8,11 @@ describe('helpers/email-template-manager', () => {
         const strings = manager.loadJsonTemplate('notification-email');
 
         expect(strings).toMatchObject({
-            subject: 'Agenda CH - Novo evento aguardando moderação',
-            brandName: 'Agenda CH',
+            subject: 'AgendaCharq - Novo evento aguardando moderação',
+            brandName: 'AgendaCharq',
             eyebrowText: 'Central de notificações',
             emailTitle: 'Evento aguardando moderação',
-            buttonText: 'Abrir na Agenda CH',
+            buttonText: 'Abrir na AgendaCharq',
             summaryLabel: 'Evento',
         });
     });
@@ -60,7 +60,7 @@ describe('helpers/email-template-manager', () => {
             summaryBlocks: manager.raw('<mj-section><mj-column><mj-text>Raw block</mj-text></mj-column></mj-section>'),
             reviewText: 'Confira abaixo.',
             actionUrl: 'https://agenda-ch.local/week?x=<tag>',
-            buttonText: 'Abrir <Agenda CH>',
+            buttonText: 'Abrir <AgendaCharq>',
             footerText: 'Rodapé',
         });
 
@@ -69,7 +69,7 @@ describe('helpers/email-template-manager', () => {
         expect(content).toContain('Marca &lt;Hub&gt;');
         expect(content).toContain('Faixa &lt;superior&gt;');
         expect(content).not.toContain('Contexto &lt;rápido&gt;.');
-        expect(content).toContain('Abrir &lt;Agenda CH&gt;');
+        expect(content).toContain('Abrir &lt;AgendaCharq&gt;');
     });
 
     test('the manager mirrors the reference flow of combining JSON strings with MJML templates', () => {

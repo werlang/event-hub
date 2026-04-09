@@ -46,7 +46,7 @@ describe('helpers/event-update-notification-manager', () => {
         expect(emailHelper.send).toHaveBeenCalledTimes(1);
         expect(emailHelper.send).toHaveBeenCalledWith(
             ['ada@example.com'],
-            'Atualização do seu evento na Agenda CH',
+            'Atualização do seu evento na AgendaCharq',
             expect.stringContaining('Feira de Ciências Atualizada'),
         );
         expect(emailHelper.send.mock.calls[0][2]).toContain('Grace Hopper');
@@ -157,7 +157,7 @@ describe('helpers/event-update-notification-manager', () => {
         expect(emailHelper.send).toHaveBeenCalledTimes(1);
         expect(emailHelper.send).toHaveBeenCalledWith(
             ['ada@example.com'],
-            'Seu evento foi removido da Agenda CH',
+            'Seu evento foi removido da AgendaCharq',
             expect.stringContaining('Feira de Ciências Cancelada'),
         );
         expect(emailHelper.send.mock.calls[0][2]).toContain('Grace Hopper');
@@ -204,7 +204,7 @@ describe('helpers/event-update-notification-manager', () => {
         expect(emailHelper.send).toHaveBeenCalledTimes(1);
         expect(emailHelper.send).toHaveBeenCalledWith(
             ['ada@example.com'],
-            'Seu evento foi aprovado na Agenda CH',
+            'Seu evento foi aprovado na AgendaCharq',
             expect.stringContaining('Feira de Ciências Publicada'),
         );
         expect(emailHelper.send.mock.calls[0][2]).toContain('Grace Hopper');
@@ -252,7 +252,7 @@ describe('helpers/event-update-notification-manager', () => {
         expect(emailHelper.send).toHaveBeenCalledTimes(1);
         expect(emailHelper.send).toHaveBeenCalledWith(
             ['ada@example.com'],
-            'Seu evento foi rejeitado na Agenda CH',
+            'Seu evento foi rejeitado na AgendaCharq',
             expect.stringContaining('Feira de Ciências em revisão'),
         );
         expect(emailHelper.send.mock.calls[0][2]).toContain('Grace Hopper');
@@ -289,7 +289,7 @@ describe('helpers/event-update-notification-manager', () => {
             editor: buildUser({ id: 'admin-1', role: 'admin', name: 'Grace <admin>' }),
         });
 
-        expect(message.subject).toBe('Atualização do seu evento na Agenda CH');
+        expect(message.subject).toBe('Atualização do seu evento na AgendaCharq');
         expect(message.content).toContain('Olá Ada &lt;owner&gt;,');
         expect(message.content).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
         expect(message.content).toContain('Linha 1 &lt;b&gt;forte&lt;/b&gt;');
@@ -318,7 +318,7 @@ describe('helpers/event-update-notification-manager', () => {
             editor: buildUser({ id: 'admin-1', role: 'admin', name: 'Grace <admin>' }),
         });
 
-        expect(message.subject).toBe('Seu evento foi rejeitado na Agenda CH');
+        expect(message.subject).toBe('Seu evento foi rejeitado na AgendaCharq');
         expect(message.content).toContain('Olá Ada &lt;owner&gt;,');
         expect(message.content).toContain('Evento em &lt;revisão&gt;');
         expect(message.content).toContain('Grace &lt;admin&gt;');
