@@ -22,6 +22,7 @@ const mjml2htmlMock = jest.fn(() => ({
     html: '<html>ok</html>',
     errors: [],
 }));
+const htmlToTextMock = jest.fn(() => 'generated plain text');
 
 jest.unstable_mockModule('nodemailer', () => ({
     default: {
@@ -35,6 +36,10 @@ jest.unstable_mockModule('mjml', () => ({
     default: mjml2htmlMock,
 }));
 
+jest.unstable_mockModule('html-to-text', () => ({
+    convert: htmlToTextMock,
+}));
+
 const { Email } = await import('../../helpers/email.js');
 
 describe('helpers/email', () => {
@@ -43,6 +48,7 @@ describe('helpers/email', () => {
         createTestAccountMock.mockClear();
         getTestMessageUrlMock.mockClear();
         mjml2htmlMock.mockClear();
+        htmlToTextMock.mockClear().mockReturnValue('generated plain text');
         transporterMock.sendMail.mockReset().mockResolvedValue({ messageId: 'msg-1' });
         transporterMock.verify.mockReset().mockResolvedValue(true);
         transporterMock.close.mockReset();
@@ -126,10 +132,11 @@ describe('helpers/email', () => {
         await email.send(['user@example.com'], 'MJML', '<mjml><mj-body><mj-text>Hi</mj-text></mj-body></mjml>');
 
         expect(mjml2htmlMock).toHaveBeenCalledTimes(1);
+        expect(htmlToTextMock).toHaveBeenCalledWith('<html>ok</html>', expect.any(Object));
         expect(transporterMock.sendMail).toHaveBeenCalledWith(expect.objectContaining({
             subject: 'MJML',
             html: '<html>ok</html>',
-            text: undefined,
+            text: 'generated plain text',
         }));
     });
 
@@ -139,10 +146,24 @@ describe('helpers/email', () => {
         await email.send(['user@example.com'], 'HTML', '<p><strong>Olá</strong></p>');
 
         expect(mjml2htmlMock).not.toHaveBeenCalled();
+        expect(htmlToTextMock).toHaveBeenCalledWith('<p><strong>Olá</strong></p>', expect.any(Object));
         expect(transporterMock.sendMail).toHaveBeenCalledWith(expect.objectContaining({
             subject: 'HTML',
             html: '<p><strong>Olá</strong></p>',
-            text: undefined,
+            text: 'generated plain text',
+        }));
+    });
+
+    test('explicit text overrides the generated HTML fallback', async () => {
+        const email = new Email({ testing: true });
+
+        await email.send(['user@example.com'], 'HTML', '<p>Olá</p>', {
+            text: 'manual plain text',
+        });
+
+        expect(transporterMock.sendMail).toHaveBeenCalledWith(expect.objectContaining({
+            html: '<p>Olá</p>',
+            text: 'manual plain text',
         }));
     });
 

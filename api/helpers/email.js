@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { convert as htmlToText } from 'html-to-text';
 import mjml2html from 'mjml';
 
 /**
@@ -166,6 +167,27 @@ export class Email {
     }
 
     /**
+     * Generates one plain-text alternative from HTML content.
+     *
+     * @private
+     * @param {string} htmlContent The HTML content to convert.
+     * @returns {string} The generated plain-text content.
+     */
+    #generateTextFromHtml(htmlContent) {
+        return htmlToText(htmlContent, {
+            wordwrap: 120,
+            selectors: [
+                {
+                    selector: 'a',
+                    options: {
+                        hideLinkHrefIfSameAsText: true,
+                    },
+                },
+            ],
+        });
+    }
+
+    /**
      * Returns whether one body string is MJML.
      *
      * @private
@@ -248,8 +270,10 @@ export class Email {
 
         if (isMjmlBody) {
             html = this.#compileMjml(body);
+            text = this.#generateTextFromHtml(html);
         } else if (isHtmlBody) {
             html = body;
+            text = this.#generateTextFromHtml(html);
         } else {
             text = this.#sanitizeBody(body);
         }
@@ -258,7 +282,7 @@ export class Email {
             from: options.from || this.#from,
             to: to.join(', '),
             subject: finalSubject,
-            text: text || options.text,
+            text: options.text || text,
             html: html || options.html,
             cc: ccRecipients ? ccRecipients.join(', ') : undefined,
             bcc: bccRecipients ? bccRecipients.join(', ') : undefined,
