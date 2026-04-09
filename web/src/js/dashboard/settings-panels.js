@@ -1,4 +1,5 @@
 import { BaseComponent } from '../components/base-component.js';
+import { Button } from '../components/button.js';
 import { Form } from '../components/form.js';
 import { Toast } from '../components/toast.js';
 import { requestApi, storeToken } from '../helpers/api.js';
@@ -39,6 +40,17 @@ function readRoleLabel(role) {
 }
 
 /**
+ * Builds the admin-facing digest status copy shown after a manual trigger.
+ */
+function readManualDigestStatusLabel(manualTriggeredAtLabel) {
+    const normalizedLabel = readText(manualTriggeredAtLabel, '');
+
+    return normalizedLabel
+        ? `Agenda atualizada manualmente em ${normalizedLabel}.`
+        : 'Nenhum envio manual realizado nesta sessão.';
+}
+
+/**
  * Builds the next authenticated session snapshot after a profile update.
  */
 function createUpdatedSession(session, response) {
@@ -56,6 +68,8 @@ function createUpdatedSession(session, response) {
 export class DashboardSettingsPanels extends BaseComponent {
     #elements;
     #forms = {};
+    #manualDigestButton = null;
+    #manualDigestStatusLabel = '';
     #session = null;
     #sessionChangeHandlers = new Set();
     #renderedProfileKey = '';
@@ -79,10 +93,17 @@ export class DashboardSettingsPanels extends BaseComponent {
             adminReset: new Form(this.#elements.adminResetForm),
             adminPromote: new Form(this.#elements.adminPromoteForm),
         };
+        this.#manualDigestButton = this.#elements.adminDigestButton
+            ? new Button({
+                element: this.#elements.adminDigestButton,
+                loadingLabel: 'Enviando resumo...',
+            })
+            : null;
 
         this.#configureButtons();
         this.#wireNavigation();
         this.#wireForms();
+        this.#wireAdminActions();
         this.#updateNavigationState('profile');
     }
 
@@ -116,6 +137,13 @@ export class DashboardSettingsPanels extends BaseComponent {
      * Stores the active session and refreshes the settings copy.
      */
     setSession(session = null) {
+        const previousUserId = readText(this.#session?.user?.id, '');
+        const nextUserId = readText(session?.user?.id, '');
+
+        if (previousUserId && previousUserId !== nextUserId) {
+            this.#manualDigestStatusLabel = '';
+        }
+
         this.#session = session && typeof session === 'object'
             ? session
             : null;
@@ -198,6 +226,10 @@ export class DashboardSettingsPanels extends BaseComponent {
             this.#elements.adminPendingPreferenceField.disabled = !isAdmin;
         }
 
+        if (this.#elements.adminDigestStatus) {
+            this.#elements.adminDigestStatus.textContent = readManualDigestStatusLabel(this.#manualDigestStatusLabel);
+        }
+
         this.#syncProfileFields();
         this.#syncPreferenceFields();
         return this;
@@ -242,6 +274,8 @@ export class DashboardSettingsPanels extends BaseComponent {
             adminPendingPreferenceItem: section?.querySelector('#dashboard-settings-email-admin-pending')?.closest('.dashboard-settings-preferences-item') || null,
             adminResetForm: section?.querySelector('#dashboard-settings-admin-reset-form') || null,
             adminPromoteForm: section?.querySelector('#dashboard-settings-admin-promote-form') || null,
+            adminDigestButton: section?.querySelector('#dashboard-settings-admin-digest-submit') || null,
+            adminDigestStatus: section?.querySelector('#dashboard-settings-admin-digest-status') || null,
         };
     }
 
@@ -254,6 +288,7 @@ export class DashboardSettingsPanels extends BaseComponent {
         this.#forms.preferences.getSubmitButton()?.setLoadingLabel('Salvando preferências...');
         this.#forms.adminReset.getSubmitButton()?.setLoadingLabel('Redefinindo...');
         this.#forms.adminPromote.getSubmitButton()?.setLoadingLabel('Promovendo...');
+        this.#manualDigestButton?.setLoadingLabel('Enviando resumo...');
     }
 
     /**
@@ -295,6 +330,15 @@ export class DashboardSettingsPanels extends BaseComponent {
 
         this.#forms.adminPromote.submit(async (values, form) => {
             await this.#handleAdminPromoteSubmit(values, form);
+        });
+    }
+
+    /**
+     * Wires button-only administrator actions that do not use form submission.
+     */
+    #wireAdminActions() {
+        this.#manualDigestButton?.click(async () => {
+            await this.#handleManualDigestTrigger();
         });
     }
 
@@ -518,6 +562,35 @@ export class DashboardSettingsPanels extends BaseComponent {
 
         form.reset();
         this.#showToast(response.message || 'Usuário promovido a administrador.', 'success', DASHBOARD_ACTION_TOAST_GROUP);
+    }
+
+    /**
+     * Triggers the weekly digest immediately from the administrator settings tools.
+     */
+    async #handleManualDigestTrigger() {
+        if (!this.#isAdmin()) {
+            this.#showToast('Apenas administradores podem enviar o resumo semanal manualmente.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
+            return;
+        }
+
+        if (!this.#readSessionToken()) {
+            this.#showToast('Não foi possível validar a sua sessão agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
+            return;
+        }
+
+        const response = await requestApi('/auth/weekly-digest/send', {
+            method: 'POST',
+            token: this.#readSessionToken(),
+        });
+
+        if (!response.ok) {
+            this.#showToast(response.message || 'Não foi possível enviar o resumo semanal agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
+            return;
+        }
+
+        this.#manualDigestStatusLabel = readText(response.data?.digest?.manualTriggeredAtLabel, '');
+        this.render();
+        this.#showToast(response.message || 'Resumo semanal enviado manualmente.', 'success', DASHBOARD_ACTION_TOAST_GROUP);
     }
 
     /**

@@ -188,6 +188,23 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 18px;
     }
+
+    & .dashboard-settings-admin__actions {
+        display: grid;
+        gap: 12px;
+        align-content: start;
+    }
+
+    & .dashboard-settings-admin__status {
+        margin: 0;
+        padding: 12px 14px;
+        border-radius: var(--radius);
+        border: 1px solid color-mix(in srgb, var(--color-main-alt), transparent 82%);
+        background: color-mix(in srgb, #ffffff, var(--color-background) 26%);
+        color: var(--color-text-secondary);
+        font-size: 0.94rem;
+        line-height: 1.6;
+    }
 }
 
 @media (max-width: 960px) {

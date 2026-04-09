@@ -730,6 +730,7 @@ async function loadSettingsScenario({ requestApiImpl }) {
                 document: dom.window.document,
                 Element: dom.window.Element,
                 BaseComponent,
+                Button,
                 Form,
                 Toast,
                 requestApi: async (path, options = {}) => {
@@ -1711,6 +1712,18 @@ test('admin settings panels reset passwords and promote users through the dashbo
                 };
             }
 
+            if (path === '/auth/weekly-digest/send') {
+                return {
+                    ok: true,
+                    message: 'Resumo semanal enviado manualmente.',
+                    data: {
+                        digest: {
+                            manualTriggeredAtLabel: '09/04/2026, 13:45',
+                        },
+                    },
+                };
+            }
+
             throw new Error(`Unexpected request path: ${path}`);
         },
     });
@@ -1739,6 +1752,8 @@ test('admin settings panels reset passwords and promote users through the dashbo
         document.querySelector('#dashboard-settings-admin-promote-email').value = 'joao@ifsul.edu.br';
         await submitForm(scenario.dom, '#dashboard-settings-admin-promote-form');
 
+        await clickElement(scenario.dom, '#dashboard-settings-admin-digest-submit');
+
         assert.deepEqual(scenario.requestCalls, [
             {
                 path: '/auth/users/password/reset',
@@ -1764,8 +1779,19 @@ test('admin settings panels reset passwords and promote users through the dashbo
                     token: 'admin-token',
                 },
             },
+            {
+                path: '/auth/weekly-digest/send',
+                options: {
+                    method: 'POST',
+                    token: 'admin-token',
+                },
+            },
         ]);
-        assert.equal(scenario.toastRecorded.shows.at(-1)?.text, 'Usuario promovido.');
+        assert.equal(
+            document.querySelector('#dashboard-settings-admin-digest-status')?.textContent?.trim(),
+            'Agenda atualizada manualmente em 09/04/2026, 13:45.',
+        );
+        assert.equal(scenario.toastRecorded.shows.at(-1)?.text, 'Resumo semanal enviado manualmente.');
     } finally {
         scenario.restore();
     }
