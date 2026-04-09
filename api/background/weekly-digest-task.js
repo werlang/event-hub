@@ -3,13 +3,19 @@ import { WeeklyDigestManager } from './weekly-digest-manager.js';
 /**
  * Sends the public weekly digest for the current Sunday-to-Saturday interval.
  */
-async function sendWeeklyDigest() {
+export async function sendWeeklyDigest({
+    referenceDate = new Date(),
+    manualTriggeredAt = null,
+} = {}) {
     const digestManager = new WeeklyDigestManager({
         mailList: [
             { email: process.env.WEEKLY_DIGEST_EMAIL, name: 'Docentes do IFSul' },
         ]
     });
-    await digestManager.sendCurrentWeekDigest();
+
+    return digestManager.sendCurrentWeekDigest(referenceDate, {
+        manualTriggeredAt,
+    });
 }
 
 /**

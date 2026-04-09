@@ -40,17 +40,6 @@ function readRoleLabel(role) {
 }
 
 /**
- * Builds the admin-facing digest status copy shown after a manual trigger.
- */
-function readManualDigestStatusLabel(manualTriggeredAtLabel) {
-    const normalizedLabel = readText(manualTriggeredAtLabel, '');
-
-    return normalizedLabel
-        ? `Agenda atualizada manualmente em ${normalizedLabel}.`
-        : 'Nenhum envio manual realizado nesta sessão.';
-}
-
-/**
  * Builds the next authenticated session snapshot after a profile update.
  */
 function createUpdatedSession(session, response) {
@@ -69,7 +58,6 @@ export class DashboardSettingsPanels extends BaseComponent {
     #elements;
     #forms = {};
     #manualDigestButton = null;
-    #manualDigestStatusLabel = '';
     #session = null;
     #sessionChangeHandlers = new Set();
     #renderedProfileKey = '';
@@ -96,7 +84,7 @@ export class DashboardSettingsPanels extends BaseComponent {
         this.#manualDigestButton = this.#elements.adminDigestButton
             ? new Button({
                 element: this.#elements.adminDigestButton,
-                loadingLabel: 'Enviando resumo...',
+                loadingLabel: 'Enviando agenda...',
             })
             : null;
 
@@ -137,13 +125,6 @@ export class DashboardSettingsPanels extends BaseComponent {
      * Stores the active session and refreshes the settings copy.
      */
     setSession(session = null) {
-        const previousUserId = readText(this.#session?.user?.id, '');
-        const nextUserId = readText(session?.user?.id, '');
-
-        if (previousUserId && previousUserId !== nextUserId) {
-            this.#manualDigestStatusLabel = '';
-        }
-
         this.#session = session && typeof session === 'object'
             ? session
             : null;
@@ -226,10 +207,6 @@ export class DashboardSettingsPanels extends BaseComponent {
             this.#elements.adminPendingPreferenceField.disabled = !isAdmin;
         }
 
-        if (this.#elements.adminDigestStatus) {
-            this.#elements.adminDigestStatus.textContent = readManualDigestStatusLabel(this.#manualDigestStatusLabel);
-        }
-
         this.#syncProfileFields();
         this.#syncPreferenceFields();
         return this;
@@ -275,7 +252,6 @@ export class DashboardSettingsPanels extends BaseComponent {
             adminResetForm: section?.querySelector('#dashboard-settings-admin-reset-form') || null,
             adminPromoteForm: section?.querySelector('#dashboard-settings-admin-promote-form') || null,
             adminDigestButton: section?.querySelector('#dashboard-settings-admin-digest-submit') || null,
-            adminDigestStatus: section?.querySelector('#dashboard-settings-admin-digest-status') || null,
         };
     }
 
@@ -288,7 +264,7 @@ export class DashboardSettingsPanels extends BaseComponent {
         this.#forms.preferences.getSubmitButton()?.setLoadingLabel('Salvando preferências...');
         this.#forms.adminReset.getSubmitButton()?.setLoadingLabel('Redefinindo...');
         this.#forms.adminPromote.getSubmitButton()?.setLoadingLabel('Promovendo...');
-        this.#manualDigestButton?.setLoadingLabel('Enviando resumo...');
+        this.#manualDigestButton?.setLoadingLabel('Enviando agenda...');
     }
 
     /**
@@ -581,6 +557,9 @@ export class DashboardSettingsPanels extends BaseComponent {
         const response = await requestApi('/auth/weekly-digest/send', {
             method: 'POST',
             token: this.#readSessionToken(),
+            body: {
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            },
         });
 
         if (!response.ok) {
@@ -588,9 +567,8 @@ export class DashboardSettingsPanels extends BaseComponent {
             return;
         }
 
-        this.#manualDigestStatusLabel = readText(response.data?.digest?.manualTriggeredAtLabel, '');
         this.render();
-        this.#showToast(response.message || 'Resumo semanal enviado manualmente.', 'success', DASHBOARD_ACTION_TOAST_GROUP);
+        this.#showToast(response.message || 'Agenda semanal enviada com sucesso.', 'success', DASHBOARD_ACTION_TOAST_GROUP);
     }
 
     /**

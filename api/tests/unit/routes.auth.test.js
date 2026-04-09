@@ -31,6 +31,7 @@ describe('routes/auth', () => {
     const passwordHandlers = getRouteHandlers(authRouter, 'put', '/password').slice(1);
     const resetPasswordHandlers = getRouteHandlers(authRouter, 'put', '/users/password/reset').slice(1);
     const usersHandlers = getRouteHandlers(authRouter, 'get', '/users').slice(1);
+    const manualDigestHandlers = getRouteHandlers(authRouter, 'post', '/weekly-digest/send').slice(1);
     const promoteHandlers = getRouteHandlers(authRouter, 'put', '/users/:id/promote').slice(1);
 
     test('register creates an account and returns a session payload', async () => {
@@ -462,6 +463,46 @@ describe('routes/auth', () => {
 
         expect(next.mock.calls[0][0].status).toBe(500);
         expect(next.mock.calls[0][0].message).toBe('Não foi possível carregar os usuários.');
+    });
+
+    test('manual weekly digest sending requires an admin and returns the manual trigger summary', async () => {
+        trackReplacement(restores, User, 'findById', async id => buildUser({ id, role: 'admin' }));
+
+        const successRes = createResponseDouble();
+        const successNext = jest.fn();
+        await runRouteHandlers(manualDigestHandlers, createRequest({
+            app: {
+                locals: {
+                    weeklyDigestSender: async ({ manualTriggeredAt }) => ({
+                        eventCount: 3,
+                        manualTriggeredAt: manualTriggeredAt.toISOString(),
+                        manualTriggeredAtLabel: '09/04/2026, 13:45',
+                        recipientCount: 2,
+                        sentCount: 2,
+                        weekRange: {
+                            from: '2026-04-05',
+                            to: '2026-04-11',
+                        },
+                    }),
+                },
+            },
+            user: { id: 'admin-1', role: 'admin' },
+        }), successRes, successNext);
+
+        expect(successNext).not.toHaveBeenCalled();
+        expect(successRes.body.message).toBe('Resumo semanal enviado manualmente.');
+        expect(successRes.body.data.digest).toMatchObject({
+            eventCount: 3,
+            manualTriggeredAtLabel: '09/04/2026, 13:45',
+            recipientCount: 2,
+            sentCount: 2,
+        });
+
+        const forbiddenNext = jest.fn();
+        await runRouteHandlers(manualDigestHandlers, createRequest({
+            user: { id: 'user-1', role: 'member' },
+        }), createResponseDouble(), forbiddenNext);
+        expect(forbiddenNext.mock.calls[0][0].status).toBe(403);
     });
 
     test('promote handles the common admin workflows and edge cases', async () => {

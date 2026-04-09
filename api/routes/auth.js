@@ -1,4 +1,5 @@
 import express from 'express';
+import { sendWeeklyDigest } from '../background/weekly-digest-task.js';
 import { User } from '../model/user.js';
 import { signToken } from '../helpers/token.js';
 import { authMiddleware } from '../middleware/auth.js';
@@ -317,6 +318,31 @@ router.get('/users',
         });
     } catch (err) {
         return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível carregar os usuários.', err));
+    }
+});
+
+/**
+ * Sends the weekly digest immediately through the administrator settings tools.
+ */
+router.post('/weekly-digest/send',
+    authMiddleware,
+    requireAdminUser,
+    async (req, res, next) => {
+    try {
+        await loadAuthenticatedUser(req.user.id);
+
+        const timezone = typeof req.body?.timezone === 'string' ? req.body.timezone : null;
+
+        const digest = await sendWeeklyDigest({
+            manualTriggeredAt: timezone ? new Date(new Date().toLocaleString('en-US', { timeZone: timezone })) : new Date(),
+        });
+
+        return sendSuccess(res, {
+            data: { digest },
+            message: 'Email da agenda semanal enviado com sucesso.',
+        });
+    } catch (err) {
+        return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível enviar o email da agenda semanal.', err));
     }
 });
 

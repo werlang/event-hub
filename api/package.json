@@ -22,7 +22,7 @@
     "mjml": "^4.18.0",
     "mysql2": "^3.18.0",
     "mysqldump": "^3.2.0",
-    "nodemailer": "^8.0.4"
+    "nodemailer": "^8.0.5"
   },
   "devDependencies": {
     "jest": "^30.2.0"

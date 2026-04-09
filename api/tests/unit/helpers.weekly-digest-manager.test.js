@@ -142,4 +142,50 @@ describe('helpers/weekly-digest-manager', () => {
         expect(message.content).not.toContain('&lt;mj-section');
         expect(message.content).toContain('<mj-section');
     });
+
+    test('manual digest runs append the update timestamp to the subject and summary payload', async () => {
+        const emailHelper = {
+            send: jest.fn(async () => ({
+                messageId: 'msg:manual',
+            })),
+        };
+        const manager = new WeeklyDigestManager({
+            emailHelper,
+            eventModel: {
+                listCurrentWeek: jest.fn(async () => ([
+                    buildEvent({
+                        title: 'Plantão de Projetos',
+                        status: 'published',
+                    }),
+                ])),
+            },
+            templateManager: new EmailTemplateManager(),
+            userModel: {
+                list: jest.fn(async () => ([
+                    buildUser({ email: 'docente@ifsul.edu.br' }),
+                ])),
+            },
+        });
+        const referenceDate = new Date(2026, 3, 7, 18, 0, 0, 0);
+        const manualTriggeredAt = new Date(2026, 3, 9, 15, 45, 0, 0);
+
+        const digest = await manager.getCurrentWeekDigest(referenceDate, { manualTriggeredAt });
+        const message = manager.renderDigestEmail(buildUser(), digest);
+        const result = await manager.sendCurrentWeekDigest(referenceDate, { manualTriggeredAt });
+
+        expect(digest.manualTriggeredAt).toBe(manualTriggeredAt.toISOString());
+        expect(digest.manualTriggeredAtLabel).toBeTruthy();
+        expect(message.subject).toContain(`Agenda atualizada em ${digest.manualTriggeredAtLabel}`);
+        expect(emailHelper.send).toHaveBeenCalledWith(
+            ['docente@ifsul.edu.br'],
+            message.subject,
+            expect.any(String),
+        );
+        expect(result).toMatchObject({
+            manualTriggeredAt: manualTriggeredAt.toISOString(),
+            manualTriggeredAtLabel: digest.manualTriggeredAtLabel,
+            recipientCount: 1,
+            sentCount: 1,
+        });
+    });
 });

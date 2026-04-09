@@ -1,5 +1,6 @@
 {
     "subject": "Agenda da semana · {{weekRangeLabel}}",
+    "manualTriggerSubjectSuffix": " · Atualização {{manualTriggeredAtLabel}}",
     "brandName": "AgendaCharq",
     "eyebrowText": "Agenda semanal",
     "emailTitle": "Agenda Campus Charqueadas",

@@ -32,6 +32,43 @@ function formatCalendarDatePtBr(value) {
 }
 
 /**
+ * Normalizes one optional date-like value used by manual digest actions.
+ */
+function normalizeOptionalDate(value) {
+    if (!value) {
+        return null;
+    }
+
+    const normalized = value instanceof Date
+        ? new Date(value.getTime())
+        : new Date(value);
+
+    return Number.isNaN(normalized.getTime())
+        ? null
+        : normalized;
+}
+
+/**
+ * Formats one manual digest trigger timestamp for the digest subject.
+ */
+function formatManualTriggeredAtPtBr(value, fallback = '') {
+    const date = normalizeOptionalDate(value);
+
+    if (!date) {
+        return fallback;
+    }
+
+    // DD/MM, HH:mm
+    return new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    }).format(date);
+}
+
+/**
  * Builds the public-facing label for one Sunday-to-Saturday range.
  */
 function createWeekRangeLabel(weekRange, fallback = '') {
@@ -217,12 +254,15 @@ export class WeeklyDigestManager {
     /**
      * Loads the same published current-week event dataset used by the public week page.
      */
-    async getCurrentWeekDigest(referenceDate = new Date()) {
+    async getCurrentWeekDigest(referenceDate = new Date(), { manualTriggeredAt = null } = {}) {
         const weekRange = getCurrentWeekRangeLocal(referenceDate);
         const strings = this.#templateManager.loadJsonTemplate(DIGEST_TEMPLATE_KEY);
         const events = await this.#eventModel.listCurrentWeek(referenceDate);
+        const normalizedManualTriggeredAt = normalizeOptionalDate(manualTriggeredAt);
 
         return {
+            manualTriggeredAt: normalizedManualTriggeredAt?.toISOString() || null,
+            manualTriggeredAtLabel: formatManualTriggeredAtPtBr(normalizedManualTriggeredAt),
             pageUrl: buildWeekPageUrl(this.#webBaseUrl),
             calendarUrl: process.env.GOOGLE_CALENDAR_JOIN_URL || '',
             events,
@@ -236,13 +276,13 @@ export class WeeklyDigestManager {
      * Returns the explicit weekly digest audience.
      */
     async listRecipients() {
-        const persistedUsers = await this.#userModel.list({
-            view: ['id', 'name', 'email'],
-        });
         if (this.#mailList && Array.isArray(this.#mailList) && this.#mailList.length > 0) {
             return normalizeRecipientAudience(this.#mailList);
         }
-
+        
+        const persistedUsers = await this.#userModel.list({
+            view: ['id', 'name', 'email'],
+        });
         return normalizeRecipientAudience(persistedUsers);
     }
 
@@ -251,9 +291,14 @@ export class WeeklyDigestManager {
      */
     renderDigestEmail(recipient, digest) {
         const strings = digest.strings || this.#templateManager.loadJsonTemplate(DIGEST_TEMPLATE_KEY);
+        const manualTriggerSubjectSuffix = digest.manualTriggeredAtLabel
+            ? this.#templateManager.interpolateString(strings.manualTriggerSubjectSuffix || '', {
+                manualTriggeredAtLabel: digest.manualTriggeredAtLabel,
+            })
+            : '';
         const subject = this.#templateManager.interpolateString(strings.subject || '', {
             weekRangeLabel: digest.weekRangeLabel,
-        });
+        }) + manualTriggerSubjectSuffix;
         const signature = this.#templateManager.interpolateString(strings.signature || '', {
             year: new Date().getFullYear(),
         });
@@ -283,14 +328,16 @@ export class WeeklyDigestManager {
     /**
      * Sends the current-week digest once per persisted recipient email address.
      */
-    async sendCurrentWeekDigest(referenceDate = new Date()) {
-        const digest = await this.getCurrentWeekDigest(referenceDate);
+    async sendCurrentWeekDigest(referenceDate = new Date(), { manualTriggeredAt = null } = {}) {
+        const digest = await this.getCurrentWeekDigest(referenceDate, { manualTriggeredAt });
         const recipients = await this.listRecipients();
 
         if (recipients.length === 0) {
             this.#logger.info('Weekly digest skipped because there are no persisted recipient email addresses.');
             return {
                 eventCount: digest.events.length,
+                manualTriggeredAt: digest.manualTriggeredAt,
+                manualTriggeredAtLabel: digest.manualTriggeredAtLabel,
                 recipientCount: 0,
                 sentCount: 0,
                 weekRange: digest.weekRange,
@@ -314,6 +361,8 @@ export class WeeklyDigestManager {
         return {
             deliveries,
             eventCount: digest.events.length,
+            manualTriggeredAt: digest.manualTriggeredAt,
+            manualTriggeredAtLabel: digest.manualTriggeredAtLabel,
             recipientCount: recipients.length,
             sentCount: deliveries.length,
             weekRange: digest.weekRange,
