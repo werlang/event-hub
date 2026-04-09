@@ -5,7 +5,7 @@ import { router as events } from './routes/events.js';
 import { HttpError } from './helpers/error.js';
 import { sendSuccess } from './helpers/response.js';
 import { errorMiddleware } from './middleware/error.js';
-import { startBackgroundTasks } from './helpers/background.js';
+import { startBackgroundTasks } from './helpers/background-task-loader.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
