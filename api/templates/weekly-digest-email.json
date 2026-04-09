@@ -2,7 +2,7 @@
     "subject": "Agenda da semana · {{weekRangeLabel}}",
     "brandName": "Event Hub",
     "eyebrowText": "Agenda semanal",
-    "emailTitle": "Agenda da Semana - Campus Charqueadas",
+    "emailTitle": "Agenda Campus Charqueadas",
     "greeting": "Olá Professores,",
     "introText": "Estes são os eventos agendados para esta semana no Campus Charqueadas. Este é um resumo automático gerado pelo Event Hub, com base nos eventos aprovados para esta semana.",
     "eventDescriptionText": "Quaisquer alterações ou adições poderão ser consultadas diretamente na página da agenda ou no Google Agenda, que são atualizados em tempo real conforme os eventos são aprovados.",

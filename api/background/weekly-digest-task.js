@@ -7,13 +7,13 @@ import { WeeklyDigestManager } from './weekly-digest-manager.js';
 async function sendWeeklyDigest() {
     const digestManager = new WeeklyDigestManager({
         mailList: [
-            { email: 'docentes@ifsul.edu.br', name: 'Docentes do IFSul' },
+            { email: process.env.WEEKLY_DIGEST_EMAIL, name: 'Docentes do IFSul' },
         ]
     });
     await digestManager.sendCurrentWeekDigest();
 }
 
-const task = new BackgroundTask('every day at 22:19', sendWeeklyDigest, {
+const task = new BackgroundTask('every sunday at 18:00', sendWeeklyDigest, {
     name: 'weekly-email-digest',
 });
 
