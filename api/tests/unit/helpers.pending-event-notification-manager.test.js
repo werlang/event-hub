@@ -5,6 +5,36 @@ import { User } from '../../model/user.js';
 import { buildEvent, buildUser } from './support/fixtures.js';
 
 describe('helpers/pending-event-notification-manager', () => {
+    test('notifyPendingApproval skips delivery when there are no opted-in admin recipients', async () => {
+        const logger = {
+            error: jest.fn(),
+            info: jest.fn(),
+        };
+        const manager = new PendingEventNotificationManager({
+            emailHelper: { send: jest.fn() },
+            logger,
+            templateManager: new EmailTemplateManager(),
+            userModel: {
+                listEmailPreferenceRecipients: jest.fn(async () => []),
+            },
+            webBaseUrl: 'https://event-hub.test',
+        });
+
+        const result = await manager.notifyPendingApproval({
+            event: buildEvent(),
+            organizer: buildUser(),
+        });
+
+        expect(result).toEqual({
+            deliveries: [],
+            failures: [],
+            failedCount: 0,
+            recipientCount: 0,
+            sentCount: 0,
+        });
+        expect(logger.info).toHaveBeenCalledWith('Pending-event notification skipped because there are no opted-in admin recipients.');
+    });
+
     test('notifyPendingApproval sends one styled message per opted-in admin email address', async () => {
         const emailHelper = {
             send: jest.fn(async ([email]) => ({
@@ -157,5 +187,31 @@ describe('helpers/pending-event-notification-manager', () => {
         expect(message.content).toContain('Acadêmico &lt;x&gt;');
         expect(message.content).not.toContain('&lt;mj-section');
         expect(message.content).toContain('<mj-section');
+    });
+
+    test('renderPendingApprovalEmail falls back to default recipient, unavailable values, and normalized dashboard URL', () => {
+        const manager = new PendingEventNotificationManager({
+            emailHelper: { send: jest.fn() },
+            templateManager: new EmailTemplateManager(),
+            userModel: { listEmailPreferenceRecipients: jest.fn(async () => []) },
+            webBaseUrl: 'https://event-hub.test///',
+        });
+
+        const message = manager.renderPendingApprovalEmail({}, {
+            event: buildEvent({
+                title: '',
+                description: '',
+                date: 'not-a-date',
+                location: '',
+                categoryLabel: '',
+                organizerName: 'Linus Torvalds',
+            }),
+        });
+
+        expect(message.content).toContain('Olá admin,');
+        expect(message.content).toContain('Linus Torvalds');
+        expect(message.content).toContain('Data a definir');
+        expect(message.content).toContain('Não informado');
+        expect(message.content).toContain('https://event-hub.test/dashboard');
     });
 });

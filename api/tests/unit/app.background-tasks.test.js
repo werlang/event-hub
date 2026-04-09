@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, jest, test } from '@jest/globals';
 import { BackgroundTask } from '../../background/background-task.js';
+import { task as weeklyDigestTask } from '../../background/weekly-digest-task.js';
 import { BACKGROUND_TASK_FILES, startBackgroundTasks } from '../../app.js';
 
 describe('app background tasks', () => {
@@ -35,5 +36,14 @@ describe('app background tasks', () => {
         expect(task.start).toHaveBeenCalledTimes(1);
         expect(startedTasks).toEqual([task]);
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('invalid-task'));
+    });
+
+    test('startBackgroundTasks uses the default loader to boot the real weekly digest task module', async () => {
+        const startSpy = jest.spyOn(weeklyDigestTask, 'start').mockImplementation(() => weeklyDigestTask);
+
+        const startedTasks = await startBackgroundTasks(['weekly-digest-task']);
+
+        expect(startSpy).toHaveBeenCalledTimes(1);
+        expect(startedTasks).toEqual([weeklyDigestTask]);
     });
 });

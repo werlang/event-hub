@@ -1,12 +1,15 @@
 import { afterEach, describe, expect, jest, test } from '@jest/globals';
 
 describe('background/weekly-digest-task', () => {
+    const originalWeeklyDigestEmail = process.env.WEEKLY_DIGEST_EMAIL;
+
     afterEach(() => {
         jest.resetModules();
         jest.restoreAllMocks();
+        process.env.WEEKLY_DIGEST_EMAIL = originalWeeklyDigestEmail;
     });
 
-    test('exports the weekly digest task with the configured daily schedule and canonical name', async () => {
+    test('exports the weekly digest task with the configured weekly schedule and canonical name', async () => {
         const createdTasks = [];
 
         jest.unstable_mockModule('../../background/background-task.js', () => ({
@@ -29,7 +32,7 @@ describe('background/weekly-digest-task', () => {
 
         expect(createdTasks).toHaveLength(1);
         expect(task).toBe(createdTasks[0]);
-        expect(task.rule).toBe('every day at 20:54');
+        expect(task.rule).toBe('every sunday at 18:00');
         expect(task.options).toEqual({
             name: 'weekly-email-digest',
         });
@@ -40,6 +43,7 @@ describe('background/weekly-digest-task', () => {
         const createdTasks = [];
         const managerOptions = [];
         const sendCurrentWeekDigest = jest.fn(async () => {});
+        process.env.WEEKLY_DIGEST_EMAIL = 'pablowerlang@ifsul.edu.br';
 
         jest.unstable_mockModule('../../background/background-task.js', () => ({
             BackgroundTask: class BackgroundTask {

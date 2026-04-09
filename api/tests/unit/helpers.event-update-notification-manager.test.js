@@ -4,6 +4,20 @@ import { EventUpdateNotificationManager } from '../../helpers/event-update-notif
 import { buildEvent, buildUser } from './support/fixtures.js';
 
 describe('helpers/event-update-notification-manager', () => {
+    test('readRecipient normalizes the owner email and rejects missing recipient data', () => {
+        const manager = new EventUpdateNotificationManager({
+            emailHelper: { send: jest.fn() },
+            templateManager: new EmailTemplateManager(),
+        });
+
+        expect(manager.readRecipient(buildUser({ name: ' Ada Lovelace ', email: ' ADA@example.com ' }))).toEqual({
+            email: 'ada@example.com',
+            name: 'Ada Lovelace',
+        });
+        expect(manager.readRecipient(buildUser({ email: '   ' }))).toBeNull();
+        expect(manager.readRecipient(null)).toBeNull();
+    });
+
     test('notifyEventUpdated sends one styled message to the opted-in owner', async () => {
         const emailHelper = {
             send: jest.fn(async ([email]) => ({
@@ -75,6 +89,38 @@ describe('helpers/event-update-notification-manager', () => {
         });
 
         expect(emailHelper.send).not.toHaveBeenCalled();
+        expect(result).toEqual({
+            delivery: null,
+            recipient: null,
+            sentCount: 0,
+            skipped: true,
+        });
+    });
+
+    test('notifyEventApproved skips owners with no deliverable email and logs the skip', async () => {
+        const logger = {
+            info: jest.fn(),
+        };
+        const emailHelper = {
+            send: jest.fn(async () => ({
+                messageId: 'msg:ignored',
+            })),
+        };
+        const manager = new EventUpdateNotificationManager({
+            emailHelper,
+            logger,
+            templateManager: new EmailTemplateManager(),
+            webBaseUrl: 'https://event-hub.test',
+        });
+
+        const result = await manager.notifyEventApproved({
+            event: buildEvent({ status: 'published' }),
+            owner: buildUser({ email: '   ' }),
+            editor: buildUser({ id: 'admin-1', role: 'admin', name: 'Grace Hopper' }),
+        });
+
+        expect(emailHelper.send).not.toHaveBeenCalled();
+        expect(logger.info).toHaveBeenCalledWith('Event-approval owner notification skipped because the owner is missing, has no email, or opted out.');
         expect(result).toEqual({
             delivery: null,
             recipient: null,
@@ -279,5 +325,31 @@ describe('helpers/event-update-notification-manager', () => {
         expect(message.content).toContain('Explique melhor o público &lt;alvo&gt; e a estrutura de apoio.');
         expect(message.content).not.toContain('&lt;mj-section');
         expect(message.content).toContain('<mj-section');
+    });
+
+    test('renderEventRejectedEmail falls back to the default rejection reason and unavailable values', () => {
+        const manager = new EventUpdateNotificationManager({
+            emailHelper: { send: jest.fn() },
+            templateManager: new EmailTemplateManager(),
+            webBaseUrl: 'https://event-hub.test///',
+        });
+
+        const message = manager.renderEventRejectedEmail({}, {
+            event: buildEvent({
+                title: '',
+                description: '',
+                date: 'invalid-date',
+                rejectionReason: '',
+                location: '',
+                categoryLabel: '',
+                category: '',
+            }),
+        });
+
+        expect(message.content).toContain('Olá participante,');
+        expect(message.content).toContain('Nenhum motivo específico foi informado.');
+        expect(message.content).toContain('Data a definir');
+        expect(message.content).toContain('Rejeitado por:');
+        expect(message.content).toContain('https://event-hub.test/dashboard');
     });
 });

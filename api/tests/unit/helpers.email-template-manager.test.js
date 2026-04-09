@@ -12,9 +12,8 @@ describe('helpers/email-template-manager', () => {
             brandName: 'Event Hub',
             eyebrowText: 'Central de notificações',
             emailTitle: 'Evento aguardando moderação',
-            buttonText: 'Abrir Event Hub',
-            summaryLabel: 'Resumo do evento',
-            summaryDescriptionText: 'Informações principais para consulta rápida.',
+            buttonText: 'Abrir no Event Hub',
+            summaryLabel: 'Evento',
         });
     });
 
@@ -69,7 +68,7 @@ describe('helpers/email-template-manager', () => {
         expect(content).toContain('href="https://event-hub.local/week?x=&lt;tag&gt;"');
         expect(content).toContain('Marca &lt;Hub&gt;');
         expect(content).toContain('Faixa &lt;superior&gt;');
-        expect(content).toContain('Contexto &lt;rápido&gt;.');
+        expect(content).not.toContain('Contexto &lt;rápido&gt;.');
         expect(content).toContain('Abrir &lt;Event Hub&gt;');
     });
 
