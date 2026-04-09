@@ -1,4 +1,3 @@
-import { BackgroundTask } from './background-task.js';
 import { WeeklyDigestManager } from './weekly-digest-manager.js';
 
 /**
@@ -13,8 +12,11 @@ async function sendWeeklyDigest() {
     await digestManager.sendCurrentWeekDigest();
 }
 
-const task = new BackgroundTask('every sunday at 18:00', sendWeeklyDigest, {
+/**
+ * Creates a background task for sending the weekly digest email on Sundays at 6 PM.
+ */
+export const task = {
+    rule: 'every sunday at 18:00',
     name: 'weekly-email-digest',
-});
-
-export { task };
+    callback: sendWeeklyDigest,
+}

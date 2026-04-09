@@ -3,26 +3,38 @@ import { BackgroundTask } from '../background/background-task.js';
 /**
  * Loads one background task module from the background directory.
  */
-async function loadBackgroundTaskModule(file) {
-    return import(`../background/${file}.js`);
+async function taskLoader(file) {
+    if (!file || typeof file !== 'string') {
+        throw new Error(`Invalid task configuration: missing "file" property.`);
+    }
+    const { task } = await import(`../background/${file}.js`);
+    if (!task?.rule || !task?.callback || !task?.name) {
+        throw new Error(`Invalid task configuration: missing required properties: rule, callback, name.`);
+    }
+
+    return new BackgroundTask(task.rule, task.callback, { name: task.name });
 }
 
 /**
  * Boots the configured background tasks and starts each valid `BackgroundTask` instance.
  */
-export async function startBackgroundTasks(taskFiles, taskLoader = loadBackgroundTaskModule) {
+export async function startBackgroundTasks(tasks) {
     const startedTasks = [];
 
-    for (const file of taskFiles) {
-        const { task } = await taskLoader(file);
-
-        if (!(task instanceof BackgroundTask)) {
-            console.warn(`Task "${file}" does not export a BackgroundTask instance named "task". Skipping.`);
+    for (const task of tasks) {
+        const loadedTask = await taskLoader(task);
+        if (loadedTask?.enabled === false) {
+            console.info(`Task "${task.file}" is disabled. Skipping.`);
             continue;
         }
 
-        task.start();
-        startedTasks.push(task);
+        if (!(loadedTask instanceof BackgroundTask)) {
+            console.warn(`Task "${task.file}" does not export a BackgroundTask instance named "task". Skipping.`);
+            continue;
+        }
+
+        loadedTask.start();
+        startedTasks.push(loadedTask);
     }
 
     return startedTasks;
