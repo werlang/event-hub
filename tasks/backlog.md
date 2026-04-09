@@ -264,3 +264,89 @@ Use the existing codebase patterns, UI conventions, and reference material as gu
 - [ ] Any follow-up fixes are limited to concrete index inconsistencies discovered during that review
 - [ ] Module/class responsibilities remain clear and no unrelated concerns are added to existing files
 - [ ] Validation step (manual or automated)
+
+## [TODO-0006] Add per-user email delivery preferences
+- Status: todo
+- Priority: P1
+- Type: feature
+- Scope: shared
+- Source: tasks/TODOs.md#L12
+- Dependencies: none
+
+### Context
+Users currently do not have fine-grained control over the email categories they receive. The product now needs explicit settings for weekly digest emails, event update emails, and pending-review notifications for admins, with each preference enabled by default and enforced before any email is sent.
+
+### Implementation Notes
+Keep the preference model cohesive across persistence, API contract, and settings UI so the same flags drive every email send path without scattering category-specific checks across unrelated modules.
+
+### Acceptance Criteria
+- [ ] User settings expose separate toggles for weekly emails, event updates, and admin pending-request emails
+- [ ] New and existing users default all email preferences to enabled without runtime schema fallback logic
+- [ ] Every relevant email send flow checks the matching user preference before delivery
+- [ ] Module/class responsibilities remain clear and no unrelated concerns are added to existing files
+- [ ] Validation step (manual or automated)
+
+## [TODO-0007] Notify admins when events enter approval
+- Status: todo
+- Priority: P1
+- Type: feature
+- Scope: api
+- Source: tasks/TODOs.md#L11
+- Dependencies: TODO-0006
+
+### Context
+Submitting an event for approval should immediately notify all admins who are eligible to receive pending-review emails. The notification needs to follow the existing project email styling so the new message feels consistent with current templates and delivery patterns.
+
+### Implementation Notes
+Reuse the existing email templating and delivery abstractions instead of introducing a separate notification pipeline, and keep recipient selection aligned with the new per-user preference flags.
+
+### Acceptance Criteria
+- [ ] Sending an event for approval triggers a notification email to every opted-in admin
+- [ ] The email presentation follows the current project styling and template conventions
+- [ ] The notification is integrated into the existing approval-submission flow without duplicating business logic
+- [ ] Module/class responsibilities remain clear and no unrelated concerns are added to existing files
+- [ ] Validation step (manual or automated)
+
+## [TODO-0008] Reopen approved events when organizers edit them
+- Status: todo
+- Priority: P1
+- Type: feature
+- Scope: shared
+- Source: tasks/TODOs.md#L13
+- Dependencies: TODO-0006, TODO-0007
+
+### Context
+Organizers need to be able to edit events that were already approved. When that happens, the current update flow should be reused, the event must move back to pending review, the existing calendar entry must be removed, and admins must be notified to review the updated submission again.
+
+### Implementation Notes
+Extend the current event-update path rather than creating a parallel edit flow, and keep calendar cleanup and admin re-notification tied to the same state transition to avoid divergent review behavior.
+
+### Acceptance Criteria
+- [ ] Organizers can edit events that are currently approved
+- [ ] Saving an approved event through the organizer flow moves it back to pending review
+- [ ] The related calendar event is deleted when an approved event is edited
+- [ ] Admins are notified again through the same pending-review email mechanism used for first submission
+- [ ] Module/class responsibilities remain clear and no unrelated concerns are added to existing files
+- [ ] Validation step (manual or automated)
+
+## [TODO-0009] Let admins edit any event through review status
+- Status: todo
+- Priority: P1
+- Type: feature
+- Scope: shared
+- Source: tasks/TODOs.md#L14
+- Dependencies: TODO-0006
+
+### Context
+Admins need authority to edit any user event, including events that were already approved. An admin edit should move the event into a review status that behaves like pending review, notify the owner that the event was changed and needs approval again, remove the existing calendar entry, and only recreate the calendar event if the review cycle ends in approval.
+
+### Implementation Notes
+Model review status as part of the existing moderation lifecycle instead of a one-off exception path, and keep user notification plus calendar recreation rules centralized around state transitions.
+
+### Acceptance Criteria
+- [ ] Admins can edit any event regardless of its current approval state
+- [ ] Admin edits move the event into review status and remove any existing calendar entry
+- [ ] The event owner receives an event-update email, subject to preferences, explaining that the event is pending review again
+- [ ] Approving a review-status event restores the event to approved state and recreates the calendar event as part of the existing approval behavior
+- [ ] Module/class responsibilities remain clear and no unrelated concerns are added to existing files
+- [ ] Validation step (manual or automated)

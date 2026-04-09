@@ -130,6 +130,101 @@ describe('helpers/event-update-notification-manager', () => {
         });
     });
 
+    test('notifyEventApproved sends one styled message to the opted-in owner', async () => {
+        const emailHelper = {
+            send: jest.fn(async ([email]) => ({
+                messageId: `msg:${email}`,
+            })),
+        };
+        const manager = new EventUpdateNotificationManager({
+            emailHelper,
+            templateManager: new EmailTemplateManager(),
+            webBaseUrl: 'https://event-hub.test',
+        });
+
+        const result = await manager.notifyEventApproved({
+            event: buildEvent({
+                title: 'Feira de Ciências Publicada',
+                description: 'Programação confirmada com oficinas e palestras.',
+                date: '2026-06-11T19:00:00.000Z',
+                status: 'published',
+                category: 'academico',
+                location: 'Auditório Central',
+            }),
+            owner: buildUser({ id: 'user-9', name: 'Ada Lovelace', email: 'ADA@example.com' }),
+            editor: buildUser({ id: 'admin-1', role: 'admin', name: 'Grace Hopper' }),
+        });
+
+        expect(emailHelper.send).toHaveBeenCalledTimes(1);
+        expect(emailHelper.send).toHaveBeenCalledWith(
+            ['ada@example.com'],
+            'Seu evento foi aprovado no Event Hub',
+            expect.stringContaining('Feira de Ciências Publicada'),
+        );
+        expect(emailHelper.send.mock.calls[0][2]).toContain('Grace Hopper');
+        expect(emailHelper.send.mock.calls[0][2]).toContain('https://event-hub.test/dashboard');
+        expect(result).toEqual({
+            delivery: {
+                email: 'ada@example.com',
+                messageId: 'msg:ada@example.com',
+            },
+            recipient: {
+                email: 'ada@example.com',
+                name: 'Ada Lovelace',
+            },
+            sentCount: 1,
+            skipped: false,
+        });
+    });
+
+    test('notifyEventRejected sends the moderation reason to the opted-in owner', async () => {
+        const emailHelper = {
+            send: jest.fn(async ([email]) => ({
+                messageId: `msg:${email}`,
+            })),
+        };
+        const manager = new EventUpdateNotificationManager({
+            emailHelper,
+            templateManager: new EmailTemplateManager(),
+            webBaseUrl: 'https://event-hub.test',
+        });
+
+        const result = await manager.notifyEventRejected({
+            event: buildEvent({
+                title: 'Feira de Ciências em revisão',
+                description: 'Programação ainda precisa de ajustes.',
+                date: '2026-06-11T19:00:00.000Z',
+                status: 'rejected',
+                rejectionReason: 'Detalhe melhor o público-alvo e o responsável pela recepção.',
+                category: 'academico',
+                location: 'Auditório Central',
+            }),
+            owner: buildUser({ id: 'user-9', name: 'Ada Lovelace', email: 'ADA@example.com' }),
+            editor: buildUser({ id: 'admin-1', role: 'admin', name: 'Grace Hopper' }),
+        });
+
+        expect(emailHelper.send).toHaveBeenCalledTimes(1);
+        expect(emailHelper.send).toHaveBeenCalledWith(
+            ['ada@example.com'],
+            'Seu evento foi rejeitado no Event Hub',
+            expect.stringContaining('Feira de Ciências em revisão'),
+        );
+        expect(emailHelper.send.mock.calls[0][2]).toContain('Grace Hopper');
+        expect(emailHelper.send.mock.calls[0][2]).toContain('Detalhe melhor o público-alvo e o responsável pela recepção.');
+        expect(result).toEqual({
+            delivery: {
+                email: 'ada@example.com',
+                messageId: 'msg:ada@example.com',
+            },
+            recipient: {
+                email: 'ada@example.com',
+                name: 'Ada Lovelace',
+            },
+            sentCount: 1,
+            skipped: false,
+        });
+    });
+
     test('renderEventUpdatedEmail escapes event fields while preserving the MJML section layout', () => {
         const manager = new EventUpdateNotificationManager({
             emailHelper: { send: jest.fn() },
@@ -154,6 +249,34 @@ describe('helpers/event-update-notification-manager', () => {
         expect(message.content).toContain('Linha 1 &lt;b&gt;forte&lt;/b&gt;');
         expect(message.content).toContain('Grace &lt;admin&gt;');
         expect(message.content).toContain('Acadêmico &lt;x&gt;');
+        expect(message.content).not.toContain('&lt;mj-section');
+        expect(message.content).toContain('<mj-section');
+    });
+
+    test('renderEventRejectedEmail escapes the moderation reason while preserving the MJML section layout', () => {
+        const manager = new EventUpdateNotificationManager({
+            emailHelper: { send: jest.fn() },
+            templateManager: new EmailTemplateManager(),
+            webBaseUrl: 'https://event-hub.test',
+        });
+
+        const message = manager.renderEventRejectedEmail(buildUser({ name: 'Ada <owner>' }), {
+            event: buildEvent({
+                title: 'Evento em <revisão>',
+                description: 'Linha 1 <b>forte</b>',
+                date: '2026-06-11T19:00:00.000Z',
+                rejectionReason: 'Explique melhor o público <alvo> e a estrutura de apoio.',
+                location: 'Lab <B>',
+                categoryLabel: 'Acadêmico <x>',
+            }),
+            editor: buildUser({ id: 'admin-1', role: 'admin', name: 'Grace <admin>' }),
+        });
+
+        expect(message.subject).toBe('Seu evento foi rejeitado no Event Hub');
+        expect(message.content).toContain('Olá Ada &lt;owner&gt;,');
+        expect(message.content).toContain('Evento em &lt;revisão&gt;');
+        expect(message.content).toContain('Grace &lt;admin&gt;');
+        expect(message.content).toContain('Explique melhor o público &lt;alvo&gt; e a estrutura de apoio.');
         expect(message.content).not.toContain('&lt;mj-section');
         expect(message.content).toContain('<mj-section');
     });

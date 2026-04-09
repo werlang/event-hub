@@ -1,6 +1,7 @@
 import '../css/dashboard.css';
 
 import { BaseComponent } from './components/base-component.js';
+import { Button } from './components/button.js';
 import { Header } from './components/header.js';
 import { DashboardActionTabs } from './dashboard/action-tabs.js';
 import { DashboardEventFormModal } from './dashboard/create-event-modal.js';
@@ -503,25 +504,26 @@ function createDateMetaPill(event) {
  * Creates one dashboard action button for manageable event cards.
  */
 function createEventActionButton({ action, label, icon, modifier = '' } = {}) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.dataset.dashboardAction = readText(action, '');
-    button.setAttribute('aria-label', readText(label, 'Continuar'));
-    button.className = modifier
-        ? `button button--ghost dashboard-event__action-button dashboard-event__action-button--${modifier}`
-        : 'button button--ghost dashboard-event__action-button';
+    const resolvedLabel = readText(label, 'Continuar');
+    const classNames = ['button', 'button--ghost', 'dashboard-event__action-button'];
+    const normalizedModifier = readText(modifier, '');
 
-    if (typeof icon === 'string' && icon.trim()) {
-        const iconElement = document.createElement('i');
-        iconElement.classList.add('fa-solid', `fa-${icon.trim()}`);
-        iconElement.setAttribute('aria-hidden', 'true');
-        button.appendChild(iconElement);
+    if (normalizedModifier) {
+        classNames.push(`dashboard-event__action-button--${normalizedModifier}`);
     }
 
-    const labelElement = document.createElement('span');
-    labelElement.textContent = readText(label, 'Continuar');
-    button.appendChild(labelElement);
-    return button;
+    const button = new Button({
+        element: document.createElement('button'),
+        text: resolvedLabel,
+        icon: readText(icon, '') || null,
+        customClass: classNames,
+        loadingLabel: resolvedLabel,
+    });
+
+    button.get().type = 'button';
+    button.get().dataset.dashboardAction = readText(action, '');
+    button.get().setAttribute('aria-label', resolvedLabel);
+    return button.get();
 }
 
 /**
@@ -1294,7 +1296,7 @@ class DashboardPage extends BaseComponent {
         }
 
         if (this.#currentView === DASHBOARD_VIEW_MODERATION) {
-            await this.#handleModerationEventAction(requestedAction, managedEvent, eventCard);
+            await this.#handleModerationEventAction(requestedAction, managedEvent, eventCard, actionButton);
             return;
         }
 
@@ -1373,7 +1375,7 @@ class DashboardPage extends BaseComponent {
     /**
      * Handles edit, approve, and reject actions dispatched from the moderation list.
      */
-    async #handleModerationEventAction(requestedAction, managedEvent, eventCard) {
+    async #handleModerationEventAction(requestedAction, managedEvent, eventCard, actionButton) {
         try {
             await handleModerationQueueActionRequest({
                 requestedAction,
@@ -1394,7 +1396,17 @@ class DashboardPage extends BaseComponent {
                     });
                 },
                 approve: async (event) => {
-                    await this.#approveEvent(event, eventCard);
+                    const approveButton = actionButton instanceof HTMLButtonElement
+                        ? new Button({ element: actionButton })
+                        : null;
+
+                    try {
+                        approveButton?.setLoadingLabel('Aprovando...');
+                        approveButton?.disable({ showBusy: true });
+                        await this.#approveEvent(event, eventCard);
+                    } finally {
+                        approveButton?.enable();
+                    }
                 },
                 openReject: async (event) => {
                     await this.#rejectEventModal.open({ event });

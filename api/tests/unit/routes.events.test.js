@@ -927,6 +927,9 @@ describe('routes/events', () => {
         const statusCalls = [];
         const deleteCalls = [];
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'user-2' }));
+        trackReplacement(restores, User, 'findById', async id => buildUser({ id, email: 'owner@example.com', name: 'Owner User' }));
+        trackReplacement(restores, EventUpdateNotificationManager.prototype, 'notifyEventApproved', async () => ({ sentCount: 1 }));
+        trackReplacement(restores, EventUpdateNotificationManager.prototype, 'notifyEventRejected', async () => ({ sentCount: 1 }));
         trackReplacement(restores, GoogleCalendarPublisher, 'publishApprovedEvent', async () => ({
             id: 'calendar-event-1',
             htmlLink: 'https://calendar.google.com/calendar/event?eid=abc123',
@@ -1040,5 +1043,129 @@ describe('routes/events', () => {
         await runRouteHandlers(moderationDecisionHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'published' } }), createResponseDouble(), errorNext);
         expect(errorNext.mock.calls[0][0].status).toBe(500);
         expect(deleteCalls).toEqual(['calendar-event-rollback']);
+    });
+
+    test('moderation decisions notify the owner on approval and rejection', async () => {
+        const notifyEventApproved = jest.fn(async payload => ({ sentCount: 1, event: payload.event }));
+        const notifyEventRejected = jest.fn(async payload => ({ sentCount: 1, event: payload.event }));
+
+        trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'user-2' }));
+        trackReplacement(restores, User, 'findById', async id => buildUser({ id, email: 'owner@example.com', name: 'Owner User' }));
+        trackReplacement(restores, GoogleCalendarPublisher, 'publishApprovedEvent', async () => ({
+            id: 'calendar-event-owner-1',
+            htmlLink: 'https://calendar.google.com/calendar/event?eid=owner-1',
+        }));
+        trackReplacement(restores, Event, 'updateStatus', async (id, status, options) => buildEvent({
+            id,
+            status,
+            organizerId: 'user-2',
+            rejectionReason: options?.rejectionReason ?? null,
+            calendarLink: options?.calendarLink ?? null,
+            calendarEventId: options?.calendarEventId ?? null,
+        }));
+        trackReplacement(restores, EventUpdateNotificationManager.prototype, 'notifyEventApproved', notifyEventApproved);
+        trackReplacement(restores, EventUpdateNotificationManager.prototype, 'notifyEventRejected', notifyEventRejected);
+
+        const publishRes = createResponseDouble();
+        const publishNext = jest.fn();
+        await runRouteHandlers(moderationDecisionHandlers, createRequest({
+            user: buildUser({ id: 'admin-1', role: 'admin', name: 'Grace Hopper' }),
+            params: { id: 'event-approved-1' },
+            body: { status: 'published' },
+        }), publishRes, publishNext);
+
+        expect(publishNext).not.toHaveBeenCalled();
+        expect(notifyEventApproved).toHaveBeenCalledWith({
+            event: expect.objectContaining({
+                id: 'event-approved-1',
+                status: 'published',
+                calendarEventId: 'calendar-event-owner-1',
+            }),
+            owner: expect.objectContaining({
+                id: 'user-2',
+                email: 'owner@example.com',
+            }),
+            editor: expect.objectContaining({
+                id: 'admin-1',
+                role: 'admin',
+            }),
+        });
+        expect(notifyEventRejected).not.toHaveBeenCalled();
+        expect(publishRes.body.message).toBe('Evento aprovado e publicado.');
+
+        notifyEventApproved.mockClear();
+        trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'user-2' }));
+        trackReplacement(restores, Event, 'updateStatus', async (id, status, options) => buildEvent({
+            id,
+            status,
+            organizerId: 'user-2',
+            rejectionReason: options?.rejectionReason ?? null,
+            calendarLink: options?.calendarLink ?? null,
+            calendarEventId: options?.calendarEventId ?? null,
+        }));
+
+        const rejectRes = createResponseDouble();
+        const rejectNext = jest.fn();
+        await runRouteHandlers(moderationDecisionHandlers, createRequest({
+            user: buildUser({ id: 'admin-1', role: 'admin', name: 'Grace Hopper' }),
+            params: { id: 'event-rejected-1' },
+            body: { status: 'rejected', rejectionReason: 'Inclua mais detalhes sobre o público.' },
+        }), rejectRes, rejectNext);
+
+        expect(rejectNext).not.toHaveBeenCalled();
+        expect(notifyEventApproved).not.toHaveBeenCalled();
+        expect(notifyEventRejected).toHaveBeenCalledWith({
+            event: expect.objectContaining({
+                id: 'event-rejected-1',
+                status: 'rejected',
+                rejectionReason: 'Inclua mais detalhes sobre o público.',
+            }),
+            owner: expect.objectContaining({
+                id: 'user-2',
+                email: 'owner@example.com',
+            }),
+            editor: expect.objectContaining({
+                id: 'admin-1',
+                role: 'admin',
+            }),
+        });
+        expect(rejectRes.body.message).toBe('Evento rejeitado.');
+    });
+
+    test('moderation decisions stay successful when owner notification delivery fails', async () => {
+        trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'user-2' }));
+        trackReplacement(restores, User, 'findById', async id => buildUser({ id, email: 'owner@example.com', name: 'Owner User' }));
+        trackReplacement(restores, GoogleCalendarPublisher, 'publishApprovedEvent', async () => ({
+            id: 'calendar-event-owner-2',
+            htmlLink: 'https://calendar.google.com/calendar/event?eid=owner-2',
+        }));
+        trackReplacement(restores, Event, 'updateStatus', async (id, status, options) => buildEvent({
+            id,
+            status,
+            organizerId: 'user-2',
+            rejectionReason: options?.rejectionReason ?? null,
+            calendarLink: options?.calendarLink ?? null,
+            calendarEventId: options?.calendarEventId ?? null,
+        }));
+        trackReplacement(restores, EventUpdateNotificationManager.prototype, 'notifyEventApproved', async () => {
+            throw new Error('smtp timeout');
+        });
+        trackReplacement(restores, EventUpdateNotificationManager.prototype, 'notifyEventRejected', async () => ({ sentCount: 0 }));
+
+        const errorLog = jest.fn();
+        trackReplacement(restores, console, 'error', errorLog);
+
+        const res = createResponseDouble();
+        const next = jest.fn();
+        await runRouteHandlers(moderationDecisionHandlers, createRequest({
+            user: buildUser({ id: 'admin-1', role: 'admin', name: 'Grace Hopper' }),
+            params: { id: 'event-approved-2' },
+            body: { status: 'published' },
+        }), res, next);
+
+        expect(next).not.toHaveBeenCalled();
+        expect(res.statusCode).toBe(200);
+        expect(res.body.message).toBe('Evento aprovado e publicado.');
+        expect(errorLog).toHaveBeenCalledWith('Failed to send event-approval owner notification:', expect.any(Error));
     });
 });

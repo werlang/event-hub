@@ -1,0 +1,20 @@
+{
+    "subject": "Seu evento foi aprovado no Event Hub",
+    "brandName": "Event Hub",
+    "eyebrowText": "Status do evento",
+    "emailTitle": "Seu evento foi aprovado",
+    "greetingWithName": "Olá {{name}},",
+    "introText": "A moderação aprovou o seu evento no Event Hub. Ele seguirá para a agenda pública com os detalhes abaixo.",
+    "reviewText": "Abra o painel do Event Hub para conferir a publicação e acompanhar o desempenho do evento na plataforma.",
+    "buttonText": "Abrir meu painel",
+    "footerText": "Mensagem automática do Event Hub.",
+    "summaryLabel": "Resumo do evento",
+    "summaryDescriptionText": "Informações principais da publicação.",
+    "eventTitleLabel": "Evento",
+    "editorLabel": "Aprovado por",
+    "dateLabel": "Quando",
+    "categoryLabel": "Categoria",
+    "locationLabel": "Local",
+    "descriptionLabel": "Descrição",
+    "dateFallback": "Data a definir"
+}

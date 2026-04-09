@@ -135,6 +135,32 @@ async function notifyOwnerAboutAdminDelete(event, owner, editor) {
 }
 
 /**
+ * Attempts to notify one opted-in owner that the moderation decision changed the event status.
+ */
+async function notifyOwnerAboutModerationDecision(event, owner, editor) {
+    const isApproved = event?.status === Event.STATUS_PUBLISHED;
+
+    try {
+        if (isApproved) {
+            await eventUpdateNotificationManager.notifyEventApproved({
+                event,
+                owner,
+                editor,
+            });
+            return;
+        }
+
+        await eventUpdateNotificationManager.notifyEventRejected({
+            event,
+            owner,
+            editor,
+        });
+    } catch (error) {
+        console.error(`Failed to send ${isApproved ? 'event-approval' : 'event-rejection'} owner notification:`, error);
+    }
+}
+
+/**
  * Reports whether the current authenticated actor is an administrator.
  */
 function isAdminUser(user) {
@@ -433,9 +459,14 @@ router.put('/:id/moderation',
                 calendarLink: createdCalendarEntry?.htmlLink || null,
                 calendarEventId: createdCalendarEntry?.id || null,
             });
+            const owner = await User.findById(currentEvent.organizerId);
             const message = moderationDecision.status === Event.STATUS_PUBLISHED
                 ? 'Evento aprovado e publicado.'
                 : 'Evento rejeitado.';
+
+            notifyOwnerAboutModerationDecision(updatedEvent, owner, req.user).catch((error) => {
+                console.error('Failed to send moderation owner notification after event moderation:', error);
+            });
 
             return sendSuccess(res, {
                 data: { event: updatedEvent },

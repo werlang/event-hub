@@ -1,0 +1,21 @@
+{
+    "subject": "Seu evento foi rejeitado no Event Hub",
+    "brandName": "Event Hub",
+    "eyebrowText": "Status do evento",
+    "emailTitle": "Seu evento foi rejeitado",
+    "greetingWithName": "Olá {{name}},",
+    "introText": "A moderação analisou o seu evento no Event Hub e ele foi devolvido para ajustes antes de uma nova tentativa de publicação.",
+    "reviewText": "Motivo informado pela moderação: {{rejectionReason}}. Abra o painel do Event Hub para revisar os detalhes, ajustar o conteúdo e reenviar o evento para análise.",
+    "buttonText": "Abrir meu painel",
+    "footerText": "Mensagem automática do Event Hub.",
+    "summaryLabel": "Resumo do evento",
+    "summaryDescriptionText": "Informações principais para orientar a revisão.",
+    "eventTitleLabel": "Evento",
+    "editorLabel": "Rejeitado por",
+    "dateLabel": "Quando",
+    "categoryLabel": "Categoria",
+    "locationLabel": "Local",
+    "descriptionLabel": "Descrição",
+    "dateFallback": "Data a definir",
+    "rejectionReasonFallback": "Nenhum motivo específico foi informado."
+}

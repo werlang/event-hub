@@ -128,6 +128,12 @@ test('dashboard moderation helpers expose an edit action before approval and rej
     assert.deepEqual(actions.map(action => action.action), ['edit', 'approve', 'reject', 'delete']);
 });
 
+test('dashboard approve action sets the busy label to Aprovando before disabling the button', async () => {
+    const source = await readFile(DASHBOARD_ENTRY_PATH, 'utf8');
+
+    assert.match(source, /approveButton\?\.setLoadingLabel\('Aprovando\.\.\.'\);\s*approveButton\?\.disable\(\{ showBusy: true \}\);/);
+});
+
 test('dashboard ships admin discovery surfaces for published and rejected events', async () => {
     const html = await readFile(DASHBOARD_TEMPLATE_PATH, 'utf8');
     const hooks = await loadDashboardHooks();

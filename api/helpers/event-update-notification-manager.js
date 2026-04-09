@@ -4,6 +4,8 @@ import { User } from '../model/user.js';
 
 const EVENT_UPDATE_MJML_TEMPLATE_KEY = 'notification-email';
 const EVENT_UPDATE_STRINGS_TEMPLATE_KEY = 'event-update-email';
+const EVENT_APPROVED_STRINGS_TEMPLATE_KEY = 'event-approved-email';
+const EVENT_REJECTED_STRINGS_TEMPLATE_KEY = 'event-rejected-email';
 const EVENT_DELETE_STRINGS_TEMPLATE_KEY = 'event-delete-email';
 const NOTIFICATION_SECTION_TEMPLATE_KEY = 'notification-email-section';
 
@@ -72,7 +74,7 @@ function buildDashboardUrl(webBaseUrl) {
 }
 
 /**
- * Sends the styled owner notification used when an administrator edits an event.
+ * Sends the styled owner notification used when an administrator changes or moderates an event.
  */
 export class EventUpdateNotificationManager {
     #emailHelper;
@@ -137,6 +139,40 @@ export class EventUpdateNotificationManager {
     }
 
     /**
+     * Renders the styled owner notification for one approved event.
+     *
+     * @param {object} recipient The recipient metadata.
+     * @param {object} payload The approved event context.
+     * @param {object} payload.event The approved event snapshot.
+     * @param {object} [payload.editor] The administrator who approved the event.
+     * @returns {{subject: string, content: string}} The rendered email message.
+     */
+    renderEventApprovedEmail(recipient, { event, editor } = {}) {
+        const strings = this.#templateManager.loadJsonTemplate(EVENT_APPROVED_STRINGS_TEMPLATE_KEY);
+        return this.#renderOwnerNotificationEmail(strings, recipient, { event, editor });
+    }
+
+    /**
+     * Renders the styled owner notification for one rejected event.
+     *
+     * @param {object} recipient The recipient metadata.
+     * @param {object} payload The rejected event context.
+     * @param {object} payload.event The rejected event snapshot.
+     * @param {object} [payload.editor] The administrator who rejected the event.
+     * @returns {{subject: string, content: string}} The rendered email message.
+     */
+    renderEventRejectedEmail(recipient, { event, editor } = {}) {
+        const strings = this.#templateManager.loadJsonTemplate(EVENT_REJECTED_STRINGS_TEMPLATE_KEY);
+        return this.#renderOwnerNotificationEmail(strings, recipient, {
+            event,
+            editor,
+            reviewTextVariables: {
+                rejectionReason: event?.rejectionReason || strings.rejectionReasonFallback || strings.valueUnavailable || '',
+            },
+        });
+    }
+
+    /**
      * Renders the styled owner notification for one admin-deleted event.
      *
      * @param {object} recipient The recipient metadata.
@@ -159,12 +195,14 @@ export class EventUpdateNotificationManager {
      * @param {object} payload The event context.
      * @param {object} payload.event The event snapshot.
      * @param {object} [payload.editor] The administrator who performed the action.
+     * @param {Record<string, string>} [payload.reviewTextVariables] Placeholder values interpolated into the review copy.
      * @returns {{subject: string, content: string}} The rendered email message.
      */
-    #renderOwnerNotificationEmail(strings, recipient, { event, editor } = {}) {
+    #renderOwnerNotificationEmail(strings, recipient, { event, editor, reviewTextVariables } = {}) {
         const greeting = this.#templateManager.interpolateString(strings.greetingWithName || '', {
             name: recipient?.name || 'participante',
         });
+        const reviewText = this.#templateManager.interpolateString(strings.reviewText || '', reviewTextVariables || {});
         const content = this.#templateManager.loadTemplate(EVENT_UPDATE_MJML_TEMPLATE_KEY, {
             brandName: strings.brandName || '',
             emailTitle: strings.emailTitle || '',
@@ -174,7 +212,7 @@ export class EventUpdateNotificationManager {
             summaryTitle: strings.summaryLabel || '',
             summaryDescriptionText: strings.summaryDescriptionText || '',
             summaryBlocks: this.#templateManager.raw(this.#buildSummaryBlocks({ event, editor, strings })),
-            reviewText: strings.reviewText || '',
+            reviewText,
             actionUrl: buildDashboardUrl(this.#webBaseUrl),
             buttonText: strings.buttonText || '',
             footerText: strings.footerText || '',
@@ -196,32 +234,51 @@ export class EventUpdateNotificationManager {
      * @returns {Promise<object>} A delivery summary for the owner notification.
      */
     async notifyEventUpdated({ event, owner, editor } = {}) {
-        const recipient = this.readRecipient(owner);
+        return this.#notifyOwner({
+            event,
+            owner,
+            editor,
+            renderEmail: this.renderEventUpdatedEmail.bind(this),
+            logPrefix: 'Event-update',
+        });
+    }
 
-        if (!recipient) {
-            this.#logger.info('Event-update owner notification skipped because the owner is missing, has no email, or opted out.');
-            return {
-                delivery: null,
-                recipient: null,
-                sentCount: 0,
-                skipped: true,
-            };
-        }
+    /**
+     * Sends the owner notification when an administrator approves an event.
+     *
+     * @param {object} payload The approved event context.
+     * @param {object} payload.event The approved event snapshot.
+     * @param {object} payload.owner The event owner snapshot.
+     * @param {object} [payload.editor] The administrator who approved the event.
+     * @returns {Promise<object>} A delivery summary for the owner notification.
+     */
+    async notifyEventApproved({ event, owner, editor } = {}) {
+        return this.#notifyOwner({
+            event,
+            owner,
+            editor,
+            renderEmail: this.renderEventApprovedEmail.bind(this),
+            logPrefix: 'Event-approval',
+        });
+    }
 
-        const message = this.renderEventUpdatedEmail(recipient, { event, editor });
-        const info = await this.#emailHelper.send([recipient.email], message.subject, message.content);
-
-        this.#logger.info(`Event-update owner notification sent to ${recipient.email}.`);
-
-        return {
-            delivery: {
-                email: recipient.email,
-                messageId: info?.messageId || null,
-            },
-            recipient,
-            sentCount: 1,
-            skipped: false,
-        };
+    /**
+     * Sends the owner notification when an administrator rejects an event.
+     *
+     * @param {object} payload The rejected event context.
+     * @param {object} payload.event The rejected event snapshot.
+     * @param {object} payload.owner The event owner snapshot.
+     * @param {object} [payload.editor] The administrator who rejected the event.
+     * @returns {Promise<object>} A delivery summary for the owner notification.
+     */
+    async notifyEventRejected({ event, owner, editor } = {}) {
+        return this.#notifyOwner({
+            event,
+            owner,
+            editor,
+            renderEmail: this.renderEventRejectedEmail.bind(this),
+            logPrefix: 'Event-rejection',
+        });
     }
 
     /**
@@ -234,10 +291,32 @@ export class EventUpdateNotificationManager {
      * @returns {Promise<object>} A delivery summary for the owner notification.
      */
     async notifyEventDeleted({ event, owner, editor } = {}) {
+        return this.#notifyOwner({
+            event,
+            owner,
+            editor,
+            renderEmail: this.renderEventDeletedEmail.bind(this),
+            logPrefix: 'Event-delete',
+        });
+    }
+
+    /**
+     * Sends one owner notification when the recipient exists and allows event-update emails.
+     *
+     * @private
+     * @param {object} payload The owner notification context.
+     * @param {object} payload.event The affected event snapshot.
+     * @param {object} payload.owner The event owner snapshot.
+     * @param {object} [payload.editor] The administrator who triggered the notification.
+     * @param {Function} payload.renderEmail The renderer used to build the final message.
+     * @param {string} payload.logPrefix The log prefix used for skip and success messages.
+     * @returns {Promise<object>} A delivery summary for the owner notification.
+     */
+    async #notifyOwner({ event, owner, editor, renderEmail, logPrefix }) {
         const recipient = this.readRecipient(owner);
 
         if (!recipient) {
-            this.#logger.info('Event-delete owner notification skipped because the owner is missing, has no email, or opted out.');
+            this.#logger.info(`${logPrefix} owner notification skipped because the owner is missing, has no email, or opted out.`);
             return {
                 delivery: null,
                 recipient: null,
@@ -246,10 +325,10 @@ export class EventUpdateNotificationManager {
             };
         }
 
-        const message = this.renderEventDeletedEmail(recipient, { event, editor });
+        const message = renderEmail(recipient, { event, editor });
         const info = await this.#emailHelper.send([recipient.email], message.subject, message.content);
 
-        this.#logger.info(`Event-delete owner notification sent to ${recipient.email}.`);
+        this.#logger.info(`${logPrefix} owner notification sent to ${recipient.email}.`);
 
         return {
             delivery: {
