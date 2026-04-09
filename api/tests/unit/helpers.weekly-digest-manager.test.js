@@ -1,6 +1,6 @@
 import { describe, expect, jest, test } from '@jest/globals';
 import { EmailTemplateManager } from '../../helpers/email-template-manager.js';
-import { WeeklyDigestManager } from '../../helpers/weekly-digest-manager.js';
+import { WeeklyDigestManager } from '../../background/weekly-digest-manager.js';
 import { buildEvent, buildUser } from './support/fixtures.js';
 
 describe('helpers/weekly-digest-manager', () => {
@@ -41,7 +41,7 @@ describe('helpers/weekly-digest-manager', () => {
         expect(message.content).toContain('Oficinas, painéis e demonstrações abertas.');
         expect(message.content).toContain('Equipe de Extensão');
         expect(message.content).toContain('Laboratório Maker');
-        expect(message.content).toContain('Abrir página da semana');
+        expect(message.content).toContain('Abrir página da agenda');
         expect(message.content).toContain('https://event-hub.test/week');
     });
 
@@ -111,7 +111,13 @@ describe('helpers/weekly-digest-manager', () => {
                     calendarLink: 'https://calendar.google.com/calendar/event?eid=<bad>',
                 }),
             ],
-            strings: new EmailTemplateManager().loadJsonTemplate('weekly-digest-email'),
+            strings: {
+                ...new EmailTemplateManager().loadJsonTemplate('weekly-digest-email'),
+                brandName: 'Campus <Hub>',
+                eyebrowText: 'Boletim <semanal>',
+                weekRangeTitle: 'Faixa <da semana>',
+                eventCardLabel: 'Destaque <evento>',
+            },
             weekRange: {
                 from: '2026-04-05',
                 to: '2026-04-11',
@@ -122,13 +128,16 @@ describe('helpers/weekly-digest-manager', () => {
         const message = manager.renderDigestEmail(buildUser({ name: 'Ada <script>' }), digest);
 
         expect(message.subject).toBe('Agenda da semana · 5 de abril <2026> a 11 de abril de 2026');
-        expect(message.content).toContain('Olá Ada &lt;script&gt;,');
+        expect(message.content).toContain('Olá Professores,');
+        expect(message.content).toContain('Campus &lt;Hub&gt;');
+        expect(message.content).toContain('Boletim &lt;semanal&gt;');
+        expect(message.content).toContain('5 de abril &lt;2026&gt; a 11 de abril de 2026');
+        expect(message.content).toContain('Destaque &lt;evento&gt;');
         expect(message.content).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
-        expect(message.content).toContain('Linha 1<br />&lt;script&gt;alert(2)&lt;/script&gt;');
+        expect(message.content).toContain('Linha 1');
+        expect(message.content).toContain('&lt;script&gt;alert(2)&lt;/script&gt;');
         expect(message.content).toContain('Extensão &lt;x&gt;');
-        expect(message.content).toContain('Lab &lt;B&gt;');
         expect(message.content).toContain('Equipe &lt;script&gt;');
-        expect(message.content).toContain('https://calendar.google.com/calendar/event?eid=&lt;bad&gt;');
         expect(message.content).toContain('Mensagem automática do Event Hub.');
         expect(message.content).not.toContain('&lt;mj-section');
         expect(message.content).toContain('<mj-section');

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals';
-import { BackgroundTask } from '../../background/task-host.js';
+import { BackgroundTask } from '../../background/background-task.js';
 
 describe('background/task-host', () => {
     let logger;
@@ -61,7 +61,7 @@ describe('background/task-host', () => {
         task.stop();
     });
 
-    test('start logs scheduled activity instead of invoking callbacks outside production', async () => {
+    test('start still invokes callbacks outside production when background tasks are enabled', async () => {
         const callback = jest.fn().mockResolvedValue(undefined);
         const task = new BackgroundTask('every sunday at 18:00', callback, {
             environment: 'development',
@@ -74,10 +74,10 @@ describe('background/task-host', () => {
         task.start();
         await jest.advanceTimersByTimeAsync(1000);
 
-        expect(callback).not.toHaveBeenCalled();
+        expect(callback).toHaveBeenCalledTimes(1);
         expect(logger.info).toHaveBeenCalledTimes(1);
+        expect(logger.info.mock.calls[0][0]).toContain('Started background task');
         expect(logger.info.mock.calls[0][0]).toContain('preview-sync');
-        expect(logger.info.mock.calls[0][0]).toContain('development');
 
         task.stop();
     });

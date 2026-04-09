@@ -16,11 +16,19 @@ describe('model/user', () => {
             email: ' ADA@EXAMPLE.COM ',
             role: 'OWNER',
             password: 'secret123',
+            emailPreferences: {
+                eventUpdates: 0,
+                adminPendingRequests: 'false',
+            },
         });
 
         expect(user.name).toBe('Ada');
         expect(user.email).toBe('ada@example.com');
         expect(user.role).toBe('member');
+        expect(user.emailPreferences).toEqual({
+            eventUpdates: false,
+            adminPendingRequests: false,
+        });
         expect(user.passwordHash).not.toBe('secret123');
         expect(user.validatePassword('secret123')).toBe(true);
         expect(user.validatePassword('other')).toBe(false);
@@ -33,6 +41,8 @@ describe('model/user', () => {
             email: 'ada@example.com',
             role: 'ADMIN',
             password_hash: 'hashed',
+            email_event_updates_enabled: 1,
+            email_admin_pending_requests_enabled: 0,
             created_at: '2026-04-02T12:00:00.000Z',
         });
 
@@ -41,6 +51,10 @@ describe('model/user', () => {
             name: 'Ada',
             email: 'ada@example.com',
             role: 'admin',
+            emailPreferences: {
+                eventUpdates: true,
+                adminPendingRequests: false,
+            },
             passwordHash: 'hashed',
             createdAt: '2026-04-02T12:00:00.000Z',
         });
@@ -61,6 +75,10 @@ describe('model/user', () => {
             role: 'member',
             passwordHash: 'hashed',
             createdAt: undefined,
+            emailPreferences: {
+                eventUpdates: true,
+                adminPendingRequests: true,
+            },
         });
     });
 
@@ -77,6 +95,10 @@ describe('model/user', () => {
             email: 'ADA@EXAMPLE.COM',
             role: 'ADMIN',
             passwordHash: 'hashed',
+            emailPreferences: {
+                eventUpdates: true,
+                adminPendingRequests: false,
+            },
             createdAt: '2026-04-02T12:00:00.000Z',
         });
 
@@ -86,6 +108,8 @@ describe('model/user', () => {
             email: 'ada@example.com',
             role: 'admin',
             password_hash: 'hashed',
+            email_event_updates_enabled: true,
+            email_admin_pending_requests_enabled: false,
             created_at: 'mysql:2026-04-02T12:00:00.000Z',
         });
     });
@@ -111,6 +135,8 @@ describe('model/user', () => {
             email: 'grace@example.com',
             role: 'admin',
             password_hash: 'ready-hash',
+            email_event_updates_enabled: true,
+            email_admin_pending_requests_enabled: true,
             created_at: expect.stringMatching(/^mysql:/),
         });
 
@@ -120,12 +146,18 @@ describe('model/user', () => {
             email: 'linus@example.com',
             role: 'owner',
             passwordHash: 'stored-hash',
+            emailPreferences: {
+                eventUpdates: false,
+                adminPendingRequests: true,
+            },
         })).toEqual({
             id: 'user-3',
             name: 'Linus',
             email: 'linus@example.com',
             role: 'member',
             password_hash: 'stored-hash',
+            email_event_updates_enabled: false,
+            email_admin_pending_requests_enabled: true,
             created_at: expect.stringMatching(/^mysql:/),
         });
     });
@@ -248,7 +280,7 @@ describe('model/user', () => {
         expect(updated.id).toBe('user-1');
     });
 
-    test('updatePassword and updateRole short-circuit when the user id is missing', async () => {
+    test('updatePassword, updateProfile, updateEmailPreferences, and updateRole short-circuit when the user id is missing', async () => {
         const driverCalls = [];
         trackReplacement(restores, User, 'driver', {
             async update(...args) {
@@ -258,8 +290,75 @@ describe('model/user', () => {
 
         await expect(User.updatePassword('', 'new-secret')).resolves.toBeNull();
         await expect(User.updateProfile('', { name: 'Ada', email: 'ada@example.com' })).resolves.toBeNull();
+        await expect(User.updateEmailPreferences('', { eventUpdates: true, adminPendingRequests: true })).resolves.toBeNull();
         await expect(User.updateRole('', 'admin')).resolves.toBeNull();
         expect(driverCalls).toEqual([]);
+    });
+
+    test('allowsEmailPreference normalizes supported preference snapshots', () => {
+        expect(User.allowsEmailPreference(buildUser({
+            emailPreferences: {
+                eventUpdates: false,
+                adminPendingRequests: true,
+            },
+        }), User.EMAIL_PREFERENCE_KEYS.eventUpdates)).toBe(false);
+    });
+
+    test('listEmailPreferenceRecipients builds the preference filter and optional role constraints', async () => {
+        let receivedOptions;
+        trackReplacement(restores, User, 'find', async options => {
+            receivedOptions = options;
+            return [];
+        });
+
+        await User.listEmailPreferenceRecipients(User.EMAIL_PREFERENCE_KEYS.adminPendingRequests, {
+            role: 'ADMIN',
+            excludeId: 'admin-1',
+        });
+
+        expect(receivedOptions).toEqual({
+            filter: {
+                email_admin_pending_requests_enabled: true,
+                role: 'admin',
+                id: { not: 'admin-1' },
+            },
+            view: User.SAFE_VIEW,
+            opt: { order: { name: 1 } },
+        });
+    });
+
+    test('updateEmailPreferences persists the normalized preference flags and reloads the entity', async () => {
+        const updateCalls = [];
+        trackReplacement(restores, User, 'driver', {
+            async update(table, payload, id) {
+                updateCalls.push({ table, payload, id });
+            },
+        });
+        trackReplacement(restores, User, 'get', async id => buildUser({
+            id,
+            emailPreferences: {
+                eventUpdates: true,
+                adminPendingRequests: false,
+            },
+        }));
+
+        const updated = await User.updateEmailPreferences('user-1', {
+            eventUpdates: true,
+            adminPendingRequests: false,
+        });
+
+        expect(updateCalls).toEqual([{
+            table: 'users',
+            payload: {
+                email_event_updates_enabled: true,
+                email_admin_pending_requests_enabled: false,
+            },
+            id: 'user-1',
+        }]);
+        expect(updated.emailPreferences).toEqual({
+            eventUpdates: true,
+            adminPendingRequests: false,
+        });
     });
 
     test('updateRole normalizes the stored role before persisting', async () => {

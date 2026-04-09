@@ -27,6 +27,7 @@ describe('routes/auth', () => {
     const loginHandlers = getRouteHandlers(authRouter, 'post', '/login');
     const meHandlers = getRouteHandlers(authRouter, 'get', '/me').slice(1);
     const updateMeHandlers = getRouteHandlers(authRouter, 'put', '/me').slice(1);
+    const updatePreferenceHandlers = getRouteHandlers(authRouter, 'put', '/me/preferences').slice(1);
     const passwordHandlers = getRouteHandlers(authRouter, 'put', '/password').slice(1);
     const resetPasswordHandlers = getRouteHandlers(authRouter, 'put', '/users/password/reset').slice(1);
     const usersHandlers = getRouteHandlers(authRouter, 'get', '/users').slice(1);
@@ -58,6 +59,10 @@ describe('routes/auth', () => {
             name: 'Ada Lovelace',
             email: 'ada@example.com',
             role: 'member',
+            emailPreferences: {
+                eventUpdates: true,
+                adminPendingRequests: true,
+            },
         });
         expect(typeof res.body.data.token).toBe('string');
     });
@@ -163,6 +168,10 @@ describe('routes/auth', () => {
             name: 'Grace Hopper',
             email: 'ada@example.com',
             role: 'member',
+            emailPreferences: {
+                eventUpdates: true,
+                adminPendingRequests: true,
+            },
         });
         expect(typeof successRes.body.data.token).toBe('string');
 
@@ -196,6 +205,88 @@ describe('routes/auth', () => {
 
         expect(next.mock.calls[0][0].status).toBe(500);
         expect(next.mock.calls[0][0].message).toBe('Não foi possível atualizar o perfil.');
+    });
+
+    test('update preferences stores the authenticated email flags and validates the payload', async () => {
+        trackReplacement(restores, User, 'findById', async id => buildUser({ id, role: 'member' }));
+        trackReplacement(restores, User, 'updateEmailPreferences', async (id, preferences) => buildUser({
+            id,
+            emailPreferences: preferences,
+        }));
+
+        const successRes = createResponseDouble();
+        const successNext = jest.fn();
+        await runRouteHandlers(updatePreferenceHandlers, createRequest({
+            user: { id: 'user-1', role: 'member' },
+            body: {
+                emailPreferences: {
+                    eventUpdates: true,
+                },
+            },
+        }), successRes, successNext);
+
+        expect(successNext).not.toHaveBeenCalled();
+        expect(successRes.body.message).toBe('Preferências de e-mail atualizadas.');
+        expect(successRes.body.data.user).toEqual({
+            id: 'user-1',
+            name: 'Ada Lovelace',
+            email: 'ada@example.com',
+            role: 'member',
+            emailPreferences: {
+                eventUpdates: true,
+                adminPendingRequests: true,
+            },
+        });
+
+        const missingPayloadNext = jest.fn();
+        await runRouteHandlers(updatePreferenceHandlers, createRequest({
+            user: { id: 'user-1', role: 'member' },
+            body: {},
+        }), createResponseDouble(), missingPayloadNext);
+        expect(missingPayloadNext.mock.calls[0][0].status).toBe(400);
+
+        const invalidFlagNext = jest.fn();
+        await runRouteHandlers(updatePreferenceHandlers, createRequest({
+            user: { id: 'user-1', role: 'member' },
+            body: {
+                emailPreferences: {
+                    eventUpdates: 'yes',
+                },
+            },
+        }), createResponseDouble(), invalidFlagNext);
+        expect(invalidFlagNext.mock.calls[0][0].status).toBe(400);
+
+        const invalidAdminFlagNext = jest.fn();
+        await runRouteHandlers(updatePreferenceHandlers, createRequest({
+            user: { id: 'admin-1', role: 'admin' },
+            body: {
+                emailPreferences: {
+                    eventUpdates: true,
+                    adminPendingRequests: 'yes',
+                },
+            },
+        }), createResponseDouble(), invalidAdminFlagNext);
+        expect(invalidAdminFlagNext.mock.calls[0][0].status).toBe(400);
+    });
+
+    test('update preferences maps unexpected failures to a 500 error', async () => {
+        trackReplacement(restores, User, 'findById', async id => buildUser({ id, role: 'member' }));
+        trackReplacement(restores, User, 'updateEmailPreferences', async () => {
+            throw new Error('write failed');
+        });
+
+        const next = jest.fn();
+        await runRouteHandlers(updatePreferenceHandlers, createRequest({
+            user: { id: 'user-1', role: 'member' },
+            body: {
+                emailPreferences: {
+                    eventUpdates: true,
+                },
+            },
+        }), createResponseDouble(), next);
+
+        expect(next.mock.calls[0][0].status).toBe(500);
+        expect(next.mock.calls[0][0].message).toBe('Não foi possível atualizar as preferências de e-mail.');
     });
 
     test('password validates the payload, current password, and update flow', async () => {
@@ -283,6 +374,10 @@ describe('routes/auth', () => {
             name: 'Ada Lovelace',
             email: 'member@example.com',
             role: 'member',
+            emailPreferences: {
+                eventUpdates: true,
+                adminPendingRequests: true,
+            },
         });
 
         const missingFieldsNext = jest.fn();
@@ -339,7 +434,16 @@ describe('routes/auth', () => {
         const successNext = jest.fn();
         await runRouteHandlers(usersHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' } }), successRes, successNext);
         expect(successNext).not.toHaveBeenCalled();
-        expect(successRes.body.data.users).toEqual([{ id: 'user-2', name: 'Grace Hopper', email: 'ada@example.com', role: 'member' }]);
+        expect(successRes.body.data.users).toEqual([{
+            id: 'user-2',
+            name: 'Grace Hopper',
+            email: 'ada@example.com',
+            role: 'member',
+            emailPreferences: {
+                eventUpdates: true,
+                adminPendingRequests: true,
+            },
+        }]);
 
         trackReplacement(restores, User, 'findById', async id => buildUser({ id, role: 'member' }));
         const forbiddenNext = jest.fn();

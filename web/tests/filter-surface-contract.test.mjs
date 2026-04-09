@@ -11,7 +11,8 @@ const WEB_ROOT = path.resolve(import.meta.dirname, '..');
 const HOME_TEMPLATE_PATH = path.join(WEB_ROOT, 'src/html/index.html');
 const DASHBOARD_TEMPLATE_PATH = path.join(WEB_ROOT, 'src/html/dashboard.html');
 const SHARED_FILTER_SURFACE_PATH = path.join(WEB_ROOT, 'src/css/components/filter-surface.css');
-const DASHBOARD_FILTERS_PATH = path.join(WEB_ROOT, 'src/css/components/dashboard-filters.css');
+const SHARED_CHECKBOX_PATH = path.join(WEB_ROOT, 'src/css/components/checkbox.css');
+const SHARED_SELECT_PATH = path.join(WEB_ROOT, 'src/css/components/select.css');
 const INDEX_BUNDLE_PATH = path.join(WEB_ROOT, 'public/css/index.min.css');
 const DASHBOARD_BUNDLE_PATH = path.join(WEB_ROOT, 'public/css/dashboard.min.css');
 
@@ -115,12 +116,23 @@ test('shared filter surface stylesheet keeps the reusable grid and mobile fallba
     assert.match(sharedFilterSurface, /grid-template-columns:\s*1fr/);
 });
 
-test('dashboard checkbox treatment stays local to dashboard filters', async () => {
+test('checkbox treatment lives in the shared checkbox component instead of filter-surface', async () => {
     const sharedFilterSurface = await readFile(SHARED_FILTER_SURFACE_PATH, 'utf8');
-    const dashboardFilters = await readFile(DASHBOARD_FILTERS_PATH, 'utf8');
+    const sharedCheckbox = await readFile(SHARED_CHECKBOX_PATH, 'utf8');
 
-    assert.match(dashboardFilters, /\.dashboard-events-filters__checkbox/);
-    assert.doesNotMatch(sharedFilterSurface, /dashboard-events-filters__checkbox/);
+    assert.match(sharedCheckbox, /\.checkbox-field\s*\{/);
+    assert.match(sharedCheckbox, /input\[type='checkbox'\]/);
+    assert.doesNotMatch(sharedFilterSurface, /\.checkbox-label-text\s*\{[\s\S]*display:\s*inline-flex/);
+});
+
+test('select treatment lives in the shared select component instead of filter-surface', async () => {
+    const sharedFilterSurface = await readFile(SHARED_FILTER_SURFACE_PATH, 'utf8');
+    const sharedSelect = await readFile(SHARED_SELECT_PATH, 'utf8');
+
+    assert.match(sharedSelect, /\.select-field\s*\{/);
+    assert.match(sharedSelect, /& select\s*\{/);
+    assert.doesNotMatch(sharedFilterSurface, /label\.select-field::after/);
+    assert.doesNotMatch(sharedFilterSurface, /& select\s*\{[\s\S]*padding-right:\s*48px/);
 });
 
 test('home and dashboard routes render the shared filter surface shells', async (t) => {
@@ -142,7 +154,7 @@ test('home and dashboard routes render the shared filter surface shells', async 
     assert.match(dashboardHtml, /class="dashboard-events-filters__grid filter-surface__grid"/i);
 });
 
-test('compiled css bundles include the shared filter surface and dashboard checkbox rules', async () => {
+test('compiled css bundles include the shared filter surface, checkbox, and select component rules', async () => {
     const [indexBundle, dashboardBundle] = await Promise.all([
         readFile(INDEX_BUNDLE_PATH, 'utf8'),
         readFile(DASHBOARD_BUNDLE_PATH, 'utf8'),
@@ -150,5 +162,8 @@ test('compiled css bundles include the shared filter surface and dashboard check
 
     assert.match(indexBundle, /\.filter-surface\{/);
     assert.match(dashboardBundle, /\.filter-surface\{/);
-    assert.match(dashboardBundle, /\.dashboard-events-filters__checkbox/);
+    assert.match(indexBundle, /\.checkbox-field\{/);
+    assert.match(dashboardBundle, /\.checkbox-field\{/);
+    assert.match(indexBundle, /\.select-field\{/);
+    assert.match(dashboardBundle, /\.select-field\{/);
 });

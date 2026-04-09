@@ -8,9 +8,13 @@ describe('helpers/email-template-manager', () => {
         const strings = manager.loadJsonTemplate('notification-email');
 
         expect(strings).toMatchObject({
-            subject: 'Notificação do Event Hub',
-            emailTitle: 'Atualização do Event Hub',
+            subject: 'Event Hub - Novo evento aguardando moderação',
+            brandName: 'Event Hub',
+            eyebrowText: 'Central de notificações',
+            emailTitle: 'Evento aguardando moderação',
             buttonText: 'Abrir Event Hub',
+            summaryLabel: 'Resumo do evento',
+            summaryDescriptionText: 'Informações principais para consulta rápida.',
         });
     });
 
@@ -20,12 +24,26 @@ describe('helpers/email-template-manager', () => {
         const section = manager.loadTemplate(
             'notification-email-section',
             {
-                label: '<Resumo>',
-                value: '3 eventos <aprovados> nesta semana',
+                cardLabel: '<Resumo>',
+                eventTitle: 'Feira <Aberta>',
+                actorText: 'Organizador: Ada <Lovelace>',
+                eventDescription: '3 eventos <aprovados> nesta semana',
+                eventDateLabel: 'Quando',
+                eventDateValue: 'Quinta-feira, 11 de junho de 2026 às 19:00',
+                locationLabel: 'Local',
+                locationValue: 'Auditório <Central>',
+                categoryLabel: 'Categoria',
+                categoryValue: 'Acadêmico <STEM>',
             },
         );
 
-        expect(section).toContain('<strong>&lt;Resumo&gt;</strong> 3 eventos &lt;aprovados&gt; nesta semana');
+        expect(section).toContain('&lt;Resumo&gt;');
+        expect(section).toContain('Feira &lt;Aberta&gt;');
+        expect(section).toContain('Organizador: Ada &lt;Lovelace&gt;');
+        expect(section).toContain('3 eventos &lt;aprovados&gt; nesta semana');
+        expect(section).toContain('Auditório &lt;Central&gt;');
+        expect(section).toContain('Acadêmico &lt;STEM&gt;');
+        expect(section).toContain('text-transform="uppercase"');
         expect(section).toContain('<mj-section');
     });
 
@@ -33,9 +51,13 @@ describe('helpers/email-template-manager', () => {
         const manager = new EmailTemplateManager();
 
         const content = manager.loadTemplate('notification-email', {
+            brandName: 'Marca <Hub>',
             emailTitle: 'Atualização',
+            eyebrowText: 'Faixa <superior>',
             greeting: 'Olá,',
             introText: 'Resumo disponível.',
+            summaryTitle: 'Resumo do evento',
+            summaryDescriptionText: 'Contexto <rápido>.',
             summaryBlocks: manager.raw('<mj-section><mj-column><mj-text>Raw block</mj-text></mj-column></mj-section>'),
             reviewText: 'Confira abaixo.',
             actionUrl: 'https://event-hub.local/week?x=<tag>',
@@ -45,6 +67,9 @@ describe('helpers/email-template-manager', () => {
 
         expect(content).toContain('<mj-section><mj-column><mj-text>Raw block</mj-text></mj-column></mj-section>');
         expect(content).toContain('href="https://event-hub.local/week?x=&lt;tag&gt;"');
+        expect(content).toContain('Marca &lt;Hub&gt;');
+        expect(content).toContain('Faixa &lt;superior&gt;');
+        expect(content).toContain('Contexto &lt;rápido&gt;.');
         expect(content).toContain('Abrir &lt;Event Hub&gt;');
     });
 
@@ -53,14 +78,26 @@ describe('helpers/email-template-manager', () => {
         const strings = manager.loadJsonTemplate('notification-email');
         const greeting = manager.interpolateString(strings.greetingWithName, { name: 'Ada' });
         const summaryBlocks = manager.loadTemplate('notification-email-section', {
-            label: strings.summaryLabel,
-            value: 'A página semanal está pronta para envio.',
+            cardLabel: strings.summaryLabel,
+            eventTitle: 'A página semanal está pronta',
+            actorText: 'Organizador: Ada',
+            eventDescription: 'A página semanal está pronta para envio.',
+            eventDateLabel: strings.dateLabel,
+            eventDateValue: 'Sexta-feira, 12 de junho de 2026 às 08:00',
+            locationLabel: strings.locationLabel,
+            locationValue: 'Laboratório 2',
+            categoryLabel: strings.categoryLabel,
+            categoryValue: 'Acadêmico',
         });
 
         const content = manager.loadTemplate('notification-email', {
+            brandName: strings.brandName,
             emailTitle: strings.emailTitle,
+            eyebrowText: strings.eyebrowText,
             greeting,
             introText: strings.introText,
+            summaryTitle: strings.summaryLabel,
+            summaryDescriptionText: strings.summaryDescriptionText,
             summaryBlocks: manager.raw(summaryBlocks),
             reviewText: strings.reviewText,
             actionUrl: 'https://event-hub.local/week',
@@ -71,6 +108,7 @@ describe('helpers/email-template-manager', () => {
         expect(content).toContain('Olá Ada,');
         expect(content).toContain('A página semanal está pronta para envio.');
         expect(content).toContain('https://event-hub.local/week');
+        expect(content).toContain('Central de notificações');
         expect(content).toContain('<mj-button');
     });
 });

@@ -25,18 +25,27 @@ describe('model/event', () => {
         expect(event.status).toBe('pending');
         expect(event.rejectionReason).toBeNull();
         expect(Event.isPublishedStatus('published')).toBe(true);
+        expect(Event.isPendingLikeStatus('pending')).toBe(true);
+        expect(Event.canOwnerEditStatus('published')).toBe(false);
+        expect(Event.canOwnerEditStatus('pending')).toBe(true);
+        expect(Event.canOwnerDeleteStatus('published')).toBe(false);
+        expect(Event.canOwnerDeleteStatus('pending')).toBe(true);
         expect(Event.canOwnerManageStatus('rejected')).toBe(true);
         expect(Event.canOwnerManageStatus('published')).toBe(false);
     });
 
     test('normalizeStatus and normalizeRejectionReason trim moderation values', () => {
         expect(Event.normalizeStatus('  rejected  ')).toBe('rejected');
+        expect(Event.normalizeStatus('  pending  ')).toBe('pending');
         expect(Event.normalizeStatus('archived')).toBe('pending');
         expect(Event.isPublishedStatus(' published ')).toBe(true);
+        expect(Event.isPendingLikeStatus(' pending ')).toBe(true);
         expect(Event.normalizeRejectionReason('  Ajuste a data do evento.  ')).toBe('Ajuste a data do evento.');
         expect(Event.normalizeRejectionReason('   ')).toBeNull();
         expect(Event.normalizeCalendarLink('  https://calendar.google.com/event  ')).toBe('https://calendar.google.com/event');
         expect(Event.normalizeCalendarLink('   ')).toBeNull();
+        expect(Event.normalizeCalendarEventId('  calendar-event-1  ')).toBe('calendar-event-1');
+        expect(Event.normalizeCalendarEventId('   ')).toBeNull();
     });
 
     test('normalize and serialize map database fields consistently', () => {
@@ -56,6 +65,7 @@ describe('model/event', () => {
             status: 'PUBLISHED',
             rejectionReason: 'Aprovado sem pendencias.',
             calendar_link: ' https://calendar.google.com/calendar/event?eid=abc123 ',
+            calendar_event_id: ' calendar-event-1 ',
             organizer_id: 'user-1',
             organizer_name: '  Ada Lovelace  ',
             created_at: '2026-04-02T12:00:00.000Z',
@@ -66,6 +76,7 @@ describe('model/event', () => {
             category: 'Tecnologia',
             rejectionReason: '  Falta anexar o cronograma.  ',
             calendarLink: ' https://calendar.google.com/calendar/event?eid=fixture ',
+            calendarEventId: ' calendar-event-fixture ',
         }));
 
         expect(normalized).toEqual({
@@ -79,6 +90,7 @@ describe('model/event', () => {
             status: 'published',
             rejectionReason: 'Aprovado sem pendencias.',
             calendarLink: 'https://calendar.google.com/calendar/event?eid=abc123',
+            calendarEventId: 'calendar-event-1',
             organizerId: 'user-1',
             organizerName: 'Ada Lovelace',
             createdAt: '2026-04-02T12:00:00.000Z',
@@ -93,6 +105,7 @@ describe('model/event', () => {
             status: 'published',
             rejection_reason: 'Falta anexar o cronograma.',
             calendar_link: 'https://calendar.google.com/calendar/event?eid=fixture',
+            calendar_event_id: 'calendar-event-fixture',
             organizer_id: 'user-1',
             created_at: 'mysql:2026-04-02T12:00:00.000Z',
         });
@@ -120,6 +133,7 @@ describe('model/event', () => {
             status: 'pending',
             rejectionReason: null,
             calendarLink: null,
+            calendarEventId: null,
             organizerId: 'user-1',
             organizerName: undefined,
             createdAt: undefined,
@@ -139,6 +153,7 @@ describe('model/event', () => {
             status: 'REJECTED',
             rejectionReason: '  Ajustar local e público-alvo. ',
             calendarLink: ' https://calendar.google.com/calendar/event?eid=editable ',
+            calendarEventId: ' calendar-event-editable ',
         });
 
         expect(serialized).toEqual({
@@ -147,6 +162,7 @@ describe('model/event', () => {
             status: 'rejected',
             rejection_reason: 'Ajustar local e público-alvo.',
             calendar_link: 'https://calendar.google.com/calendar/event?eid=editable',
+            calendar_event_id: 'calendar-event-editable',
         });
     });
 
@@ -321,6 +337,26 @@ describe('model/event', () => {
         }]);
     });
 
+    test('listForModeration treats pending filters as pending-like queue statuses', async () => {
+        const calls = [];
+        trackReplacement(restores, Event, 'find', async options => {
+            calls.push(options);
+            return [];
+        });
+        trackReplacement(restores, Relation.prototype, 'getMany', async function() {
+            return [];
+        });
+
+        await Event.listForModeration({ status: 'pending' });
+
+        expect(calls).toEqual([{
+            filter: {
+                status: 'pending',
+            },
+            opt: { order: { date: 0 } },
+        }]);
+    });
+
     test('listByOrganizer and find helpers short-circuit missing ids, and moderation defaults to unpublished events', async () => {
         const calls = [];
         const relationCalls = [];
@@ -384,6 +420,7 @@ describe('model/event', () => {
         const updatedStatus = await Event.updateStatus('event-1', 'published', {
             rejectionReason: 'Nao deve permanecer salvo.',
             calendarLink: null,
+            calendarEventId: 'calendar-event-1',
         });
         await Event.remove('event-1');
 
@@ -399,6 +436,7 @@ describe('model/event', () => {
                     status: 'published',
                     rejection_reason: 'Nao deve permanecer salvo.',
                     calendar_link: null,
+                    calendar_event_id: 'calendar-event-1',
                 },
                 id: 'event-1',
             },
