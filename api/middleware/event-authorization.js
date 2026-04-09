@@ -2,9 +2,9 @@ import { HttpError } from '../helpers/error.js';
 import { Event } from '../model/event.js';
 
 /**
- * Ensures the authenticated owner can still manage the target event.
+ * Ensures the target event exists and belongs to the authenticated owner.
  */
-export function assertOwnerCanManageEvent(event, user) {
+function assertOwnedEvent(event, user) {
     if (!event) {
         throw new HttpError(404, 'Evento não encontrado.');
     }
@@ -12,10 +12,35 @@ export function assertOwnerCanManageEvent(event, user) {
     if (event.organizerId !== user?.id) {
         throw new HttpError(403, 'Você não tem permissão para gerenciar este evento.');
     }
+}
 
-    if (!Event.canOwnerManageStatus(event.status)) {
-        throw new HttpError(403, 'Somente eventos pendentes ou rejeitados podem ser editados ou excluídos.');
+/**
+ * Ensures the authenticated owner can still edit the target event.
+ */
+export function assertOwnerCanEditEvent(event, user) {
+    assertOwnedEvent(event, user);
+
+    if (!Event.canOwnerEditStatus(event.status)) {
+        throw new HttpError(403, 'Somente eventos pendentes ou rejeitados podem ser editados.');
     }
+}
+
+/**
+ * Ensures the authenticated owner can still delete the target event.
+ */
+export function assertOwnerCanDeleteEvent(event, user) {
+    assertOwnedEvent(event, user);
+
+    if (!Event.canOwnerDeleteStatus(event.status)) {
+        throw new HttpError(403, 'Somente eventos pendentes ou rejeitados podem ser excluídos.');
+    }
+}
+
+/**
+ * Ensures the authenticated owner can still manage the target event through the legacy delete-oriented contract.
+ */
+export function assertOwnerCanManageEvent(event, user) {
+    assertOwnerCanDeleteEvent(event, user);
 }
 
 /**

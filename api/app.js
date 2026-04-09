@@ -49,7 +49,7 @@ async function start() {
             app.listen(port, host, () => {
                 console.log(`Academic Events API running on http://${host}:${port}`);
             });
-            startBackgroundTasks(BACKGROUND_TASK_FILES);
+            await startBackgroundTasks(BACKGROUND_TASK_FILES);
         }
     } catch (err) {
         console.error('Failed to start the server:', err);
@@ -59,4 +59,4 @@ async function start() {
 
 start();
 
-export { app, start };
+export { app, BACKGROUND_TASK_FILES, start, startBackgroundTasks };

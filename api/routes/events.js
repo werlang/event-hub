@@ -104,6 +104,151 @@ async function notifyPendingApproval(event, organizer) {
     }
 }
 
+/**
+ * Attempts to notify one opted-in owner that an administrator edited the event.
+ */
+async function notifyOwnerAboutAdminEdit(event, owner, editor) {
+    try {
+        await eventUpdateNotificationManager.notifyEventUpdated({
+            event,
+            owner,
+            editor,
+        });
+    } catch (error) {
+        console.error('Failed to send event-update owner notification:', error);
+    }
+}
+
+/**
+ * Attempts to notify one opted-in owner that an administrator deleted the event.
+ */
+async function notifyOwnerAboutAdminDelete(event, owner, editor) {
+    try {
+        await eventUpdateNotificationManager.notifyEventDeleted({
+            event,
+            owner,
+            editor,
+        });
+    } catch (error) {
+        console.error('Failed to send event-delete owner notification:', error);
+    }
+}
+
+/**
+ * Reports whether the current authenticated actor is an administrator.
+ */
+function isAdminUser(user) {
+    return String(user?.role || '').trim().toLowerCase() === 'admin';
+}
+
+/**
+ * Resolves the moderation transition used by the current authenticated editor.
+ */
+function readEventEditTransition(currentEvent, user) {
+    if (!currentEvent) {
+        throw new HttpError(404, 'Evento não encontrado.');
+    }
+
+    if (isAdminUser(user)) {
+        return {
+            targetStatus: Event.STATUS_PENDING,
+            message: 'Evento atualizado e enviado para moderação.',
+            shouldNotifyOwner: true,
+            shouldNotifyPendingApproval: false,
+        };
+    }
+
+    assertOwnerCanEditEvent(currentEvent, user);
+
+    return {
+        targetStatus: Event.STATUS_PENDING,
+        message: 'Evento atualizado e enviado para moderação.',
+        shouldNotifyOwner: false,
+        shouldNotifyPendingApproval: currentEvent.status !== Event.STATUS_PENDING || Boolean(currentEvent.calendarEventId),
+    };
+}
+
+/**
+ * Resolves whether the current authenticated actor may delete the target event.
+ */
+function readEventDeleteTransition(currentEvent, user) {
+    if (!currentEvent) {
+        throw new HttpError(404, 'Evento não encontrado.');
+    }
+
+    if (isAdminUser(user)) {
+        return {
+            shouldNotifyOwner: currentEvent.organizerId !== user?.id,
+        };
+    }
+
+    assertOwnerCanDeleteEvent(currentEvent, user);
+
+    return {
+        shouldNotifyOwner: false,
+    };
+}
+
+/**
+ * Detects whether a calendar deletion error means the entry was already removed.
+ */
+function isMissingCalendarEventError(error) {
+    const statusCode = Number(
+        error?.status
+        || error?.statusCode
+        || error?.code
+        || error?.response?.status,
+    );
+
+    if (statusCode === 404) {
+        return true;
+    }
+
+    const normalizedMessage = String(error?.message || '').trim().toLowerCase();
+    return normalizedMessage.includes('not found') || normalizedMessage.includes('already deleted');
+}
+
+/**
+ * Deletes a persisted calendar entry and tolerates already-missing events for retry safety.
+ */
+async function deleteCalendarEntryIfPresent(calendarEventId) {
+    if (!calendarEventId) {
+        return;
+    }
+
+    try {
+        await GoogleCalendarPublisher.deleteEvent(calendarEventId);
+    } catch (error) {
+        if (!isMissingCalendarEventError(error)) {
+            throw error;
+        }
+    }
+}
+
+/**
+ * Persists an event edit back into the moderation queue while keeping calendar metadata until cleanup succeeds.
+ */
+async function updateEventForModeration(currentEvent, payload, { targetStatus } = {}) {
+    const shouldDeleteCalendarEntry = Boolean(currentEvent.calendarEventId);
+    const updatedEvent = await Event.updateDetails(currentEvent.id, {
+        ...payload,
+        status: targetStatus || Event.STATUS_PENDING,
+        rejectionReason: null,
+        calendarLink: shouldDeleteCalendarEntry ? currentEvent.calendarLink : null,
+        calendarEventId: shouldDeleteCalendarEntry ? currentEvent.calendarEventId : null,
+    });
+
+    if (!shouldDeleteCalendarEntry) {
+        return updatedEvent;
+    }
+
+    await deleteCalendarEntryIfPresent(currentEvent.calendarEventId);
+
+    return Event.updateDetails(currentEvent.id, {
+        calendarLink: null,
+        calendarEventId: null,
+    });
+}
 
 /**
  * Lists public events using the supported query-string filters.
@@ -193,24 +338,32 @@ router.post('/', authMiddleware, async (req, res, next) => {
 });
 
 /**
- * Updates an event still pending moderation or already rejected.
+ * Updates an organizer-owned event and reopens it for moderation when needed.
  */
 router.put('/:id', 
     authMiddleware, 
     async (req, res, next) => {
     try {
         const currentEvent = await Event.findById(req.params.id);
-        assertOwnerCanManageEvent(currentEvent, req.user);
-
-        const updatedEvent = await Event.updateDetails(currentEvent.id, {
-            ...parseEventPayload(req.body),
-            status: Event.STATUS_PENDING,
-            rejectionReason: null,
+        const transition = readEventEditTransition(currentEvent, req.user);
+        const updatedEvent = await updateEventForModeration(currentEvent, parseEventPayload(req.body), {
+            targetStatus: transition.targetStatus,
         });
+
+        if (transition.shouldNotifyPendingApproval) {
+            notifyPendingApproval(updatedEvent, req.user).catch((error) => {
+                console.error('Failed to send pending-event admin notification after event update:', error);
+            });
+        }
+
+        if (transition.shouldNotifyOwner) {
+            const owner = await User.findById(currentEvent.organizerId);
+            await notifyOwnerAboutAdminEdit(updatedEvent, owner, req.user);
+        }
 
         return sendSuccess(res, {
             data: { event: updatedEvent },
-            message: 'Evento atualizado e enviado para moderação.',
+            message: transition.message,
         });
     } catch (err) {
         return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível atualizar o evento.', err));
@@ -218,19 +371,33 @@ router.put('/:id',
 });
 
 /**
- * Deletes an event still pending moderation or already rejected.
+ * Deletes an owner-managed or admin-managed event with calendar cleanup.
  */
 router.delete('/:id', 
     authMiddleware, 
     async (req, res, next) => {
     try {
         const currentEvent = await Event.findById(req.params.id);
-        assertOwnerCanManageEvent(currentEvent, req.user);
+        const transition = readEventDeleteTransition(currentEvent, req.user);
 
         await Event.remove(currentEvent.id);
+
+        if (currentEvent.calendarEventId) {
+            try {
+                await deleteCalendarEntryIfPresent(currentEvent.calendarEventId);
+            } catch (error) {
+                console.error('Failed to delete calendar entry after event removal:', error);
+            }
+        }
+
+        if (transition.shouldNotifyOwner) {
+            const owner = await User.findById(currentEvent.organizerId);
+            await notifyOwnerAboutAdminDelete(currentEvent, owner, req.user);
+        }
+
         return sendSuccess(res, {
             data: { id: currentEvent.id },
-            message: 'Evento excluído.',
+            message: 'Evento excluído com sucesso.',
         });
     } catch (err) {
         return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível excluir o evento.', err));
@@ -250,24 +417,17 @@ router.put('/:id/moderation',
 
         const moderationDecision = parseModerationDecisionPayload(req.body);
 
+        let createdCalendarEntry = null;
+
         try {
             if (moderationDecision.status === Event.STATUS_PUBLISHED) {
-                GoogleCalendarPublisher.publishApprovedEvent(currentEvent).then((calendarEntry) => {
-                    Event.linkCalendarEntry(currentEvent.id, calendarEntry.htmlLink).catch((err) => {
-                        // Best-effort cleanup to avoid orphan calendar entries after persistence failures.
-                        try {
-                            GoogleCalendarPublisher.deleteEvent(calendarEntry.id);
-                        } catch {
-                            // Ignore cleanup failures.
-                        }
-
-                        throw err;
-                    });
-                });
+                createdCalendarEntry = await GoogleCalendarPublisher.publishApprovedEvent(currentEvent);
             }
 
             const updatedEvent = await Event.updateStatus(currentEvent.id, moderationDecision.status, {
                 rejectionReason: moderationDecision.rejectionReason,
+                calendarLink: createdCalendarEntry?.htmlLink || null,
+                calendarEventId: createdCalendarEntry?.id || null,
             });
             const message = moderationDecision.status === Event.STATUS_PUBLISHED
                 ? 'Evento aprovado e publicado.'
@@ -280,7 +440,7 @@ router.put('/:id/moderation',
         } catch (error) {
             if (createdCalendarEntry?.id) {
                 try {
-                    GoogleCalendarPublisher.deleteEvent(createdCalendarEntry.id);
+                    await GoogleCalendarPublisher.deleteEvent(createdCalendarEntry.id);
                 } catch {
                     // Best-effort cleanup to avoid orphan calendar entries after persistence failures.
                 }

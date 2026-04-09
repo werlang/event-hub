@@ -18,6 +18,7 @@ export class Event extends Model {
         'status',
         'rejection_reason',
         'calendar_link',
+        'calendar_event_id',
         'organizer_id',
         'created_at',
     ];
@@ -39,6 +40,7 @@ export class Event extends Model {
         status,
         rejectionReason,
         calendarLink,
+        calendarEventId,
         organizerId,
         organizerName,
         createdAt,
@@ -53,6 +55,7 @@ export class Event extends Model {
         this.status = Event.normalizeStatus(status);
         this.rejectionReason = Event.normalizeRejectionReason(rejectionReason);
         this.calendarLink = Event.normalizeCalendarLink(calendarLink);
+        this.calendarEventId = Event.normalizeCalendarEventId(calendarEventId);
         this.organizerId = organizerId;
         this.organizerName = typeof organizerName === 'string' ? organizerName.trim() || undefined : undefined;
         this.createdAt = createdAt || new Date().toISOString();
@@ -73,6 +76,7 @@ export class Event extends Model {
             status: this.status,
             rejectionReason: this.rejectionReason,
             calendarLink: this.calendarLink,
+            calendarEventId: this.calendarEventId,
             organizerId: this.organizerId,
             organizerName: this.organizerName,
             createdAt: this.createdAt,
@@ -87,19 +91,6 @@ export class Event extends Model {
         return Event.ALLOWED_STATUSES.includes(normalizedStatus)
             ? normalizedStatus
             : Event.STATUS_PENDING;
-    }
-
-    /**
-     * Links a published event to its corresponding Google Calendar entry through the stored calendar entry id.
-     */
-    static linkCalendarEntry(eventId, calendarEntryId) {
-        if (!eventId || !calendarEntryId) {
-            return null;
-        }
-
-        return this.driver.update(this.table, {
-            calendar_link: calendarEntryId,
-        }, eventId);
     }
 
     /**
@@ -119,6 +110,14 @@ export class Event extends Model {
     }
 
     /**
+     * Normalizes the stored Google Calendar event id used for later deletion.
+     */
+    static normalizeCalendarEventId(calendarEventId) {
+        const normalizedCalendarEventId = typeof calendarEventId === 'string' ? calendarEventId.trim() : '';
+        return normalizedCalendarEventId || null;
+    }
+
+    /**
      * Checks whether a moderation status represents a public event.
      */
     static isPublishedStatus(status) {
@@ -126,11 +125,42 @@ export class Event extends Model {
     }
 
     /**
-     * Checks whether an owner may still edit or delete an event.
+     * Checks whether a moderation status stays inside the pending moderation queue.
      */
-    static canOwnerManageStatus(status) {
+    static isPendingLikeStatus(status) {
+        const normalizedStatus = Event.normalizeStatus(status);
+        return normalizedStatus === Event.STATUS_PENDING;
+    }
+
+    /**
+     * Checks whether an owner may still edit an event.
+     */
+    static canOwnerEditStatus(status) {
         const normalizedStatus = Event.normalizeStatus(status);
         return [Event.STATUS_PENDING, Event.STATUS_REJECTED].includes(normalizedStatus);
+    }
+
+    /**
+     * Checks whether an owner may still delete an event.
+     */
+    static canOwnerDeleteStatus(status) {
+        const normalizedStatus = Event.normalizeStatus(status);
+        return [Event.STATUS_PENDING, Event.STATUS_REJECTED].includes(normalizedStatus);
+    }
+
+    /**
+     * Resolves the moderation-queue filter that should be used for one requested status.
+     */
+    static readModerationStatusFilter(status) {
+        const normalizedStatus = this.normalizeStatus(status);
+        return normalizedStatus;
+    }
+
+    /**
+     * Checks whether an owner may still manage an event through the legacy delete-oriented contract.
+     */
+    static canOwnerManageStatus(status) {
+        return Event.canOwnerDeleteStatus(status);
     }
 
 
@@ -151,6 +181,7 @@ export class Event extends Model {
             status: Event.normalizeStatus(row.status),
             rejectionReason: Event.normalizeRejectionReason(row.rejectionReason || row.rejection_reason),
             calendarLink: Event.normalizeCalendarLink(row.calendarLink || row.calendar_link),
+            calendarEventId: Event.normalizeCalendarEventId(row.calendarEventId || row.calendar_event_id),
             organizerId: row.organizerId || row.organizer_id,
             organizerName: typeof (row.organizerName || row.organizer_name) === 'string'
                 ? (row.organizerName || row.organizer_name).trim() || undefined
@@ -176,6 +207,7 @@ export class Event extends Model {
             status: this.normalizeStatus(event.status),
             rejection_reason: this.normalizeRejectionReason(event.rejectionReason),
             calendar_link: this.normalizeCalendarLink(event.calendarLink),
+            calendar_event_id: this.normalizeCalendarEventId(event.calendarEventId),
             organizer_id: event.organizerId,
             created_at: this.driver.toDateTime(event.createdAt || Date.now()),
         };
@@ -200,6 +232,10 @@ export class Event extends Model {
 
         if (Object.prototype.hasOwnProperty.call(payload, 'calendarLink')) {
             serialized.calendar_link = this.normalizeCalendarLink(payload.calendarLink);
+        }
+
+        if (Object.prototype.hasOwnProperty.call(payload, 'calendarEventId')) {
+            serialized.calendar_event_id = this.normalizeCalendarEventId(payload.calendarEventId);
         }
 
         return serialized;
@@ -339,7 +375,7 @@ export class Event extends Model {
     static async listForModeration({ moderatorId, status } = {}) {
         const events = await this.find({
             filter: {
-                status: status ? this.normalizeStatus(status) : { not: this.STATUS_PUBLISHED },
+                status: status ? this.readModerationStatusFilter(status) : { not: this.STATUS_PUBLISHED },
                 ...(moderatorId ? { organizer_id: { not: moderatorId } } : {}),
             },
             opt: { order: { date: 0 } },
@@ -364,7 +400,7 @@ export class Event extends Model {
     /**
      * Updates the moderation status for an event and returns the persisted event.
      */
-    static async updateStatus(id, status, { rejectionReason, calendarLink } = {}) {
+    static async updateStatus(id, status, { rejectionReason, calendarLink, calendarEventId } = {}) {
         if (!id) {
             return null;
         }
@@ -373,6 +409,7 @@ export class Event extends Model {
             status: this.normalizeStatus(status),
             rejection_reason: this.normalizeRejectionReason(rejectionReason),
             calendar_link: this.normalizeCalendarLink(calendarLink),
+            calendar_event_id: this.normalizeCalendarEventId(calendarEventId),
         }, id);
         return this.get(id);
     }
