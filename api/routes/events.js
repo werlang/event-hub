@@ -358,7 +358,9 @@ router.put('/:id',
 
         if (transition.shouldNotifyOwner) {
             const owner = await User.findById(currentEvent.organizerId);
-            await notifyOwnerAboutAdminEdit(updatedEvent, owner, req.user);
+            notifyOwnerAboutAdminEdit(updatedEvent, owner, req.user).catch((error) => {
+                console.error('Failed to send event-update owner notification after event update:', error);
+            });
         }
 
         return sendSuccess(res, {
@@ -392,7 +394,9 @@ router.delete('/:id',
 
         if (transition.shouldNotifyOwner) {
             const owner = await User.findById(currentEvent.organizerId);
-            await notifyOwnerAboutAdminDelete(currentEvent, owner, req.user);
+            notifyOwnerAboutAdminDelete(currentEvent, owner, req.user).catch((error) => {
+                console.error('Failed to send event-delete owner notification after event removal:', error);
+            });
         }
 
         return sendSuccess(res, {

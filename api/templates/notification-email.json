@@ -6,7 +6,7 @@
     "greetingWithName": "Olá {{name}},",
     "introText": "Um novo evento foi enviado para moderação e já está aguardando análise na central administrativa.",
     "reviewText": "Abra o painel do Event Hub para analisar os detalhes do envio e decidir pela aprovação ou rejeição.",
-    "buttonText": "Abrir Event Hub",
+    "buttonText": "Abrir no Event Hub",
     "footerText": "Mensagem automática do Event Hub.",
     "summaryLabel": "Evento",
     "eventTitleLabel": "Evento",
