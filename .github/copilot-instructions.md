@@ -17,7 +17,7 @@
 - **Cross-table data loading**: when API code needs related records from another table, compose that through `api/model/relation.js`. Do not add direct SQL joins in models or expose a public raw-query method from the MySQL driver.
 
 ## Architecture
-- **API service** (`api/`): REST endpoints for auth and events.
+- **API service** (`api/`): REST endpoints for auth and events, plus e-mail notifications, Google Calendar publishing, and recurring background tasks.
 - **Web service** (`web/`): SSR shell with Mustache and client behavior bundled with Webpack.
 - **No shared package**: `api/` and `web/` are independent Node projects.
 - **Persistence**: MySQL access flows through the base `Model` class and the `Mysql` driver (`api/model/model.js`, `api/helpers/mysql.js`).
@@ -46,8 +46,11 @@
 - `POST /auth/register` → create user and return JWT; no invite token is required.
 - `POST /auth/login` → validate credentials and return JWT.
 - `GET /auth/me` → requires Bearer token via `authMiddleware`.
+- `PUT /auth/me` → authenticated profile update that returns a refreshed JWT.
+- `PUT /auth/me/preferences` → authenticated e-mail preference update.
 - `PUT /auth/password` → authenticated password change.
 - `GET /auth/users` → authenticated admin-only user list.
+- `PUT /auth/users/password/reset` → authenticated admin-only password reset for member accounts.
 - `PUT /auth/users/:id/promote` → authenticated admin-only promotion flow.
 
 ### Event routes (`api/routes/events.js`)
@@ -56,9 +59,9 @@
 - `GET /events/moderation` → authenticated admin moderation queue, with optional `status=pending|rejected`.
 - `GET /events/:id` → public event detail.
 - `POST /events` → authenticated event creation.
-- `PUT /events/:id` → organizer-only update for pending or rejected events.
-- `DELETE /events/:id` → organizer-only deletion for pending or rejected events.
-- `PUT /events/:id/moderation` → admin-only moderation decision for pending events.
+- `PUT /events/:id` → organizer resubmission for pending/rejected events and admin edits that return the event to moderation.
+- `DELETE /events/:id` → organizer deletion for pending/rejected events and admin deletion for any event.
+- `PUT /events/:id/moderation` → admin-only moderation decision for pending events, including Google Calendar publication on approval.
 
 ## Auth and Security
 - JWT helpers are in `api/helpers/token.js`.
@@ -71,15 +74,17 @@
   - password hashing via bcrypt (`12` rounds).
   - email normalized to lowercase.
   - roles normalized to `admin` or `member`.
+  - e-mail preference flags normalized through `emailPreferences` with defaults enabled.
 - **Event** (`api/model/event.js`):
   - generated UUID when `id` is absent.
-  - defaults: `category = 'Geral'`, `location = 'A definir'`.
+  - category ids normalized through `normalizeEventCategoryId(...)`, with fallback `outro`.
+  - defaults: `location = 'A definir'`, status `pending`.
   - `createdAt` set automatically when omitted.
 
 ## Build and Run
 - **API scripts**:
   - `npm run production` → `node app.js`
-  - `npm run development` → `node --watch app.js`
+  - `npm run development` → `node --inspect=0.0.0.0 --watch app.js`
 - **Web scripts**:
   - `npm run production` → `node app.js`
   - `npm run development` → `concurrently "npm run dev:server" "npm run dev:client"`
@@ -98,28 +103,41 @@
 - Web routes:
   - `GET /` renders `web/src/html/index.html`
   - `GET /login` renders `web/src/html/login.html`
-  - `GET /publish` renders `web/src/html/publish.html`
+  - `GET /week` renders `web/src/html/week.html`
+  - `GET /dashboard` renders `web/src/html/dashboard.html`
 - Static assets are served from `web/public/`.
 - Webpack entries are:
   - `web/src/js/index.js` → public home page bundle plus shared `index.css`
   - `web/src/js/login.js` → login/register tab UI plus `login.css`
-- The current home page flow is componentized around `EventList`, `FilterForm`, and `QuickChips`.
+  - `web/src/js/week.js` → public week-page bundle plus `week.css`
+  - `web/src/js/dashboard.js` → authenticated dashboard bundle plus `dashboard.css`
+- The current home page flow is componentized around `EventList`, `FilterForm`, `QuickChips`, `Pagination`, and `Header`, and defaults to the current local week range.
+- The current week page is a dedicated public route that reads SSR-provided date bounds and the shared Google Calendar join URL.
+- The dashboard is organized around `DashboardActionTabs`, event-management modals, reusable filters, and `DashboardSettingsPanels` for profile, password, e-mail preferences, and admin account tools.
 - `web/src/js/helpers/template-var.js` reads server-injected template variables from `web/middleware/render.js`.
 - `web/src/js/helpers/api.js` resolves API URLs from template vars, then a meta tag, then relative paths.
-- `web/src/html/publish.html` currently renders the publish form shell, but there is no dedicated `web/src/js/publish.js` entry at the moment.
 - The `.github/references/` folder is a style inspiration source for class-based DOM helpers and component ergonomics; use it as reference material, not as a copy target.
 
 ## Environment Variables
-- Root `.env` currently contains:
+- Relevant root/Compose environment variables include:
   - `NODE_ENV`
   - `API_URL`
+  - `WEB_URL`
   - `JWT_SECRET`
   - `MYSQL_DATABASE`
   - `MYSQL_ROOT_PASSWORD`
+  - `GOOGLE_CALENDAR_JOIN_URL`
+  - `WEEKLY_DIGEST_EMAIL`
+  - `EMAIL_TESTING`
+  - `SMTP_FROM`, `SMTP_FROM_NAME`, `SMTP_FROM_EMAIL`
+  - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`
 
 ## Testing
-- No automated test suite is currently configured.
+- API automation lives in the committed Jest unit suite under `api/tests/unit`.
+- Web automation lives in the committed Node test suite under `web/tests`.
 - Feature and refactor work is not complete after code edits alone: when a task introduces or touches stable automation, update and run it.
-- When automation is still absent, validate changes with explicit manual API/Web checks and, when relevant, Docker Compose logs.
+- Prefer `docker compose -f compose.dev.yaml exec api npm test -- --runInBand` for the full API unit suite when the Compose stack is available.
+- Prefer `cd web && node --test tests/*.test.mjs` for the committed web route/template/contract suite.
+- When automation is still absent for the touched flow, validate changes with explicit manual API/Web checks and, when relevant, Docker Compose logs.
 - Prefer the smallest service-local test bootstrap when a task can add deterministic coverage cleanly inside `api/` or `web/`; otherwise document the manual validation steps and remaining gaps.
 - For web asset or bundle changes, prefer the repository workflow `docker compose -f compose.dev.yaml exec web ./node_modules/.bin/webpack --config webpack.config.js --stats errors-warnings` when the Compose stack is available.

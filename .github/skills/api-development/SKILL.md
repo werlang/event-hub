@@ -1,6 +1,6 @@
 ---
 name: api-development
-description: Build and maintain REST API endpoints for authentication and academic events in `api/`. Use when adding or modifying routes, request validation, auth flows, response contracts, model behavior, or MySQL-backed persistence.
+description: Build and maintain REST API endpoints for authentication, moderation, notifications, and academic events in `api/`. Use when adding or modifying routes, request validation, auth flows, response contracts, background side effects, model behavior, or MySQL-backed persistence.
 ---
 
 # API Development
@@ -19,8 +19,11 @@ Routes:
 - `POST /auth/register`
 - `POST /auth/login`
 - `GET /auth/me` (requires `Authorization: Bearer <token>`)
+- `PUT /auth/me` (requires `Authorization: Bearer <token>`)
+- `PUT /auth/me/preferences` (requires `Authorization: Bearer <token>`)
 - `PUT /auth/password` (requires `Authorization: Bearer <token>`)
 - `GET /auth/users` (requires admin bearer token)
+- `PUT /auth/users/password/reset` (requires admin bearer token)
 - `PUT /auth/users/:id/promote` (requires admin bearer token)
 - `GET /events`
 - `GET /events/mine` (requires `Authorization: Bearer <token>`)
@@ -39,11 +42,13 @@ Routes:
 - Stores password hash only (`password_hash`)
 - Normalizes email to lowercase
 - Normalizes roles to `admin` or `member`
+- Normalizes `emailPreferences` with `eventUpdates` and `adminPendingRequests` flags enabled by default
 
 `Event` model (`api/model/event.js`):
 
 - Generates UUID when `id` is missing
-- Defaults: `category = 'Geral'`, `location = 'A definir'`
+- Normalizes category ids through `normalizeEventCategoryId(...)`, with fallback `outro`
+- Defaults: `location = 'A definir'`, status `pending`
 - Sets `createdAt` automatically
 
 ## Authentication Pattern
@@ -81,6 +86,7 @@ Error middleware (`api/middleware/error.js`) derives `type` from HTTP status nam
 - When API code needs data from another table, resolve it through `api/model/relation.js` or model composition. Do not introduce direct SQL joins in models, routes, or helpers.
 - Treat raw SQL execution as an internal MySQL-driver concern. Do not expose or rely on a public `Mysql.query(...)` style API from application code.
 - Treat checked-in schema files as the source of truth. Do not add runtime schema upgrade or legacy-compatibility code such as `ensureSchema`, request-time `ALTER TABLE`, `SHOW COLUMNS`, or lazy migration guards in production code.
+- When route behavior includes e-mail notifications, Google Calendar publishing, or background-task side effects, keep the main HTTP outcome resilient and test the side effect orchestration with mocks instead of making route success depend on external delivery.
 - Preserve the global envelope format for both success and errors.
 - After each API feature or behavior change, update the Jest unit suite in `api/tests/unit` and run `docker compose -f compose.dev.yaml exec api npm test` before considering the task complete.
 - Add tests for both common real-world flows and meaningful edge cases such as missing inputs, malformed identifiers, unauthorized actors, stale state, duplicate data, and fallback defaults.
@@ -102,9 +108,21 @@ Error middleware (`api/middleware/error.js`) derives `type` from HTTP status nam
 - requires `email`, `password`
 - validates credentials
 
+`PUT /auth/me`:
+- requires `name`, `email`
+- rejects duplicate e-mail ownership
+
+`PUT /auth/me/preferences`:
+- requires `emailPreferences`
+- validates all provided flags as booleans
+
 `PUT /auth/password`:
 - requires `currentPassword`, `newPassword`
 - rejects when the new password matches the current password
+
+`PUT /auth/users/password/reset`:
+- requires `email`, `newPassword`
+- only administrators may reset member passwords
 
 `POST /events`:
 - requires `title`, `description`, `date`
@@ -112,12 +130,13 @@ Error middleware (`api/middleware/error.js`) derives `type` from HTTP status nam
 
 `PUT /events/:id`:
 - requires `title`, `description`, `date`
-- only the organizer can update pending or rejected events
+- lets organizers update pending/rejected events and lets administrators edit any event
 - resets the event to `pending` and clears `rejectionReason`
 
 `PUT /events/:id/moderation`:
 - accepts moderation status `published` or `rejected`
 - `rejected` may include `rejectionReason`
+- `published` may create a Google Calendar event and persist its identifiers
 
 ## References
 

@@ -71,5 +71,5 @@ authTabs.setActive(readInitialAuthTab());
 
 ## Notes
 
-- The current repository does not have an active `publish.js` entry.
+- The active frontend entries are `index.js`, `login.js`, `week.js`, and `dashboard.js`; do not document dormant routes or bundle files that are not wired in `web/app.js` and `web/webpack.config.js`.
 - Use the root `.github/references/` folder as style inspiration for class-based DOM APIs, but keep implementation details anchored in the live `web/src/js/` files.

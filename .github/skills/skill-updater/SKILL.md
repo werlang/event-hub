@@ -1,6 +1,6 @@
 ---
 name: skill-updater
-description: Update the repository skill guides when a task establishes or clarifies durable coding principles, project styles, structure rules, patterns, or best practices. Use when a user asks for maintainability, architecture, readability, OOP, refactoring, code review guidance, or any new long-lived convention that should become future guidance.
+description: Update repository documentation and agent guidance when README, SKILL.md files, prompts, Copilot instructions, or durable coding conventions drift from the codebase. Use when asked to update docs, update a skill, update instructions, audit .github guidance, or record long-lived maintainability and architecture rules.
 ---
 
 # Skill Updater
@@ -9,6 +9,7 @@ Use this skill when a task does more than change code: it also establishes a dur
 
 Use it by default when the task is about any of these:
 
+- updating README or repository documentation so it matches the real codebase
 - updating project-wide coding standards or agent instructions
 - writing or revising skill files, prompt files, or Copilot instructions
 - turning a repeated implementation preference into a documented convention
@@ -24,8 +25,13 @@ Use this skill when the user asks for any of the following:
 - make a convention explicit so it can guide future tasks
 - create or revise a repository skill because the current guidance is missing, outdated, or too weak
 - update the repository instruction set so future agents are less likely to repeat the same mistake or omission
+- run a documentation audit because `.github` files, prompts, or README content no longer match the current routes, pages, scripts, or tests
 
 Do not use this skill for one-off implementation details, temporary workarounds, or task-specific decisions that are unlikely to matter again.
+
+## Discovery Note
+
+The frontmatter `description` is the discovery surface. If this skill is not being auto-invoked for obvious requests like "update docs", "update the skill", or "fix Copilot instructions", add those exact phrases to the description instead of leaving them only in the body text.
 
 ## Primary Goal
 
@@ -39,7 +45,8 @@ Convert stable lessons from the current task into the smallest correct documenta
 4. Update that guide with concise, directive wording.
 5. Only create a new skill when no existing skill is the right long-term owner.
 6. If the rule is repository-wide, also update `.github/copilot-instructions.md`.
-7. If the rule is useful beyond the current diff and likely to remain true, store a repository memory with citations.
+7. If the request is a documentation audit, also check `README.md`, `.github/skills/README.md`, and any prompts or references that repeat the stale claim.
+8. If the rule is useful beyond the current diff and likely to remain true, store a repository memory with citations.
 
 ## Ownership Rules
 

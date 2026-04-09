@@ -24,8 +24,9 @@ Use this skill whenever a task changes behavior in `api/` or `web/`.
 - This repo is split into two independent Node/Express services: `api/` and `web/`.
 - `api/` now has a committed Jest unit suite rooted at `api/tests/unit` with coverage output in `api/tests/coverage`.
 - The verified API validation command is `docker compose -f compose.dev.yaml exec api npm test`.
-- The verified automated web validation path today is rebuilding the web bundle from the running Compose web service.
-- Manual validation is still the default for many API, auth, database, and SSR flows until a task introduces a stable local harness.
+- `web/` now has a committed Node test suite rooted at `web/tests` for route, template, bundle-contract, and UI-state coverage.
+- The practical automated web validation path is `cd web && node --test tests/*.test.mjs`, plus bundle rebuilds when assets changed.
+- Manual validation is still required for browser-only interaction work, but it is no longer the default for SSR, template, or many client contract checks.
 - For frontend interaction changes, manual validation should include a real browser pass over the affected page, not only a compile or static DOM review.
 
 ## Workflow
@@ -34,10 +35,11 @@ Use this skill whenever a task changes behavior in `api/` or `web/`.
 2. Check whether the touched service already has automated tests or whether the task is also adding a small service-local harness.
 3. Choose the validation path using [references/testing-decision-tree.md](references/testing-decision-tree.md).
 4. For API behavior changes, add or update Jest unit tests under `api/tests/unit` alongside the production code change.
-5. Run the relevant commands and checks from [references/validation-commands.md](references/validation-commands.md).
-6. For frontend interaction changes, open the affected page in a browser session and exercise the changed controls or flows.
-7. Fix failures and rerun the validated scope until it passes with no failing tests.
-8. Finish with explicit reporting:
+5. For web behavior changes covered by the existing suite, add or update the relevant tests under `web/tests` alongside the production code change.
+6. Run the relevant commands and checks from [references/validation-commands.md](references/validation-commands.md).
+7. For frontend interaction changes, open the affected page in a browser session and exercise the changed controls or flows.
+8. Fix failures and rerun the validated scope until it passes with no failing tests.
+9. Finish with explicit reporting:
    - tests or commands run
    - manual checks performed
    - remaining gaps or unvalidated risk
@@ -49,7 +51,9 @@ A behavior-changing task is complete only when:
 - the implementation is in place,
 - automated tests were updated and run when they existed or were intentionally bootstrapped,
 - API tasks updated the Jest unit suite for both common and edge-case behavior when the API code changed,
+- web tasks updated the committed `web/tests` coverage when the touched behavior already had route, template, or contract assertions,
 - API test execution finished with `100%` passing tests,
+- relevant web test execution finished with `100%` passing tests,
 - otherwise the manual validation checklist was executed for the touched flow,
 - any web asset change was rebuilt through the repo's real workflow,
 - frontend interaction changes were checked in a real browser session when the environment made that possible,

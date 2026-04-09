@@ -7,7 +7,7 @@ Perform a documentation audit so `.github` guidance matches the **actual** Acade
 Verify and fix documentation so it reflects real implementation in:
 
 - `api/` (auth + events API)
-- `web/` (SSR + client bundle)
+- `web/` (SSR + client bundles for home, login, week, and dashboard)
 - `compose.dev.yaml` (development containers)
 
 Remove references to non-existent features (Redis, timetable entities, proposal flow, i18n namespaces, etc.).
@@ -35,13 +35,17 @@ Remove references to non-existent features (Redis, timetable entities, proposal 
 - `web/app.js`
 - `web/src/js/index.js`
 - `web/src/js/login.js`
+- `web/src/js/week.js`
+- `web/src/js/dashboard.js`
 - `web/src/js/components/*.js`
 - `web/src/js/helpers/api.js`
 - `web/src/js/helpers/query-state.js`
 - `web/src/html/index.html`
 - `web/src/html/login.html`
-- `web/src/html/publish.html`
+- `web/src/html/week.html`
+- `web/src/html/dashboard.html`
 - `web/webpack.config.js`
+- `web/tests/*.test.mjs`
 - `compose.dev.yaml`
 - `api/package.json`, `web/package.json`
 - `.github/references/`
@@ -59,10 +63,12 @@ Remove references to non-existent features (Redis, timetable entities, proposal 
 Update docs to match real behavior:
 
 - API routes and payload expectations
+- API background tasks, e-mail notifications, and Google Calendar side effects
 - Auth/JWT flow and middleware behavior
 - Domain model rules and defaults
 - Docker compose reality (dev file only)
 - Web architecture and current client flow
+- Current automation in `api/tests/unit` and `web/tests`
 - Notes about `.github/references/` as coding-style inspiration only
 
 ### Phase 3 — Validation
@@ -80,7 +86,8 @@ Update docs to match real behavior:
 - i18n namespace lists not present in code
 - CI/testing requirements that do not exist
 - References to deleted frontend entries such as `web/src/js/publish.js`
-- Claims about auth or publish flows that are not implemented in the current web bundle
+- Claims about auth, week, dashboard, or publish flows that are not implemented in the current web bundle
+- Claims that the repository has no committed test suite when `api/tests/unit` and `web/tests` are present
 - Claims that registration still depends on a special access token
 
 ## Output Template

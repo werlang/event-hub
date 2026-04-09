@@ -1,13 +1,13 @@
 # Academic Events
 
-Aplicação com dois serviços independentes, ambos em Express 5 e ES Modules, para autenticação, e publicação de eventos acadêmicos com visualização pública e filtros.
+Aplicação com dois serviços independentes, ambos em Express 5 e ES Modules, para autenticação, moderação e divulgação de eventos acadêmicos com agenda pública, dashboard autenticado, integração com Google Calendar e notificações por e-mail.
 
 O contrato HTTP da API deste repositório usa apenas `GET`, `POST`, `PUT` e `DELETE`.
 
 ## Serviços
 
-- **API** (`api/`, porta padrão `3000`): autenticação, cadastro e listagem filtrada de eventos.
-- **Web** (`web/`, porta padrão `3000` local no processo; exposta como `80` no Compose): interface SSR Mustache para login/registro, publicação e exploração pública dos eventos.
+- **API** (`api/`, porta padrão `3000`): autenticação, moderação de eventos, integrações de e-mail/Google Calendar e tarefas em background.
+- **Web** (`web/`, SSR Mustache + bundles Webpack): home pública, login/registro, agenda semanal e dashboard autenticado.
 
 ## Execução rápida
 
@@ -15,17 +15,23 @@ O contrato HTTP da API deste repositório usa apenas `GET`, `POST`, `PUT` e `DEL
 # API
 cd api
 npm install
-NODE_ENV=development MYSQL_DATABASE=academic_events MYSQL_ROOT_PASSWORD=changeme JWT_SECRET=dev-academic-events-local-secret-change-me npm run development
+PORT=3001 NODE_ENV=development MYSQL_DATABASE=academic_events MYSQL_ROOT_PASSWORD=changeme JWT_SECRET=dev-academic-events-local-secret-change-me npm run development
 
 # Web (em outro terminal)
 cd ../web
 npm install
-API_URL=http://localhost:3000 npm run development
+API_URL=http://localhost:3001 npm run development
 ```
 
-Abra `http://localhost:80` (Compose) ou `http://localhost:3000` (execução local direta da web) para usar. A agenda pública não requer autenticação; o cadastro de eventos exige login.
+Abra `http://localhost:80` para usar o fluxo web com o Webpack Dev Server. A agenda pública não requer autenticação; o dashboard e os envios exigem login.
 
 Para desenvolvimento com containers, use `docker compose -f compose.dev.yaml up -d --build`.
+
+## Testes e validação
+
+- **API**: suíte Jest comprometida em `api/tests/unit`, executada com `cd api && npm test` ou `docker compose -f compose.dev.yaml exec api npm test -- --runInBand`.
+- **Web**: suíte com Node test runner em `web/tests`, executada com `cd web && node --test tests/*.test.mjs`.
+- **Bundles web**: para mudanças de frontend, regenere os assets com `docker compose -f compose.dev.yaml exec web ./node_modules/.bin/webpack --config webpack.config.js --stats errors-warnings` quando o stack Compose estiver disponível.
 
 ## Integração com Google Calendar
 
@@ -41,38 +47,41 @@ The API reads only this JSON file for the Google Calendar flow; there is no envi
 
 ## Tarefas em background da API
 
-- A API instancia tarefas em background diretamente no boot normal da aplicação, sem um módulo de bootstrap separado.
-- A primeira tarefa recorrente é `weekly-sunday-foo`, criada com uma regra textual como `every sunday at 18:00` e executada no relógio local do processo.
-- A classe `BackgroundTask` também aceita expressões cron quando for mais conveniente do que a regra textual.
-- Em produção, o callback configurado em `api/background/foo.js` será executado a cada ocorrência.
-- Fora de produção, a infraestrutura recalcula os próximos disparos, mas apenas registra em log quando a tarefa chegaria ao horário configurado.
+- A API inicializa tarefas em background no boot normal via `startBackgroundTasks(...)`.
+- A tarefa recorrente atualmente registrada é `weekly-email-digest`, definida em `api/background/weekly-digest-task.js` com a regra textual `every sunday at 18:00`.
+- A classe `BackgroundTask` aceita regras textuais legíveis e expressões cron.
+- O digest semanal usa `WeeklyDigestManager` para ler os eventos publicados da semana atual, montar o e-mail localizado e apontar de volta para `/week` e para o link compartilhado do Google Calendar quando configurado.
+- Fora de produção, o scheduler só executa callbacks quando `EMAIL_TESTING=true`; caso contrário, ele apenas registra em log os disparos ignorados.
 
 ## Fluxos principais
 
-- **Páginas web**: `/` opera em dois modos (neutro sem carregar eventos por padrão, ou agenda-only quando acessada com query de filtro); `/login` renderiza a troca visual entre abas de entrada e registro; `/publish` renderiza o formulário de publicação.
-- **Dashboard (`/dashboard`)**: área autenticada que resume os seus envios, lista eventos da própria conta e abre ações rápidas por modais com templates HTML estáticos pré-carregados e argumentos de template aplicados na abertura.
-- **Home (`/`)**: filtros por busca/categoria/período e chips rápidos (esta semana, próximos 7 dias e categorias) sincronizam a URL para compartilhamento de estado.
-- **Home em modo agenda-only por link**: ao acessar `/` com query relevante (`search|q`, `category`, `from`, `to`), a tela prioriza apenas os resultados da agenda e oculta superfícies de entrada.
-- **Autenticação**:
+- **Home (`/`)**: renderiza a agenda pública com filtros de busca/categoria/período, paginação e chips rápidos. Por padrão, a listagem usa a semana local atual; quando a URL já traz filtros, a página entra em modo agenda-only e oculta as superfícies de entrada.
+- **Login/Register (`/login`)**: alterna entre abas, preserva o redirect sanitizado, envia login/registro ao backend, persiste o token localmente e redireciona para o dashboard.
+- **Agenda semanal (`/week`)**: página pública dedicada à semana atual (domingo a sábado), com CTA destacado para o Google Calendar compartilhado e paginação própria.
+- **Dashboard (`/dashboard`)**: área autenticada com abas para seus envios, moderação e configurações. O painel de configurações cobre perfil, senha, preferências de e-mail e, para admins, reset de senha e promoção de usuários.
+- **Autenticação (API)**:
   - `POST /auth/register` exige `name`, `email` e `password`, e retorna token JWT (12h) + usuário.
   - `POST /auth/login` retorna token JWT (12h) + usuário.
-  - `GET /auth/me` retorna sessão atual (incluindo `role`).
-  - `PUT /auth/me` atualiza `name` e `email` da conta autenticada e retorna o usuário com token renovado.
+  - `GET /auth/me` retorna a sessão atual.
+  - `PUT /auth/me` atualiza `name` e `email` da conta autenticada e devolve token renovado.
+  - `PUT /auth/me/preferences` atualiza as preferências de e-mail da conta autenticada.
   - `PUT /auth/password` atualiza a senha da conta autenticada.
   - `GET /auth/users` lista usuários para ferramentas administrativas.
   - `PUT /auth/users/password/reset` redefine a senha de uma conta `member` a partir do e-mail informado por um administrador.
   - `PUT /auth/users/:id/promote` promove uma conta `member` para `admin`.
-- **Login/Register (`/login`)**: a interface alterna entre abas, sincroniza `#register` na URL, envia login/registro ao backend, persiste o token localmente e redireciona após autenticar.
-- **Publicação (`/publish`)**: a página SSR já contém o formulário e o toggle de horário, mas o repositório ainda não possui um bundle dedicado para validar sessão e enviar o formulário.
 - **Eventos (API)**:
-  - `POST /events` (Bearer token) — cria evento com `title`, `description`, `date`, `category`, `location`.
-  - `GET /events` — lista pública com filtros `search|q`, `category`, `from`, `to`, retornando também `organizerName`.
-  - `GET /events/:id` — detalhe público.
-  - `GET /events/mine` (Bearer token) — lista os eventos da conta autenticada.
-  - `PUT /events/:id` (Bearer token) — atualiza um evento pendente ou rejeitado e o reenfileira para moderação.
-  - `DELETE /events/:id` (Bearer token) — exclui um evento pendente ou rejeitado.
-  - `GET /events/moderation` (Bearer token admin) — lista a fila administrativa com filtro opcional `status=pending|rejected`, retornando também `organizerName`.
-  - `PUT /events/:id/moderation` (Bearer token admin) — aprova ou rejeita um evento pendente.
+  - `POST /events` (Bearer token) cria um evento e o envia para moderação.
+  - `GET /events` lista apenas eventos publicados com filtros `search|q`, `category`, `from`, `to`, retornando também `organizerName`.
+  - `GET /events/:id` retorna o detalhe público de um evento publicado.
+  - `GET /events/mine` (Bearer token) lista os eventos da conta autenticada.
+  - `PUT /events/:id` (Bearer token) permite ao organizador reenviar eventos pendentes/rejeitados e também permite edição administrativa, recolocando o evento em `pending`.
+  - `DELETE /events/:id` (Bearer token) permite exclusão do organizador em estados gerenciáveis e exclusão administrativa em qualquer estado.
+  - `GET /events/moderation` (Bearer token admin) lista a fila administrativa com filtro opcional `status=pending|rejected`.
+  - `PUT /events/:id/moderation` (Bearer token admin) aprova ou rejeita eventos pendentes, podendo criar o item correspondente no Google Calendar.
+- **Notificações por e-mail**:
+  - admins opt-in recebem aviso quando um evento entra na fila de moderação.
+  - organizadores opt-in recebem avisos quando admins atualizam, excluem, aprovam ou rejeitam seus eventos.
+  - o digest semanal envia a agenda pública da semana para a audiência resolvida pelo manager.
 
 ## Exemplos de links compartilháveis
 
@@ -96,6 +105,18 @@ The API reads only this JSON file for the Google Calendar flow; there is no envi
 - Para demonstrar a paginação do dashboard com mais de 10 eventos em uma única conta, use `api/data/dashboard-pagination-sample.sql`.
   Após importar o arquivo, entre com `membro.paginacao@example.com` e senha `senha123456` para ver 12 eventos no dashboard e acionar a paginação.
 - Para desenvolvimento via Docker Compose, use `compose.dev.yaml`, que sobe `api`, `web` e `mysql`.
+
+## Variáveis de ambiente relevantes
+
+- `NODE_ENV`, `PORT`
+- `API_URL`, `WEB_URL`
+- `JWT_SECRET`
+- `MYSQL_DATABASE`, `MYSQL_ROOT_PASSWORD`
+- `GOOGLE_CALENDAR_JOIN_URL`
+- `WEEKLY_DIGEST_EMAIL`
+- `EMAIL_TESTING`
+- `SMTP_FROM`, `SMTP_FROM_NAME`, `SMTP_FROM_EMAIL`
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`
 
 ## Roles
 
@@ -124,13 +145,14 @@ The API reads only this JSON file for the Google Calendar flow; there is no envi
 
 ## Arquitetura frontend (web/src/js)
 
-- `index.js`: entry da home pública, responsável por filtros, chips, URL state e renderização de eventos.
-- `login.js`: entry da página de login, responsável apenas pelas abas visuais de autenticação.
-- `dashboard.js`: entry da área autenticada, responsável por sessão, resumo/listagem de eventos e sincronização do estado principal do painel.
-- `dashboard/*.js`: controladores de UI específicos do dashboard, responsáveis pelos gatilhos, ciclo de abertura, submissão e template args dos modais relacionados.
-- `components/*`: blocos de UI reutilizáveis, como `EventList`, `FilterForm`, `QuickChips`, `AuthTabs`, `StatusAlert` e `EventForm`.
-- `helpers/*`: utilitários não-UI para request, template vars, query state, datas e ordenação.
-- `public/html/*.html`: fragmentos HTML estáticos consumidos por `Modal.loadContentFromFile(..., { args })`, úteis para corpos de modal reutilizáveis, pré-carregáveis e com substituição segura de placeholders `{{token}}`.
+- `index.js`: entry da home pública, responsável por filtros, chips, paginação, modo agenda-only e renderização de eventos.
+- `login.js`: entry da página de login, responsável pelo fluxo de autenticação e redirect pós-login.
+- `week.js`: entry da agenda semanal pública, responsável pela leitura do intervalo SSR, carregamento dos eventos da semana e paginação dedicada.
+- `dashboard.js`: entry da área autenticada, responsável por sessão, abas de navegação, listagens, modais e configurações da conta.
+- `dashboard/*.js`: controladores de UI específicos do dashboard, incluindo criação/edição de evento, rejeição, filtros e painéis de configuração.
+- `components/*`: blocos de UI reutilizáveis, como `EventList`, `FilterForm`, `QuickChips`, `Pagination`, `Tooltip`, `Toast`, `Header` e `Form`.
+- `helpers/*`: utilitários não-UI para request, template vars, query state, datas, sessão e ordenação.
+- `public/html/*.html`: fragmentos HTML estáticos consumidos por modais do dashboard com substituição segura de placeholders `{{token}}`.
 
 ## Ícones e assets visuais
 
