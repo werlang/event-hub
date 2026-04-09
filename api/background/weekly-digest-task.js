@@ -16,6 +16,7 @@ async function sendWeeklyDigest() {
  * Creates a background task for sending the weekly digest email on Sundays at 6 PM.
  */
 export const task = {
+    enabled: false,
     rule: 'every sunday at 18:00',
     name: 'weekly-email-digest',
     callback: sendWeeklyDigest,
