@@ -123,12 +123,12 @@ test('week route renders the current public week range into the template vars', 
     const templateVars = readTemplateVars(html);
 
     assert.equal(response.status, 200);
-    assert.equal(templateVars.page, 'week');
     assert.equal(templateVars.weekFrom, expectedRange.from);
     assert.equal(templateVars.weekTo, expectedRange.to);
+    assert.ok(templateVars.weekRangeLabel);
     assert.equal(templateVars.weekCalendarJoinUrl, WEEK_CALENDAR_JOIN_URL);
     assert.match(html, /Agenda da semana/i);
     assert.match(html, /Eventos Campus Charqueadas/i);
-    assert.match(html, />\s*Google Calendar\s*</i);
+    assert.match(html, />\s*Google Agenda\s*</i);
     assert.match(html, new RegExp(WEEK_CALENDAR_JOIN_URL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 });

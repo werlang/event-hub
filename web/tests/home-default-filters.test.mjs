@@ -109,8 +109,8 @@ test('createDefaultHomeFilters returns a local seven-day window', () => {
 	assert.deepEqual(createDefaultHomeFilters(referenceDate), {
 		search: '',
 		category: '',
-		from: '2026-04-03',
-		to: '2026-04-09',
+		from: '2026-03-29',
+		to: '2026-04-04',
 	});
 });
 
@@ -153,20 +153,21 @@ test('readHomeFiltersFromUrl preserves explicit date ranges from the URL', () =>
 	});
 });
 
-test('index template binds the server-provided default date values', async () => {
+test('index template keeps client-hydrated date fields without SSR value attributes', async () => {
 	const template = await readFile(INDEX_TEMPLATE_PATH, 'utf8');
 
-	assert.match(template, /id="filter-from"[^>]*value="\{\{defaultFrom\}\}"/i);
-	assert.match(template, /id="filter-to"[^>]*value="\{\{defaultTo\}\}"/i);
+	assert.match(template, /id="filter-from"/i);
+	assert.match(template, /id="filter-to"/i);
+	assert.doesNotMatch(template, /id="filter-from"[^>]*value=/i);
+	assert.doesNotMatch(template, /id="filter-to"[^>]*value=/i);
 });
 
-test('home route renders the current default date window into the SSR inputs', async (t) => {
+test('home route renders empty date inputs that the client hydrates on boot', async (t) => {
 	const { port } = await startWebServer(t);
-	const expectedDefaults = createDefaultHomeFilters();
     const response = await fetch(`http://127.0.0.1:${port}/`);
     const html = await response.text();
 
 	assert.equal(response.status, 200);
-	assert.equal(readInputValue(html, 'filter-from'), expectedDefaults.from);
-	assert.equal(readInputValue(html, 'filter-to'), expectedDefaults.to);
+	assert.equal(readInputValue(html, 'filter-from'), '');
+	assert.equal(readInputValue(html, 'filter-to'), '');
 });

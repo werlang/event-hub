@@ -128,6 +128,7 @@ async function runHomePageScenario(apiResponse) {
                     : apiResponse;
             },
         },
+        Event,
         Toast: {
             dismissGroup(group) {
                 recorded.toastDismisses.push(group);
@@ -162,6 +163,24 @@ async function runHomePageScenario(apiResponse) {
 
             render(events, options) {
                 recorded.renderCalls.push({ events, options });
+                return this;
+            }
+        },
+        Pagination: class PaginationMock {
+            onPageChange() {
+                return this;
+            }
+
+            clampPage(page) {
+                return Number(page) || 1;
+            }
+
+            readPageItems(events) {
+                return events;
+            }
+
+            render(detail) {
+                recorded.paginationDetail = detail;
                 return this;
             }
         },

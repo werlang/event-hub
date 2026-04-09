@@ -1,5 +1,5 @@
 {
-  "name": "academic-events-web",
+  "name": "agenda-ch",
   "version": "0.1.0",
   "description": "Interface web para autenticação e visualização de eventos acadêmicos.",
   "type": "module",
@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
+    "jsdom": "^29.0.2",
     "webpack-dev-server": "^5.2.2"
   }
 }
