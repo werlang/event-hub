@@ -1,0 +1,47 @@
+services:
+    api:
+        build: ./api
+        restart: unless-stopped
+        volumes:
+            - ./api:/app
+            - node_modules_api:/app/node_modules
+        working_dir: /app
+        env_file:
+            - .env
+        command: npm run ${NODE_ENV}
+        depends_on:
+            - mysql
+        networks:
+            - default
+            - agenda
+    web:
+        build: ./web
+        restart: unless-stopped
+        volumes:
+            - ./web:/app
+            - node_modules_web:/app/node_modules
+        working_dir: /app
+        env_file:
+            - .env
+        command: npm run ${NODE_ENV}
+        depends_on:
+            - api
+        networks:
+            - default
+            - agenda
+    mysql:
+        image: mysql:8.2
+        restart: unless-stopped
+        environment:
+            - MYSQL_DATABASE=${MYSQL_DATABASE}
+            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+        volumes:
+            - mysql:/var/lib/mysql
+            - .:/app
+volumes:
+    node_modules_web:
+    node_modules_api:
+    mysql:
+networks:
+    agenda:
+        name: agenda
