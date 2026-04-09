@@ -9,13 +9,16 @@ import {
     canEditOwnEvent,
     canManageOwnEvent,
     canOpenEventForm,
+    formatDateTimeLocalInputValue,
     isPendingLikeEventStatus,
     normalizeEventStatus,
+    serializeDateTimeLocalInputValue,
 } from '../src/js/dashboard/event-management.js';
 
 const WEB_ROOT = path.resolve(import.meta.dirname, '..');
 const DASHBOARD_ENTRY_PATH = path.join(WEB_ROOT, 'src/js/dashboard.js');
 const DASHBOARD_TEMPLATE_PATH = path.join(WEB_ROOT, 'src/html/dashboard.html');
+const DASHBOARD_CREATE_EVENT_MODAL_PATH = path.join(WEB_ROOT, 'src/js/dashboard/create-event-modal.js');
 
 /**
  * Removes ESM import declarations so the dashboard entry can run inside a VM with mocks.
@@ -101,6 +104,21 @@ test('dashboard event-management helpers keep pending as the only queue status a
     assert.equal(canManageOwnEvent({ status: 'published' }), false);
     assert.equal(canOpenEventForm({ status: 'published' }), false);
     assert.equal(canOpenEventForm({ status: 'published' }, { allowAdminEdit: true }), true);
+});
+
+test('dashboard event-management helpers round-trip local form datetimes through ISO payloads', () => {
+    const localInputValue = '2026-04-08T15:45';
+    const isoValue = serializeDateTimeLocalInputValue(localInputValue);
+
+    assert.equal(isoValue, new Date(localInputValue).toISOString());
+    assert.equal(formatDateTimeLocalInputValue(isoValue), localInputValue);
+    assert.equal(serializeDateTimeLocalInputValue('not-a-date'), '');
+});
+
+test('dashboard create-event modal serializes the datetime-local field before submitting to the API', async () => {
+    const source = await readFile(DASHBOARD_CREATE_EVENT_MODAL_PATH, 'utf8');
+
+    assert.match(source, /serializeDateTimeLocalInputValue\(readText\(formData\.date, ''\)\)/);
 });
 
 test('dashboard moderation helpers expose an edit action before approval and rejection controls', async () => {

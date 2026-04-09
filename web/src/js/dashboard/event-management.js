@@ -78,3 +78,20 @@ export function formatDateTimeLocalInputValue(value) {
 
     return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
+
+/**
+ * Converts a datetime-local field value into an ISO timestamp.
+ */
+export function serializeDateTimeLocalInputValue(value) {
+    const normalizedValue = String(value || '').trim();
+    if (!normalizedValue) {
+        return '';
+    }
+
+    const parsedDate = new Date(normalizedValue);
+    if (Number.isNaN(parsedDate.getTime())) {
+        return '';
+    }
+
+    return parsedDate.toISOString();
+}

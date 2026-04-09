@@ -3,7 +3,11 @@ import { Button } from '../components/button.js';
 import { Modal } from '../components/modal.js';
 import { Toast } from '../components/toast.js';
 import { requestApi } from '../helpers/api.js';
-import { canOpenEventForm, formatDateTimeLocalInputValue } from './event-management.js';
+import {
+    canOpenEventForm,
+    formatDateTimeLocalInputValue,
+    serializeDateTimeLocalInputValue,
+} from './event-management.js';
 
 const CREATE_EVENT_MODAL_FILE = '/html/dashboard-create-event-modal.html';
 const DASHBOARD_EVENT_FORM_TOAST_GROUP = 'dashboard-event-form';
@@ -291,7 +295,7 @@ export class DashboardEventFormModal {
         return {
             title: readText(formData.title, ''),
             description: readText(formData.description, ''),
-            date: readText(formData.date, ''),
+            date: serializeDateTimeLocalInputValue(readText(formData.date, '')),
             category: readText(formData.category, 'outro'),
             location: readText(formData.location, 'A definir'),
         };
