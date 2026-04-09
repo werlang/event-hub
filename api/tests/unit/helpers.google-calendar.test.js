@@ -134,7 +134,7 @@ describe('helpers/google-calendar', () => {
                 },
                 extendedProperties: {
                     private: {
-                        eventHubEventId: 'event-1',
+                        agendaChEventId: 'event-1',
                     },
                 },
             },

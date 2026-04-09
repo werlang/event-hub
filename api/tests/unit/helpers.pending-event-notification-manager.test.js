@@ -17,7 +17,7 @@ describe('helpers/pending-event-notification-manager', () => {
             userModel: {
                 listEmailPreferenceRecipients: jest.fn(async () => []),
             },
-            webBaseUrl: 'https://event-hub.test',
+            webBaseUrl: 'https://agenda-ch.test',
         });
 
         const result = await manager.notifyPendingApproval({
@@ -53,7 +53,7 @@ describe('helpers/pending-event-notification-manager', () => {
             emailHelper,
             templateManager: new EmailTemplateManager(),
             userModel,
-            webBaseUrl: 'https://event-hub.test',
+            webBaseUrl: 'https://agenda-ch.test',
         });
 
         const result = await manager.notifyPendingApproval({
@@ -76,10 +76,10 @@ describe('helpers/pending-event-notification-manager', () => {
             ['admin@example.com'],
             ['grace@example.com'],
         ]);
-        expect(emailHelper.send.mock.calls[0][1]).toBe('Event Hub - Novo evento aguardando moderação');
+        expect(emailHelper.send.mock.calls[0][1]).toBe('Agenda CH - Novo evento aguardando moderação');
         expect(emailHelper.send.mock.calls[0][2]).toContain('Feira de Ciências');
         expect(emailHelper.send.mock.calls[0][2]).toContain('Ada Lovelace');
-        expect(emailHelper.send.mock.calls[0][2]).toContain('https://event-hub.test/dashboard');
+        expect(emailHelper.send.mock.calls[0][2]).toContain('https://agenda-ch.test/dashboard');
         expect(result).toMatchObject({
             failedCount: 0,
             failures: [],
@@ -117,7 +117,7 @@ describe('helpers/pending-event-notification-manager', () => {
             logger,
             templateManager: new EmailTemplateManager(),
             userModel,
-            webBaseUrl: 'https://event-hub.test',
+            webBaseUrl: 'https://agenda-ch.test',
         });
 
         const result = await manager.notifyPendingApproval({
@@ -165,7 +165,7 @@ describe('helpers/pending-event-notification-manager', () => {
             emailHelper: { send: jest.fn() },
             templateManager: new EmailTemplateManager(),
             userModel: { listEmailPreferenceRecipients: jest.fn(async () => []) },
-            webBaseUrl: 'https://event-hub.test',
+            webBaseUrl: 'https://agenda-ch.test',
         });
 
         const message = manager.renderPendingApprovalEmail(buildUser({ name: 'Grace <admin>' }), {
@@ -179,7 +179,7 @@ describe('helpers/pending-event-notification-manager', () => {
             organizer: buildUser({ name: 'Ada <script>' }),
         });
 
-        expect(message.subject).toBe('Event Hub - Novo evento aguardando moderação');
+        expect(message.subject).toBe('Agenda CH - Novo evento aguardando moderação');
         expect(message.content).toContain('Olá Grace &lt;admin&gt;,');
         expect(message.content).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
         expect(message.content).toContain('Linha 1 &lt;b&gt;forte&lt;/b&gt;');
@@ -194,7 +194,7 @@ describe('helpers/pending-event-notification-manager', () => {
             emailHelper: { send: jest.fn() },
             templateManager: new EmailTemplateManager(),
             userModel: { listEmailPreferenceRecipients: jest.fn(async () => []) },
-            webBaseUrl: 'https://event-hub.test///',
+            webBaseUrl: 'https://agenda-ch.test///',
         });
 
         const message = manager.renderPendingApprovalEmail({}, {
@@ -212,6 +212,6 @@ describe('helpers/pending-event-notification-manager', () => {
         expect(message.content).toContain('Linus Torvalds');
         expect(message.content).toContain('Data a definir');
         expect(message.content).toContain('Não informado');
-        expect(message.content).toContain('https://event-hub.test/dashboard');
+        expect(message.content).toContain('https://agenda-ch.test/dashboard');
     });
 });

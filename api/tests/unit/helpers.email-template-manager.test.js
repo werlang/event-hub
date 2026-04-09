@@ -8,11 +8,11 @@ describe('helpers/email-template-manager', () => {
         const strings = manager.loadJsonTemplate('notification-email');
 
         expect(strings).toMatchObject({
-            subject: 'Event Hub - Novo evento aguardando moderação',
-            brandName: 'Event Hub',
+            subject: 'Agenda CH - Novo evento aguardando moderação',
+            brandName: 'Agenda CH',
             eyebrowText: 'Central de notificações',
             emailTitle: 'Evento aguardando moderação',
-            buttonText: 'Abrir no Event Hub',
+            buttonText: 'Abrir na Agenda CH',
             summaryLabel: 'Evento',
         });
     });
@@ -59,17 +59,17 @@ describe('helpers/email-template-manager', () => {
             summaryDescriptionText: 'Contexto <rápido>.',
             summaryBlocks: manager.raw('<mj-section><mj-column><mj-text>Raw block</mj-text></mj-column></mj-section>'),
             reviewText: 'Confira abaixo.',
-            actionUrl: 'https://event-hub.local/week?x=<tag>',
-            buttonText: 'Abrir <Event Hub>',
+            actionUrl: 'https://agenda-ch.local/week?x=<tag>',
+            buttonText: 'Abrir <Agenda CH>',
             footerText: 'Rodapé',
         });
 
         expect(content).toContain('<mj-section><mj-column><mj-text>Raw block</mj-text></mj-column></mj-section>');
-        expect(content).toContain('href="https://event-hub.local/week?x=&lt;tag&gt;"');
+        expect(content).toContain('href="https://agenda-ch.local/week?x=&lt;tag&gt;"');
         expect(content).toContain('Marca &lt;Hub&gt;');
         expect(content).toContain('Faixa &lt;superior&gt;');
         expect(content).not.toContain('Contexto &lt;rápido&gt;.');
-        expect(content).toContain('Abrir &lt;Event Hub&gt;');
+        expect(content).toContain('Abrir &lt;Agenda CH&gt;');
     });
 
     test('the manager mirrors the reference flow of combining JSON strings with MJML templates', () => {
@@ -99,14 +99,14 @@ describe('helpers/email-template-manager', () => {
             summaryDescriptionText: strings.summaryDescriptionText,
             summaryBlocks: manager.raw(summaryBlocks),
             reviewText: strings.reviewText,
-            actionUrl: 'https://event-hub.local/week',
+            actionUrl: 'https://agenda-ch.local/week',
             buttonText: strings.buttonText,
             footerText: strings.footerText,
         });
 
         expect(content).toContain('Olá Ada,');
         expect(content).toContain('A página semanal está pronta para envio.');
-        expect(content).toContain('https://event-hub.local/week');
+        expect(content).toContain('https://agenda-ch.local/week');
         expect(content).toContain('Central de notificações');
         expect(content).toContain('<mj-button');
     });

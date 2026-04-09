@@ -106,7 +106,7 @@ function buildCalendarEventPayload(event, durationMinutes) {
         },
         extendedProperties: {
             private: {
-                eventHubEventId: String(event?.id || '').trim(),
+                agendaChEventId: String(event?.id || '').trim(),
             },
         },
     };

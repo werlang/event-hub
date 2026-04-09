@@ -23,7 +23,7 @@ describe('helpers/weekly-digest-manager', () => {
             eventModel,
             templateManager: new EmailTemplateManager(),
             userModel: { list: jest.fn(async () => []) },
-            webBaseUrl: 'https://event-hub.test',
+            webBaseUrl: 'https://agenda-ch.test',
         });
         const referenceDate = new Date(2026, 3, 6, 9, 0, 0, 0);
 
@@ -42,7 +42,7 @@ describe('helpers/weekly-digest-manager', () => {
         expect(message.content).toContain('Equipe de Extensão');
         expect(message.content).toContain('Laboratório Maker');
         expect(message.content).toContain('Abrir página da agenda');
-        expect(message.content).toContain('https://event-hub.test/week');
+        expect(message.content).toContain('https://agenda-ch.test/week');
     });
 
     test('sendCurrentWeekDigest sends one message per persisted user email address with no hidden audience fallback', async () => {
@@ -96,10 +96,10 @@ describe('helpers/weekly-digest-manager', () => {
             eventModel: { listCurrentWeek: jest.fn(async () => []) },
             templateManager: new EmailTemplateManager(),
             userModel: { list: jest.fn(async () => []) },
-            webBaseUrl: 'https://event-hub.test',
+            webBaseUrl: 'https://agenda-ch.test',
         });
         const digest = {
-            actionUrl: 'https://event-hub.test/week',
+            actionUrl: 'https://agenda-ch.test/week',
             events: [
                 buildEvent({
                     title: '<script>alert(1)</script>',
@@ -138,7 +138,7 @@ describe('helpers/weekly-digest-manager', () => {
         expect(message.content).toContain('&lt;script&gt;alert(2)&lt;/script&gt;');
         expect(message.content).toContain('Extensão &lt;x&gt;');
         expect(message.content).toContain('Equipe &lt;script&gt;');
-        expect(message.content).toContain('Mensagem automática do Event Hub.');
+        expect(message.content).toContain('Mensagem automática da Agenda CH.');
         expect(message.content).not.toContain('&lt;mj-section');
         expect(message.content).toContain('<mj-section');
     });
