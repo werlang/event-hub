@@ -1,4 +1,6 @@
-const MANAGEABLE_EVENT_STATUSES = new Set(['pending', 'rejected']);
+const EDITABLE_EVENT_STATUSES = new Set(['pending', 'rejected']);
+const DELETABLE_EVENT_STATUSES = new Set(['pending', 'rejected']);
+const PENDING_LIKE_EVENT_STATUSES = new Set(['pending']);
 
 /**
  * Normalizes a raw moderation status for dashboard management rules.
@@ -8,14 +10,54 @@ export function normalizeEventStatus(status) {
 }
 
 /**
- * Reports whether the authenticated owner may still manage an event.
+ * Reports whether a status should behave like pending in dashboard flows.
  */
-export function canManageOwnEvent(eventOrStatus) {
+export function isPendingLikeEventStatus(eventOrStatus) {
     const normalizedStatus = typeof eventOrStatus === 'string'
         ? normalizeEventStatus(eventOrStatus)
         : normalizeEventStatus(eventOrStatus?.status);
 
-    return MANAGEABLE_EVENT_STATUSES.has(normalizedStatus);
+    return PENDING_LIKE_EVENT_STATUSES.has(normalizedStatus);
+}
+
+/**
+ * Reports whether the authenticated owner may still edit an event.
+ */
+export function canEditOwnEvent(eventOrStatus) {
+    const normalizedStatus = typeof eventOrStatus === 'string'
+        ? normalizeEventStatus(eventOrStatus)
+        : normalizeEventStatus(eventOrStatus?.status);
+
+    return EDITABLE_EVENT_STATUSES.has(normalizedStatus);
+}
+
+/**
+ * Reports whether the authenticated owner may still delete an event.
+ */
+export function canDeleteOwnEvent(eventOrStatus) {
+    const normalizedStatus = typeof eventOrStatus === 'string'
+        ? normalizeEventStatus(eventOrStatus)
+        : normalizeEventStatus(eventOrStatus?.status);
+
+    return DELETABLE_EVENT_STATUSES.has(normalizedStatus);
+}
+
+/**
+ * Reports whether the authenticated owner may still manage an event through the legacy delete-oriented contract.
+ */
+export function canManageOwnEvent(eventOrStatus) {
+    return canDeleteOwnEvent(eventOrStatus);
+}
+
+/**
+ * Reports whether the shared dashboard event form may open for one event.
+ */
+export function canOpenEventForm(eventOrStatus, { allowAdminEdit = false } = {}) {
+    if (allowAdminEdit) {
+        return true;
+    }
+
+    return canEditOwnEvent(eventOrStatus);
 }
 
 /**

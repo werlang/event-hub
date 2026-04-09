@@ -3,7 +3,7 @@ import { Button } from '../components/button.js';
 import { Modal } from '../components/modal.js';
 import { Toast } from '../components/toast.js';
 import { requestApi } from '../helpers/api.js';
-import { canManageOwnEvent, formatDateTimeLocalInputValue } from './event-management.js';
+import { canOpenEventForm, formatDateTimeLocalInputValue } from './event-management.js';
 
 const CREATE_EVENT_MODAL_FILE = '/html/dashboard-create-event-modal.html';
 const DASHBOARD_EVENT_FORM_TOAST_GROUP = 'dashboard-event-form';
@@ -227,8 +227,8 @@ export class DashboardEventFormModal {
     /**
      * Loads a fresh form body, wires handlers, and opens the modal for create or edit.
      */
-    async open({ args = {}, event = null } = {}) {
-        if (event?.id && !canManageOwnEvent(event)) {
+    async open({ args = {}, event = null, allowAdminEdit = false } = {}) {
+        if (event?.id && !canOpenEventForm(event, { allowAdminEdit })) {
             this.#showToast(
                 'Apenas eventos pendentes ou rejeitados podem ser editados por aqui.',
                 'error',

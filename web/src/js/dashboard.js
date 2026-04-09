@@ -5,7 +5,15 @@ import { Header } from './components/header.js';
 import { DashboardActionTabs } from './dashboard/action-tabs.js';
 import { DashboardEventFormModal } from './dashboard/create-event-modal.js';
 import { DashboardDeleteEventModal } from './dashboard/delete-event-modal.js';
-import { canManageOwnEvent } from './dashboard/event-management.js';
+import { canDeleteOwnEvent, canEditOwnEvent, isPendingLikeEventStatus } from './dashboard/event-management.js';
+import {
+    DashboardFilters,
+    createDefaultDashboardBrowseFilters,
+    filterDashboardBrowseEvents,
+    formatDashboardBrowseBadge,
+    readDashboardBrowseCaption,
+    readDashboardBrowseEmptyState,
+} from './dashboard/filters.js';
 import { DashboardRejectEventModal } from './dashboard/reject-event-modal.js';
 import { DashboardSettingsPanels } from './dashboard/settings-panels.js';
 import { Pagination } from './components/pagination.js';
@@ -21,9 +29,9 @@ const DASHBOARD_EVENTS_PER_PAGE = 10;
 const DASHBOARD_VIEW_BROWSE = 'browse';
 const DASHBOARD_VIEW_MODERATION = 'moderation';
 const DASHBOARD_VIEW_SETTINGS = 'settings';
-const DASHBOARD_FILTER_ALL = 'all';
-const DASHBOARD_FILTER_ASC = 'asc';
-const DASHBOARD_FILTER_DESC = 'desc';
+const DASHBOARD_MODERATION_SCOPE_QUEUE = 'queue';
+const DASHBOARD_MODERATION_SCOPE_REJECTED = 'rejected';
+const DASHBOARD_MODERATION_SCOPE_PUBLISHED = 'published';
 
 /**
  * Returns the UI metadata associated with an event moderation status.
@@ -111,17 +119,43 @@ function readDashboardShellInstruction(role) {
 /**
  * Returns the copy used by the list section for the active dashboard view.
  */
-function readEventSectionCopy(view) {
+function readEventSectionCopy(view, { moderationScope = DASHBOARD_MODERATION_SCOPE_QUEUE } = {}) {
+    if (view === DASHBOARD_VIEW_MODERATION && isPublishedModerationScope(moderationScope)) {
+        return {
+            eyebrow: 'Moderação',
+            heading: 'Publicados de outras contas',
+            description: 'Encontre eventos já publicados por outros organizadores e abra a edição administrativa quando um ajuste precisar voltar para moderação.',
+            badgeSingular: 'publicado',
+            badgePlural: 'publicados',
+            populatedCaption: 'Abaixo ficam os eventos publicados por outras contas, ordenados da data mais recente para a mais antiga, para ajustes administrativos sem depender de IDs conhecidos.',
+            emptyCaption: 'Quando outras contas tiverem eventos publicados, eles aparecerão aqui para edição administrativa.',
+            emptyState: 'Nenhum evento publicado por outras contas está disponível para edição agora.',
+        };
+    }
+
+    if (view === DASHBOARD_VIEW_MODERATION && isRejectedModerationScope(moderationScope)) {
+        return {
+            eyebrow: 'Moderação',
+            heading: 'Rejeitados de outras contas',
+            description: 'Encontre eventos rejeitados de outras contas para ajustes administrativos e devolva-os ao fluxo de moderação sem depender de IDs conhecidos.',
+            badgeSingular: 'rejeitado',
+            badgePlural: 'rejeitados',
+            populatedCaption: 'Abaixo ficam os eventos rejeitados de outras contas, ordenados da data mais recente para a mais antiga, para reabertura administrativa do fluxo de moderação.',
+            emptyCaption: 'Quando outras contas tiverem eventos rejeitados, eles aparecerão aqui para edição administrativa.',
+            emptyState: 'Nenhum evento rejeitado por outras contas está disponível para edição agora.',
+        };
+    }
+
     if (view === DASHBOARD_VIEW_MODERATION) {
         return {
             eyebrow: 'Moderação',
-            heading: 'Fila de revisão',
-            description: 'Revise os eventos pendentes enviados por outras contas e decida se cada um deve ser publicado ou devolvido para ajustes.',
+            heading: 'Fila de moderação',
+            description: 'Analise os eventos pendentes enviados por outras contas e decida se cada um deve ser publicado ou devolvido para ajustes.',
             badgeSingular: 'pendente',
             badgePlural: 'pendentes',
-            populatedCaption: 'Abaixo ficam os envios ainda pendentes de avaliação administrativa, ordenados da data mais recente para a mais antiga.',
+            populatedCaption: 'Abaixo ficam os envios que ainda aguardam avaliação administrativa, ordenados da data mais recente para a mais antiga.',
             emptyCaption: 'Quando novos eventos aguardarem análise administrativa, eles aparecerão aqui para aprovação ou rejeição.',
-            emptyState: 'Nenhum evento pendente na fila de moderação agora.',
+            emptyState: 'Nenhum evento aguardando moderação na fila agora.',
         };
     }
 
@@ -152,7 +186,7 @@ function countEvents(events, predicate) {
  * Reports whether an event is still pending moderation.
  */
 function isPendingModerationEvent(event) {
-    return String(event?.status || '').trim().toLowerCase() === 'pending';
+    return isPendingLikeEventStatus(event);
 }
 
 /**
@@ -225,13 +259,13 @@ function createSummaryCards(events) {
         },
         {
             id: 'rejected',
-            eyebrow: 'Revisão',
+            eyebrow: 'Ajustes',
             label: 'Rejeitados',
             value: rejected,
             unit: 'pedem ajuste',
             note: rejected === 0
                 ? 'Nenhum envio devolvido para ajustes agora.'
-                : `${formatCount(rejected, 'envio precisa', 'envios precisam')} de revisão antes de voltar para aprovação.`,
+                : `${formatCount(rejected, 'envio precisa', 'envios precisam')} de ajustes antes de voltar para aprovação.`,
             meta: total === 0 ? 'Sem base ainda' : `${formatPercentage(rejected, total)} do total`,
             icon: 'triangle-exclamation',
             tone: 'warning',
@@ -324,163 +358,84 @@ function createSummaryCardElement(card) {
 }
 
 /**
- * Normalizes one browse-list status filter value.
+ * Normalizes the admin moderation surface between queue and discovery modes.
  */
-function normalizeDashboardStatusFilter(value) {
-    const normalizedValue = String(value || DASHBOARD_FILTER_ALL).trim().toLowerCase();
-    const allowedValues = [DASHBOARD_FILTER_ALL, 'pending', 'rejected', 'published'];
+function normalizeModerationScope(value) {
+    const normalizedValue = String(value || DASHBOARD_MODERATION_SCOPE_QUEUE).trim().toLowerCase();
 
-    return allowedValues.includes(normalizedValue)
-        ? normalizedValue
-        : DASHBOARD_FILTER_ALL;
+    if (normalizedValue === DASHBOARD_MODERATION_SCOPE_PUBLISHED) {
+        return DASHBOARD_MODERATION_SCOPE_PUBLISHED;
+    }
+
+    if (normalizedValue === DASHBOARD_MODERATION_SCOPE_REJECTED) {
+        return DASHBOARD_MODERATION_SCOPE_REJECTED;
+    }
+
+    return DASHBOARD_MODERATION_SCOPE_QUEUE;
 }
 
 /**
- * Normalizes one browse-list ordering value.
+ * Reports whether the admin moderation surface is showing published events.
  */
-function normalizeDashboardSortOrder(value) {
-    return String(value || DASHBOARD_FILTER_DESC).trim().toLowerCase() === DASHBOARD_FILTER_ASC
-        ? DASHBOARD_FILTER_ASC
-        : DASHBOARD_FILTER_DESC;
+function isPublishedModerationScope(scope) {
+    return normalizeModerationScope(scope) === DASHBOARD_MODERATION_SCOPE_PUBLISHED;
 }
 
 /**
- * Returns the canonical category metadata for one dashboard event.
+ * Reports whether the admin moderation surface is showing rejected events.
  */
-function readDashboardEventCategory(event) {
-    return Event.from(event).readCategoryMeta();
+function isRejectedModerationScope(scope) {
+    return normalizeModerationScope(scope) === DASHBOARD_MODERATION_SCOPE_REJECTED;
 }
 
 /**
- * Returns the category options available for the loaded owner events.
+ * Reports whether the active moderation scope is an edit-only discovery list.
  */
-function readDashboardEventCategoryOptions(events) {
-    const options = [];
-    const seenCategories = new Set();
+function isEditOnlyModerationScope(scope) {
+    return isPublishedModerationScope(scope) || isRejectedModerationScope(scope);
+}
 
-    (Array.isArray(events) ? events : []).forEach((event) => {
-        const category = readDashboardEventCategory(event);
-        const optionValue = String(category?.id || '').trim().toLowerCase();
+/**
+ * Returns the API path used by the admin moderation surface for one scope.
+ */
+function readModerationEventSourcePath(scope) {
+    if (isPublishedModerationScope(scope)) {
+        return '/events';
+    }
 
-        if (!optionValue || seenCategories.has(optionValue)) {
-            return;
-        }
+    if (isRejectedModerationScope(scope)) {
+        return '/events/moderation?status=rejected';
+    }
 
-        seenCategories.add(optionValue);
-        options.push({
-            value: optionValue,
-            label: readText(category?.label, 'Outro'),
-        });
+    return '/events/moderation?status=pending';
+}
+
+/**
+ * Filters published discovery results down to events owned by other users.
+ */
+function filterAdminPublishedDiscoveryEvents(events, currentUserId) {
+    const normalizedUserId = readText(currentUserId, '');
+
+    return (Array.isArray(events) ? events : []).filter((event) => {
+        const organizerId = readText(event?.organizerId, '');
+        const normalizedStatus = String(event?.status || '').trim().toLowerCase();
+
+        return normalizedStatus === 'published' && organizerId !== normalizedUserId;
     });
-
-    return options.sort((left, right) => left.label.localeCompare(right.label, 'pt-BR'));
 }
 
 /**
- * Reports whether the browse list currently deviates from the default criteria.
+ * Filters rejected discovery results down to events owned by other users.
  */
-function hasActiveDashboardBrowseFilters(filters) {
-    return normalizeDashboardStatusFilter(filters?.status) !== DASHBOARD_FILTER_ALL
-        || readText(filters?.category, DASHBOARD_FILTER_ALL).toLowerCase() !== DASHBOARD_FILTER_ALL
-        || Boolean(filters?.includePast)
-        || normalizeDashboardSortOrder(filters?.order) !== DASHBOARD_FILTER_DESC;
-}
+function filterAdminRejectedDiscoveryEvents(events, currentUserId) {
+    const normalizedUserId = readText(currentUserId, '');
 
-/**
- * Returns the owner-event list after applying the current browse filters.
- */
-function filterDashboardBrowseEvents(events, filters) {
-    const normalizedStatus = normalizeDashboardStatusFilter(filters?.status);
-    const normalizedCategory = readText(filters?.category, DASHBOARD_FILTER_ALL).toLowerCase();
-    const includePast = Boolean(filters?.includePast);
-    const normalizedOrder = normalizeDashboardSortOrder(filters?.order);
+    return (Array.isArray(events) ? events : []).filter((event) => {
+        const organizerId = readText(event?.organizerId, '');
+        const normalizedStatus = String(event?.status || '').trim().toLowerCase();
 
-    const filteredEvents = (Array.isArray(events) ? events : []).filter((event) => {
-        const eventStatus = String(event?.status || '').trim().toLowerCase();
-        const eventCategory = readDashboardEventCategory(event).id;
-
-        if (normalizedStatus !== DASHBOARD_FILTER_ALL && eventStatus !== normalizedStatus) {
-            return false;
-        }
-
-        if (normalizedCategory !== DASHBOARD_FILTER_ALL && eventCategory !== normalizedCategory) {
-            return false;
-        }
-
-        if (!includePast && Event.from(event).isPast()) {
-            return false;
-        }
-
-        return true;
+        return normalizedStatus === 'rejected' && organizerId !== normalizedUserId;
     });
-
-    return normalizedOrder === DASHBOARD_FILTER_ASC
-        ? Event.sortByDate(filteredEvents)
-        : Event.sortByDateDescending(filteredEvents);
-}
-
-/**
- * Formats the event-section badge for filtered owner lists.
- */
-function formatDashboardBrowseBadge(filteredCount, totalCount) {
-    if (filteredCount === totalCount) {
-        return formatCount(filteredCount, 'evento', 'eventos');
-    }
-
-    return `${filteredCount} de ${totalCount} eventos`;
-}
-
-/**
- * Returns the explanatory caption for the owner-event section.
- */
-function readDashboardBrowseCaption(filteredCount, totalCount, filters, sectionCopy) {
-    const isShowingOnlyUpcomingEvents = !Boolean(filters?.includePast) && filteredCount !== totalCount;
-
-    if (!hasActiveDashboardBrowseFilters(filters)) {
-        if (isShowingOnlyUpcomingEvents) {
-            return `Mostrando ${filteredCount} de ${totalCount} eventos. Marque a opção para incluir os que já aconteceram.`;
-        }
-
-        return filteredCount > 0
-            ? sectionCopy.populatedCaption
-            : sectionCopy.emptyCaption;
-    }
-
-    if (filteredCount === 0) {
-        return 'Nenhum evento corresponde aos filtros selecionados no momento.';
-    }
-
-    return `Mostrando ${filteredCount} de ${totalCount} eventos conforme os filtros selecionados.`;
-}
-
-/**
- * Returns the empty-state copy for the owner-event section.
- */
-function readDashboardBrowseEmptyState(filteredCount, totalCount, filters, sectionCopy) {
-    if (totalCount === 0) {
-        return sectionCopy.emptyState;
-    }
-
-    if (filteredCount === 0 && !Boolean(filters?.includePast) && !hasActiveDashboardBrowseFilters(filters)) {
-        return 'Todos os eventos carregados já aconteceram. Marque a opção para incluir os eventos passados.';
-    }
-
-    if (filteredCount === 0 && hasActiveDashboardBrowseFilters(filters)) {
-        return 'Nenhum evento corresponde aos filtros atuais. Ajuste os critérios para ampliar a lista.';
-    }
-
-    return sectionCopy.emptyState;
-}
-
-/**
- * Creates one option element for a dashboard select input.
- */
-function createDashboardSelectOption({ value, label, selected = false } = {}) {
-    const option = document.createElement('option');
-    option.value = readText(value, DASHBOARD_FILTER_ALL);
-    option.textContent = readText(label, 'Opção');
-    option.selected = Boolean(selected);
-    return option;
 }
 
 /**
@@ -573,6 +528,10 @@ function createEventActionButton({ action, label, icon, modifier = '' } = {}) {
  * Returns the longer action guidance associated with one dashboard event card.
  */
 function readOwnerActionHintText(statusMeta) {
+    if (statusMeta.tone === 'success') {
+        return 'Este evento já foi publicado. A partir daqui, apenas administradores podem editar ou excluir o envio.';
+    }
+
     return statusMeta.tone === 'warning'
         ? 'Faça os ajustes necessários e reenvie o evento para moderação, ou exclua este envio se preferir começar de novo.'
         : 'Enquanto este envio não for publicado, você ainda pode editar ou excluir o evento.';
@@ -598,26 +557,33 @@ function createEventActionGuide({ content, label, customClass = '' } = {}) {
 /**
  * Creates the owner-management toolbar attached to a manageable event card.
  */
-function createOwnerEventActionToolbar(statusMeta) {
+function createOwnerEventActionToolbar(event, statusMeta) {
     const toolbar = document.createElement('div');
     toolbar.className = 'dashboard-event__toolbar';
 
     const actions = document.createElement('div');
     actions.className = 'dashboard-event__actions';
-    actions.append(
-        createEventActionButton({
+    if (canEditOwnEvent(event)) {
+        actions.append(
+            createEventActionButton({
             action: 'edit',
             label: 'Editar',
             icon: 'pen-to-square',
             modifier: 'edit',
-        }),
-        createEventActionButton({
+            }),
+        );
+    }
+
+    if (canDeleteOwnEvent(event)) {
+        actions.append(
+            createEventActionButton({
             action: 'delete',
             label: 'Excluir',
             icon: 'trash',
             modifier: 'danger',
-        }),
-    );
+            }),
+        );
+    }
 
     toolbar.append(createEventActionGuide({
         content: readOwnerActionHintText(statusMeta),
@@ -628,35 +594,145 @@ function createOwnerEventActionToolbar(statusMeta) {
 }
 
 /**
+ * Returns the moderation actions available for admin queue cards.
+ */
+function readModerationEventActionDefinitions({ scope = DASHBOARD_MODERATION_SCOPE_QUEUE } = {}) {
+    if (isEditOnlyModerationScope(scope)) {
+        return [
+            {
+                action: 'edit',
+                label: 'Editar',
+                icon: 'pen-to-square',
+                modifier: 'edit',
+            },
+            {
+                action: 'delete',
+                label: 'Excluir',
+                icon: 'trash',
+                modifier: 'danger',
+            },
+        ];
+    }
+
+    return [
+        {
+            action: 'edit',
+            label: 'Editar',
+            icon: 'pen-to-square',
+            modifier: 'edit',
+        },
+        {
+            action: 'approve',
+            label: 'Aprovar',
+            icon: 'check',
+            modifier: 'approve',
+        },
+        {
+            action: 'reject',
+            label: 'Rejeitar',
+            icon: 'ban',
+            modifier: 'danger',
+        },
+        {
+            action: 'delete',
+            label: 'Excluir',
+            icon: 'trash',
+            modifier: 'danger',
+        },
+    ];
+}
+
+/**
  * Creates the moderation toolbar attached to one pending admin queue card.
  */
-function createModerationEventActionToolbar() {
+function createModerationEventActionToolbar({ scope = DASHBOARD_MODERATION_SCOPE_QUEUE } = {}) {
     const toolbar = document.createElement('div');
     toolbar.className = 'dashboard-event__toolbar';
 
     const actions = document.createElement('div');
     actions.className = 'dashboard-event__actions';
-    actions.append(
-        createEventActionButton({
-            action: 'approve',
-            label: 'Aprovar',
-            icon: 'check',
-            modifier: 'approve',
-        }),
-        createEventActionButton({
-            action: 'reject',
-            label: 'Rejeitar',
-            icon: 'ban',
-            modifier: 'danger',
-        }),
-    );
+    readModerationEventActionDefinitions({ scope }).forEach((actionDefinition) => {
+        actions.appendChild(createEventActionButton(actionDefinition));
+    });
 
     toolbar.append(createEventActionGuide({
-        content: 'Aprove para publicar o evento imediatamente ou rejeite com uma justificativa opcional para o organizador.',
+        content: isPublishedModerationScope(scope)
+            ? 'Use esta lista para localizar eventos já publicados por outras contas. Você pode editar para devolver o evento à moderação ou excluir o envio definitivamente.'
+            : (isRejectedModerationScope(scope)
+                ? 'Use esta lista para localizar eventos rejeitados de outras contas. Você pode editar para devolver o evento à moderação ou excluir o envio definitivamente.'
+                : 'Edite para reenviar o evento ao fluxo de moderação, aprove para publicar imediatamente, rejeite com uma justificativa opcional ou exclua o envio.'),
         label: 'Ver orientações da moderação',
         customClass: 'dashboard-event__action-tooltip',
     }), actions);
     return toolbar;
+}
+
+/**
+ * Dispatches one requested moderation action through the provided collaborators.
+ */
+async function handleModerationQueueActionRequest({
+    requestedAction = '',
+    managedEvent = null,
+    isAdmin = false,
+    isPendingModeration = false,
+    allowDiscoveryEdit = false,
+    openEdit = async () => {},
+    openDelete = async () => {},
+    approve = async () => {},
+    openReject = async () => {},
+    showToast = () => {},
+} = {}) {
+    if (!isAdmin) {
+        showToast('Acesso restrito à fila de moderação.');
+        return;
+    }
+
+    if (requestedAction === 'edit' && (isPendingModeration || allowDiscoveryEdit)) {
+        await openEdit(managedEvent);
+        return;
+    }
+
+    if (requestedAction === 'delete' && (isPendingModeration || allowDiscoveryEdit)) {
+        await openDelete(managedEvent);
+        return;
+    }
+
+    if (!isPendingModeration) {
+        showToast('Somente eventos pendentes podem ser aprovados ou rejeitados por aqui.');
+        return;
+    }
+
+    if (requestedAction === 'approve') {
+        await approve(managedEvent);
+        return;
+    }
+
+    if (requestedAction === 'reject') {
+        await openReject(managedEvent);
+    }
+}
+
+/**
+ * Updates the local moderation list after an admin edit succeeds.
+ */
+function syncModerationEventsAfterAdminEdit(events, updatedEvent, {
+    scope = DASHBOARD_MODERATION_SCOPE_QUEUE,
+    previousEventId = null,
+} = {}) {
+    const normalizedUpdatedEventId = readText(updatedEvent?.id, '');
+    const normalizedPreviousEventId = readText(previousEventId, '');
+    const remainingEvents = (Array.isArray(events) ? events : []).filter((currentEvent) => {
+        const currentEventId = readText(currentEvent?.id, '');
+
+        return currentEventId !== normalizedUpdatedEventId
+            && currentEventId !== normalizedPreviousEventId;
+    });
+
+    if (normalizeModerationScope(scope) === DASHBOARD_MODERATION_SCOPE_QUEUE && isPendingModerationEvent(updatedEvent)) {
+        return Event.sortByDateDescending([updatedEvent, ...remainingEvents]);
+    }
+
+    return Event.sortByDateDescending(remainingEvents);
 }
 
 /**
@@ -682,12 +758,16 @@ function createModerationFeedbackElement(event) {
 /**
  * Creates a rendered event card tailored for the active dashboard list.
  */
-function createDashboardEventElement(event, { mode = DASHBOARD_VIEW_BROWSE } = {}) {
+function createDashboardEventElement(event, {
+    mode = DASHBOARD_VIEW_BROWSE,
+    moderationScope = DASHBOARD_MODERATION_SCOPE_QUEUE,
+} = {}) {
     const eventRecord = Event.from(event);
     const isPastEvent = eventRecord.isPast();
     const statusMeta = readStatusMeta(eventRecord.readStatus('pending'));
     const isModerationView = mode === DASHBOARD_VIEW_MODERATION;
-    const isManageable = !isModerationView && canManageOwnEvent(event);
+    const isAdminDiscoveryView = isModerationView && isEditOnlyModerationScope(moderationScope);
+    const isOwnerActionable = !isModerationView && (canEditOwnEvent(event) || canDeleteOwnEvent(event));
     const article = document.createElement('article');
     article.className = `dashboard-event dashboard-event--${statusMeta.tone}`;
     article.dataset.eventId = eventRecord.readId('');
@@ -746,10 +826,12 @@ function createDashboardEventElement(event, { mode = DASHBOARD_VIEW_BROWSE } = {
     headline.append(titleBlock, statusGroup);
     header.appendChild(headline);
 
-    if (isModerationView && isPendingModerationEvent(event)) {
-        header.appendChild(createModerationEventActionToolbar());
-    } else if (isManageable) {
-        header.appendChild(createOwnerEventActionToolbar(statusMeta));
+    if (isAdminDiscoveryView) {
+        header.appendChild(createModerationEventActionToolbar({ scope: moderationScope }));
+    } else if (isModerationView && isPendingModerationEvent(event)) {
+        header.appendChild(createModerationEventActionToolbar({ scope: moderationScope }));
+    } else if (isOwnerActionable) {
+        header.appendChild(createOwnerEventActionToolbar(event, statusMeta));
     }
 
     const description = document.createElement('p');
@@ -782,13 +864,10 @@ class DashboardPage extends BaseComponent {
     #elements;
     #events = [];
     #moderationEvents = [];
+    #moderationScope = DASHBOARD_MODERATION_SCOPE_QUEUE;
     #showPastFilterTooltip;
-    #browseFilters = {
-        status: DASHBOARD_FILTER_ALL,
-        category: DASHBOARD_FILTER_ALL,
-        includePast: false,
-        order: DASHBOARD_FILTER_DESC,
-    };
+    #browseFilters = createDefaultDashboardBrowseFilters();
+    #browseFiltersController;
     #eventFormModal;
     #deleteEventModal;
     #rejectEventModal;
@@ -815,6 +894,11 @@ class DashboardPage extends BaseComponent {
         });
         this.#deleteEventModal = new DashboardDeleteEventModal();
         this.#deleteEventModal.onDeleteSuccess(async ({ eventId }) => {
+            if (this.#currentView === DASHBOARD_VIEW_MODERATION) {
+                await this.#syncModerationAfterDelete(eventId);
+                return;
+            }
+
             await this.#syncEventsAfterDelete(eventId);
         });
         this.#rejectEventModal = new DashboardRejectEventModal();
@@ -835,6 +919,17 @@ class DashboardPage extends BaseComponent {
             },
         });
         this.#actionTabs.wire().setActive('browse');
+        this.#browseFiltersController = new DashboardFilters({
+            root: this.#elements.eventsFilters,
+            statusField: this.#elements.eventsFilterStatus,
+            categoryField: this.#elements.eventsFilterCategory,
+            showPastField: this.#elements.eventsFilterShowPast,
+            orderField: this.#elements.eventsFilterOrder,
+            onChange: (filters) => {
+                this.#handleBrowseFilterChange(filters);
+            },
+        });
+        this.#browseFiltersController.wire();
         this.#showPastFilterTooltip = this.#elements.eventsFilterShowPastTooltip
             ? new Tooltip({
                 element: this.#elements.eventsFilterShowPastTooltip,
@@ -864,8 +959,8 @@ class DashboardPage extends BaseComponent {
         this.on(this.#elements.eventsList, 'click', event => {
             void this.#handleEventListClick(event);
         });
-        this.on(this.#elements.eventsFilters, 'change', event => {
-            this.#handleBrowseFilterChange(event);
+        this.on(this.#elements.eventsFilterModerationScope, 'change', event => {
+            void this.#handleModerationScopeChange(event);
         });
 
         if (this.#elements.eventsEmpty) {
@@ -985,10 +1080,16 @@ class DashboardPage extends BaseComponent {
             eventsBadge: root?.querySelector('#dashboard-events-badge') || null,
             eventsCaption: root?.querySelector('#dashboard-events-caption') || null,
             eventsFilters: root?.querySelector('#dashboard-events-filters') || null,
+            eventsFilterStatusField: root?.querySelector('#dashboard-events-filter-status-field') || null,
             eventsFilterStatus: root?.querySelector('#dashboard-events-filter-status') || null,
+            eventsFilterCategoryField: root?.querySelector('#dashboard-events-filter-category-field') || null,
             eventsFilterCategory: root?.querySelector('#dashboard-events-filter-category') || null,
+            eventsFilterModerationScopeField: root?.querySelector('#dashboard-events-filter-moderation-scope-field') || null,
+            eventsFilterModerationScope: root?.querySelector('#dashboard-events-filter-moderation-scope') || null,
+            eventsFilterShowPastField: root?.querySelector('#dashboard-events-filter-show-past-field') || null,
             eventsFilterShowPast: root?.querySelector('.checkbox-field #filter-show-past') || null,
             eventsFilterShowPastTooltip: root?.querySelector('.checkbox-field[title]') || null,
+            eventsFilterOrderField: root?.querySelector('#dashboard-events-filter-order-field') || null,
             eventsFilterOrder: root?.querySelector('#dashboard-events-filter-order') || null,
             eventsList: root?.querySelector('#dashboard-events-list') || null,
             eventsEmpty: root?.querySelector('#dashboard-events-empty') || null,
@@ -1097,6 +1198,18 @@ class DashboardPage extends BaseComponent {
         }
 
         const normalizedMode = readText(mode, 'create').toLowerCase();
+
+        if (this.#currentView === DASHBOARD_VIEW_MODERATION && normalizedMode === 'edit') {
+            this.#moderationEvents = syncModerationEventsAfterAdminEdit(this.#moderationEvents, event, {
+                scope: this.#moderationScope,
+                previousEventId,
+            });
+            this.#syncModerationPage();
+            this.#renderDashboardSections();
+            this.#actionTabs.setActive(this.#currentView);
+            return;
+        }
+
         const nextEvents = this.#events.filter((currentEvent) => {
             if (normalizedMode === 'edit' && previousEventId) {
                 return currentEvent.id !== previousEventId;
@@ -1145,6 +1258,22 @@ class DashboardPage extends BaseComponent {
     }
 
     /**
+     * Synchronizes the moderation list after a successful admin delete.
+     */
+    async #syncModerationAfterDelete(eventId) {
+        const normalizedEventId = readText(eventId, '');
+        if (!normalizedEventId) {
+            await this.refreshModerationEvents({ showErrors: false });
+            return;
+        }
+
+        this.#moderationEvents = this.#moderationEvents.filter(event => event.id !== normalizedEventId);
+        this.#syncModerationPage();
+        this.#renderDashboardSections();
+        this.#actionTabs.setActive(this.#currentView);
+    }
+
+    /**
      * Handles edit and delete clicks dispatched from the event list.
      */
     async #handleEventListClick(domEvent) {
@@ -1169,22 +1298,31 @@ class DashboardPage extends BaseComponent {
             return;
         }
 
-        if (!canManageOwnEvent(managedEvent)) {
-            this.#showToast(
-                'Apenas eventos pendentes ou rejeitados podem ser gerenciados por aqui.',
-                'error',
-                { group: DASHBOARD_STATUS_TOAST_GROUP },
-            );
-            return;
-        }
-
         try {
             if (requestedAction === 'edit') {
+                if (!canEditOwnEvent(managedEvent)) {
+                    this.#showToast(
+                        'Apenas eventos pendentes ou rejeitados podem ser editados por aqui.',
+                        'error',
+                        { group: DASHBOARD_STATUS_TOAST_GROUP },
+                    );
+                    return;
+                }
+
                 await this.#eventFormModal.open({ event: managedEvent });
                 return;
             }
 
             if (requestedAction === 'delete') {
+                if (!canDeleteOwnEvent(managedEvent)) {
+                    this.#showToast(
+                        'Apenas eventos pendentes ou rejeitados podem ser excluídos por aqui.',
+                        'error',
+                        { group: DASHBOARD_STATUS_TOAST_GROUP },
+                    );
+                    return;
+                }
+
                 await this.#deleteEventModal.open({ event: managedEvent });
             }
         } catch {
@@ -1197,58 +1335,76 @@ class DashboardPage extends BaseComponent {
     }
 
     /**
-     * Updates the browse-list filter state after one control changes.
+     * Updates the current browse-list state after the shared filter component changes.
      */
-    #handleBrowseFilterChange(domEvent) {
-        const target = domEvent.target instanceof HTMLInputElement || domEvent.target instanceof HTMLSelectElement
-            ? domEvent.target
-            : null;
-
-        if (!target || !this.#elements.eventsFilters?.contains(target)) {
+    #handleBrowseFilterChange(filters) {
+        if (this.#currentView !== DASHBOARD_VIEW_BROWSE) {
             return;
         }
 
-        this.#browseFilters = {
-            status: normalizeDashboardStatusFilter(this.#elements.eventsFilterStatus?.value),
-            category: readText(this.#elements.eventsFilterCategory?.value, DASHBOARD_FILTER_ALL).toLowerCase(),
-            includePast: Boolean(this.#elements.eventsFilterShowPast?.checked),
-            order: normalizeDashboardSortOrder(this.#elements.eventsFilterOrder?.value),
-        };
+        this.#browseFilters = filters;
         this.#currentEventPage = 1;
         this.#renderEventList();
     }
 
     /**
-     * Handles approve and reject actions dispatched from the moderation queue.
+     * Updates the moderation discovery scope after the admin selector changes.
+     */
+    async #handleModerationScopeChange(domEvent) {
+        const target = domEvent.target instanceof HTMLSelectElement
+            ? domEvent.target
+            : null;
+
+        if (!target || target !== this.#elements.eventsFilterModerationScope || this.#currentView !== DASHBOARD_VIEW_MODERATION) {
+            return;
+        }
+
+        const nextScope = normalizeModerationScope(target.value);
+
+        if (nextScope === this.#moderationScope) {
+            return;
+        }
+
+        this.#moderationScope = nextScope;
+        this.#currentModerationPage = 1;
+        await this.refreshModerationEvents({ showErrors: true });
+    }
+
+    /**
+     * Handles edit, approve, and reject actions dispatched from the moderation list.
      */
     async #handleModerationEventAction(requestedAction, managedEvent, eventCard) {
-        if (!this.#isAdmin()) {
-            this.#showToast(
-                'Acesso restrito à fila de moderação.',
-                'error',
-                { group: DASHBOARD_STATUS_TOAST_GROUP },
-            );
-            return;
-        }
-
-        if (!isPendingModerationEvent(managedEvent)) {
-            this.#showToast(
-                'Somente eventos pendentes podem ser moderados por aqui.',
-                'error',
-                { group: DASHBOARD_STATUS_TOAST_GROUP },
-            );
-            return;
-        }
-
         try {
-            if (requestedAction === 'approve') {
-                await this.#approveEvent(managedEvent, eventCard);
-                return;
-            }
-
-            if (requestedAction === 'reject') {
-                await this.#rejectEventModal.open({ event: managedEvent });
-            }
+            await handleModerationQueueActionRequest({
+                requestedAction,
+                managedEvent,
+                isAdmin: this.#isAdmin(),
+                isPendingModeration: isPendingModerationEvent(managedEvent),
+                allowDiscoveryEdit: isEditOnlyModerationScope(this.#moderationScope),
+                openEdit: async (event) => {
+                    await this.#eventFormModal.open({
+                        event,
+                        allowAdminEdit: true,
+                    });
+                },
+                openDelete: async (event) => {
+                    await this.#deleteEventModal.open({
+                        event,
+                        allowAdminDelete: true,
+                    });
+                },
+                approve: async (event) => {
+                    await this.#approveEvent(event, eventCard);
+                },
+                openReject: async (event) => {
+                    await this.#rejectEventModal.open({ event });
+                },
+                showToast: (text) => {
+                    this.#showToast(text, 'error', {
+                        group: DASHBOARD_STATUS_TOAST_GROUP,
+                    });
+                },
+            });
         } catch {
             this.#showToast(
                 'Não foi possível abrir essa ação de moderação agora.',
@@ -1383,11 +1539,13 @@ class DashboardPage extends BaseComponent {
             return;
         }
 
-        const sectionCopy = readEventSectionCopy(this.#currentView);
-        const activeEvents = this.#readActiveEvents();
+        const sectionCopy = readEventSectionCopy(this.#currentView, {
+            moderationScope: this.#moderationScope,
+        });
         const isBrowseView = this.#currentView === DASHBOARD_VIEW_BROWSE;
+        this.#renderEventFilters();
         this.#syncCurrentListPage();
-        this.#renderBrowseFilters();
+        const activeEvents = this.#readActiveEvents();
 
         if (this.#elements.eventsEyebrow) {
             this.#elements.eventsEyebrow.textContent = sectionCopy.eyebrow;
@@ -1435,7 +1593,10 @@ class DashboardPage extends BaseComponent {
 
         const fragment = document.createDocumentFragment();
         this.#pagination.readPageItems(activeEvents, this.#readCurrentListPage()).forEach((event) => {
-            fragment.appendChild(createDashboardEventElement(event, { mode: this.#currentView }));
+            fragment.appendChild(createDashboardEventElement(event, {
+                mode: this.#currentView,
+                moderationScope: this.#moderationScope,
+            }));
         });
 
         this.#elements.eventsList.replaceChildren(fragment);
@@ -1447,81 +1608,46 @@ class DashboardPage extends BaseComponent {
     /**
      * Shows or hides the owner-event filters and synchronizes their values.
      */
-    #renderBrowseFilters() {
+    #renderEventFilters() {
         if (!this.#elements.eventsFilters) {
             return;
         }
 
         const isBrowseView = this.#currentView === DASHBOARD_VIEW_BROWSE;
-        this.#elements.eventsFilters.hidden = !isBrowseView;
+        const isModerationView = this.#currentView === DASHBOARD_VIEW_MODERATION && this.#isAdmin();
+        this.#elements.eventsFilters.hidden = !isBrowseView && !isModerationView;
+
+        [
+            this.#elements.eventsFilterStatusField,
+            this.#elements.eventsFilterCategoryField,
+            this.#elements.eventsFilterOrderField,
+            this.#elements.eventsFilterShowPastField,
+        ].forEach((element) => {
+            if (element) {
+                element.hidden = !isBrowseView;
+            }
+        });
+
+        if (this.#elements.eventsFilterModerationScopeField) {
+            this.#elements.eventsFilterModerationScopeField.hidden = !isModerationView;
+        }
+
+        if (isModerationView) {
+            if (this.#elements.eventsFilterModerationScope) {
+                this.#elements.eventsFilterModerationScope.value = this.#moderationScope;
+            }
+
+            return;
+        }
 
         if (!isBrowseView) {
             return;
         }
 
-        this.#syncBrowseFilterState();
-        this.#syncBrowseCategoryOptions();
-
-        if (this.#elements.eventsFilterStatus) {
-            this.#elements.eventsFilterStatus.value = this.#browseFilters.status;
-        }
-
-        if (this.#elements.eventsFilterCategory) {
-            this.#elements.eventsFilterCategory.value = this.#browseFilters.category;
-        }
-
-        if (this.#elements.eventsFilterShowPast) {
-            this.#elements.eventsFilterShowPast.checked = this.#browseFilters.includePast;
-        }
-
-        if (this.#elements.eventsFilterOrder) {
-            this.#elements.eventsFilterOrder.value = this.#browseFilters.order;
-        }
-    }
-
-    /**
-     * Resets the category filter when the selected option is no longer available.
-     */
-    #syncBrowseFilterState() {
-        const categoryOptions = readDashboardEventCategoryOptions(this.#events);
-        const selectedCategory = readText(this.#browseFilters.category, DASHBOARD_FILTER_ALL).toLowerCase();
-        const hasSelectedCategory = selectedCategory === DASHBOARD_FILTER_ALL
-            || categoryOptions.some(option => option.value === selectedCategory);
-
-        if (!hasSelectedCategory) {
-            this.#browseFilters.category = DASHBOARD_FILTER_ALL;
-        }
-
-        this.#browseFilters.status = normalizeDashboardStatusFilter(this.#browseFilters.status);
-        this.#browseFilters.order = normalizeDashboardSortOrder(this.#browseFilters.order);
-        this.#browseFilters.includePast = Boolean(this.#browseFilters.includePast);
-    }
-
-    /**
-     * Rebuilds the browse-category select from the loaded owner events.
-     */
-    #syncBrowseCategoryOptions() {
-        if (!this.#elements.eventsFilterCategory) {
-            return;
-        }
-
-        const categoryOptions = readDashboardEventCategoryOptions(this.#events);
-        const fragment = document.createDocumentFragment();
-        fragment.appendChild(createDashboardSelectOption({
-            value: DASHBOARD_FILTER_ALL,
-            label: 'Todas as categorias',
-            selected: this.#browseFilters.category === DASHBOARD_FILTER_ALL,
-        }));
-
-        categoryOptions.forEach((option) => {
-            fragment.appendChild(createDashboardSelectOption({
-                value: option.value,
-                label: option.label,
-                selected: option.value === this.#browseFilters.category,
-            }));
+        this.#browseFilters = this.#browseFiltersController.render({
+            events: this.#events,
+            filters: this.#browseFilters,
         });
-
-        this.#elements.eventsFilterCategory.replaceChildren(fragment);
     }
 
     /**
@@ -1574,7 +1700,7 @@ class DashboardPage extends BaseComponent {
             return;
         }
 
-        const response = await requestApi('/events/moderation?status=pending', {
+        const response = await requestApi(readModerationEventSourcePath(this.#moderationScope), {
             token: this.#session.token,
         });
 
@@ -1584,8 +1710,14 @@ class DashboardPage extends BaseComponent {
             this.#renderDashboardSections();
 
             if (showErrors) {
+                const errorMessage = isPublishedModerationScope(this.#moderationScope)
+                    ? 'Não foi possível carregar os eventos publicados para edição administrativa no momento.'
+                    : (isRejectedModerationScope(this.#moderationScope)
+                        ? 'Não foi possível carregar os eventos rejeitados para edição administrativa no momento.'
+                        : 'Não foi possível carregar a fila de moderação no momento.');
+
                 this.#showToast(
-                    response.message || 'Não foi possível carregar a fila de moderação no momento.',
+                    response.message || errorMessage,
                     'error',
                     { group: DASHBOARD_STATUS_TOAST_GROUP },
                 );
@@ -1594,7 +1726,14 @@ class DashboardPage extends BaseComponent {
             return;
         }
 
-        this.#moderationEvents = Event.sortByDateDescending(response.data?.events || []);
+        const loadedEvents = response.data?.events || [];
+        const moderationEvents = isPublishedModerationScope(this.#moderationScope)
+            ? filterAdminPublishedDiscoveryEvents(loadedEvents, this.#session?.user?.id)
+            : (isRejectedModerationScope(this.#moderationScope)
+                ? filterAdminRejectedDiscoveryEvents(loadedEvents, this.#session?.user?.id)
+                : loadedEvents);
+
+        this.#moderationEvents = Event.sortByDateDescending(moderationEvents);
         this.#currentModerationPage = 1;
         this.#renderDashboardSections();
     }
@@ -1612,7 +1751,14 @@ class DashboardPage extends BaseComponent {
     #readActiveEvents() {
         return this.#currentView === DASHBOARD_VIEW_MODERATION
             ? this.#moderationEvents
-            : filterDashboardBrowseEvents(this.#events, this.#browseFilters);
+            : this.#readBrowseEvents();
+    }
+
+    /**
+     * Returns the current owner-event slice after the active browse filters are applied.
+     */
+    #readBrowseEvents() {
+        return filterDashboardBrowseEvents(this.#events, this.#browseFilters);
     }
 
     /**
@@ -1640,7 +1786,7 @@ class DashboardPage extends BaseComponent {
      * Keeps the owner-event page inside the valid browse range.
      */
     #syncBrowsePage() {
-        const totalPages = this.#pagination.readPageCount(filterDashboardBrowseEvents(this.#events, this.#browseFilters));
+        const totalPages = this.#pagination.readPageCount(this.#readBrowseEvents());
         this.#currentEventPage = this.#pagination.clampPage(this.#currentEventPage, totalPages);
     }
 

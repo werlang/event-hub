@@ -1,7 +1,7 @@
 import { Modal } from '../components/modal.js';
 import { Toast } from '../components/toast.js';
 import { requestApi } from '../helpers/api.js';
-import { canManageOwnEvent, normalizeEventStatus } from './event-management.js';
+import { canDeleteOwnEvent, normalizeEventStatus } from './event-management.js';
 
 const DASHBOARD_DELETE_TOAST_GROUP = 'dashboard-delete';
 const DASHBOARD_ACTION_TOAST_GROUP = 'dashboard-action';
@@ -59,6 +59,7 @@ export class DashboardDeleteEventModal {
     #sessionToken = '';
     #successHandlers = new Set();
     #activeEvent = null;
+    #allowAdminDelete = false;
 
     /**
      * Creates the reusable dashboard confirmation modal for event deletion.
@@ -90,6 +91,7 @@ export class DashboardDeleteEventModal {
 
         this.#modal.onClose(() => {
             this.#activeEvent = null;
+            this.#allowAdminDelete = false;
             this.#restoreActions();
         });
     }
@@ -116,12 +118,12 @@ export class DashboardDeleteEventModal {
     /**
      * Loads the confirmation copy for the provided event and opens the modal.
      */
-    async open({ event = null } = {}) {
+    async open({ event = null, allowAdminDelete = false } = {}) {
         if (!event?.id) {
             return this;
         }
 
-        if (!canManageOwnEvent(event)) {
+        if (!allowAdminDelete && !canDeleteOwnEvent(event)) {
             this.#showToast(
                 'Apenas eventos pendentes ou rejeitados podem ser excluídos por aqui.',
                 'error',
@@ -131,6 +133,7 @@ export class DashboardDeleteEventModal {
         }
 
         this.#activeEvent = event;
+        this.#allowAdminDelete = allowAdminDelete;
         this.#modal.setContent(createDeleteConfirmationContent(event));
         this.#restoreActions();
         Toast.dismissGroup(DASHBOARD_DELETE_TOAST_GROUP);
@@ -164,7 +167,7 @@ export class DashboardDeleteEventModal {
             return false;
         }
 
-        if (!canManageOwnEvent(currentEvent)) {
+        if (!this.#allowAdminDelete && !canDeleteOwnEvent(currentEvent)) {
             this.#showToast(
                 'Apenas eventos pendentes ou rejeitados podem ser excluídos por aqui.',
                 'error',
