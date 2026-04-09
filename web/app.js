@@ -30,24 +30,44 @@ app.engine('html', mustacheExpress());
 app.set('view engine', 'html');
 app.set('views', new URL('./src/html/', import.meta.url).pathname);
 
+const SITE_NAME = 'Agenda Acadêmica – IFSul Campus Charqueadas';
+const DEFAULT_DESCRIPTION = 'Acompanhe os eventos acadêmicos do Campus Charqueadas do Instituto Federal Sul-Rio-Grandense.';
+const DEFAULT_KEYWORDS = 'agenda acadêmica, eventos, ifsul, campus charqueadas, instituto federal, sul-rio-grandense, palestras, oficinas, simpósios';
+const webUrl = (process.env.WEB_URL || '').replace(/\/$/, '');
+
 // render middleware, setting some variables to be used in all views
 app.use(renderMiddleware({
     apiUrl: process.env.API_URL,
+    webUrl,
     year: new Date().getFullYear(),
+    metaTitle: SITE_NAME,
+    metaDescription: DEFAULT_DESCRIPTION,
+    metaKeywords: DEFAULT_KEYWORDS,
+    siteName: SITE_NAME,
 }));
 
 /**
  * Renders the public home page shell.
  */
 app.get('/', (req, res) => {
-    res.templateRender('index');
+    res.templateRender('index', {
+        metaRobots: 'index, follow',
+        canonicalPath: '/',
+    });
 });
 
 /**
  * Renders the login page while preserving any redirect target.
  */
 app.get('/login', (req, res) => {
-    res.templateRender('login', { page: 'login', redirect: req.query.redirect || '' });
+    res.templateRender('login', {
+        page: 'login',
+        redirect: req.query.redirect || '',
+        metaTitle: `Entrar · ${SITE_NAME}`,
+        metaDescription: 'Acesse sua conta para publicar e gerenciar eventos acadêmicos no Campus Charqueadas.',
+        metaRobots: 'noindex, nofollow',
+        canonicalPath: '/login',
+    });
 });
 
 /**
@@ -60,6 +80,10 @@ app.get('/week', (req, res) => {
         weekTo: weekRange.to,
         weekRangeLabel: `${formatCalendarDatePtBr(weekRange.from)} a ${formatCalendarDatePtBr(weekRange.to)}`,
         weekCalendarJoinUrl: process.env.GOOGLE_CALENDAR_JOIN_URL,
+        metaTitle: `Agenda da Semana · ${SITE_NAME}`,
+        metaDescription: 'Confira os eventos acadêmicos aprovados para esta semana no Campus Charqueadas do IFSul.',
+        metaRobots: 'index, follow',
+        canonicalPath: '/week',
     });
 });
 
@@ -67,7 +91,12 @@ app.get('/week', (req, res) => {
  * Renders the dashboard shell used for authenticated tooling.
  */
 app.get('/dashboard', (req, res) => {
-    res.templateRender('dashboard', { page: 'dashboard' });
+    res.templateRender('dashboard', {
+        page: 'dashboard',
+        metaTitle: `Painel · ${SITE_NAME}`,
+        metaRobots: 'noindex, nofollow',
+        canonicalPath: '/dashboard',
+    });
 });
 
 // static assets

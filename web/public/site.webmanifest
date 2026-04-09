@@ -1,0 +1,33 @@
+{
+    "name": "Agenda Acadêmica - IFSul Campus Charqueadas",
+    "short_name": "Agenda CH",
+    "description": "Acompanhe os eventos acadêmicos do Campus Charqueadas do Instituto Federal Sul-Rio-Grandense.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#5b775a",
+    "lang": "pt-BR",
+    "icons": [
+        {
+            "src": "/assets/favicon-16.png",
+            "sizes": "16x16",
+            "type": "image/png"
+        },
+        {
+            "src": "/assets/favicon-32.png",
+            "sizes": "32x32",
+            "type": "image/png"
+        },
+        {
+            "src": "/assets/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        },
+        {
+            "src": "/assets/logo-original.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

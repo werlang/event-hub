@@ -1,0 +1,5 @@
+Sitemap: https://agenda.sistemas.charqueadas.ifsul.edu.br/sitemap.xml
+
+User-agent: *
+Disallow: /dashboard
+Disallow: /login
