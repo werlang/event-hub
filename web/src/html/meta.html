@@ -1,28 +1,60 @@
+<!-- Primary SEO -->
+
+<title>{{metaTitle}}</title>
 <meta name="description" content="{{metaDescription}}">
 <meta name="keywords" content="{{metaKeywords}}">
 <meta name="robots" content="{{metaRobots}}">
-<meta name="theme-color" content="#5b775a">
 <link rel="canonical" href="{{webUrl}}{{canonicalPath}}">
 
+<!-- Theme -->
+
+<meta name="theme-color" content="#5b775a">
+
 <!-- Open Graph -->
+
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:site_name" content="{{siteName}}">
 <meta property="og:title" content="{{metaTitle}}">
 <meta property="og:description" content="{{metaDescription}}">
 <meta property="og:url" content="{{webUrl}}{{canonicalPath}}">
-<meta property="og:image" content="{{webUrl}}/assets/ifsul-og.webp">
+
+<!-- OG Image (WebP + fallback) -->
+
+<meta property="og:image" content="{{webUrl}}/assets/logo-og.webp">
+<meta property="og:image:type" content="image/webp">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<meta property="og:image" content="{{webUrl}}/assets/logo-og.png">
+<meta property="og:image:type" content="image/png">
 
 <!-- Twitter Card -->
-<meta name="twitter:card" content="summary">
+
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{{metaTitle}}">
 <meta name="twitter:description" content="{{metaDescription}}">
-<meta name="twitter:image" content="{{webUrl}}/assets/ifsul-og.webp">
+
+<!-- Twitter Image (WebP + fallback) -->
+
+<meta name="twitter:image" content="{{webUrl}}/assets/logo-og.webp">
+<meta name="twitter:image:alt" content="{{metaTitle}}">
+
+<meta name="twitter:image" content="{{webUrl}}/assets/logo-og.png">
 
 <!-- Favicons -->
+
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="icon" type="image/png" href="/assets/favicon-32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/assets/favicon-16.png" sizes="16x16">
 <link rel="icon" type="image/png" href="/assets/favicon-96.png" sizes="96x96" />
-<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
-<link rel="shortcut icon" href="/favicon.ico" />
-<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
-<meta name="apple-mobile-web-app-title" content="{{siteName}}" />
-<link rel="manifest" href="/site.webmanifest" />
+
+<!-- Apple -->
+
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="{{siteName}}">
+
+<!-- Manifest -->
+
+<link rel="manifest" href="/site.webmanifest">
