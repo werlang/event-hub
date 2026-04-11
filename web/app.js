@@ -30,19 +30,16 @@ app.engine('html', mustacheExpress());
 app.set('view engine', 'html');
 app.set('views', new URL('./src/html/', import.meta.url).pathname);
 
-const SITE_NAME = 'Agenda Acadêmica – IFSul Campus Charqueadas';
-const DEFAULT_DESCRIPTION = 'Acompanhe os eventos acadêmicos do Campus Charqueadas do Instituto Federal Sul-Rio-Grandense.';
-const DEFAULT_KEYWORDS = 'agenda acadêmica, eventos, ifsul, campus charqueadas, instituto federal, sul-rio-grandense, palestras, oficinas, simpósios';
-const webUrl = (process.env.WEB_URL || '').replace(/\/$/, '');
+const SITE_NAME = 'AgendaCharq';
 
 // render middleware, setting some variables to be used in all views
 app.use(renderMiddleware({
     apiUrl: process.env.API_URL,
-    webUrl,
+    webUrl: process.env.WEB_URL,
     year: new Date().getFullYear(),
-    metaTitle: SITE_NAME,
-    metaDescription: DEFAULT_DESCRIPTION,
-    metaKeywords: DEFAULT_KEYWORDS,
+    metaTitle: 'Agenda Acadêmica – IFSul Campus Charqueadas',
+    metaDescription: 'Acompanhe os eventos acadêmicos do Campus Charqueadas do Instituto Federal Sul-Rio-Grandense.',
+    metaKeywords: 'agenda acadêmica, eventos, ifsul, campus charqueadas, instituto federal, sul-rio-grandense, palestras, oficinas, simpósios',
     siteName: SITE_NAME,
 }));
 
