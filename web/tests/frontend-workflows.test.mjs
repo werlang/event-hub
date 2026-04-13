@@ -1512,6 +1512,14 @@ test('dashboard member workflow renders visible event metadata, dispatches rejec
         assert.match(publishedCard.querySelector('.dashboard-meta-pill--category').textContent, new RegExp(Event.from(publishedEvent).readCategoryMeta().label));
         assert.match(publishedCard.querySelector('.dashboard-meta-pill--location').textContent, /Auditorio/);
 
+        document.querySelector('#dashboard-events-filter-category').value = 'academico';
+        document.querySelector('#dashboard-events-filter-category').dispatchEvent(new scenario.dom.window.Event('change', { bubbles: true }));
+
+        const filteredCards = Array.from(document.querySelectorAll('#dashboard-events-list .dashboard-event'));
+        assert.equal(filteredCards.length, 1);
+        assert.match(filteredCards[0].querySelector('.dashboard-event__title').textContent, /Evento Rejeitado/);
+        assert.match(document.querySelector('#dashboard-events-badge').textContent, /1 de 2 eventos/);
+
         const rejectedActionNames = Array.from(rejectedCard.querySelectorAll('[data-dashboard-action]'))
             .map(button => button.dataset.dashboardAction);
         assert.deepEqual(rejectedActionNames, ['edit', 'delete']);
@@ -2343,6 +2351,34 @@ test('dashboard browse filters cover status, category, past visibility, and orde
 
     assert.deepEqual(rejectedOnly, ['evt-future-rejected']);
     assert.deepEqual(academicWithPastAsc, ['evt-past-published', 'evt-future-pending']);
+});
+
+test('dashboard browse category filter matches custom categories case-insensitively', () => {
+    const events = [
+        {
+            id: 'evt-custom-1',
+            title: 'Feira de Tecnologia',
+            status: 'published',
+            category: 'Tecnologia',
+            date: '2026-04-20T12:00:00.000Z',
+        },
+        {
+            id: 'evt-custom-2',
+            title: 'Semana Cultural',
+            status: 'published',
+            category: 'Cultura',
+            date: '2026-04-22T12:00:00.000Z',
+        },
+    ];
+
+    const filteredIds = filterDashboardBrowseEvents(events, {
+        status: 'all',
+        category: 'tecnologia',
+        includePast: true,
+        order: 'desc',
+    }).map(event => event.id);
+
+    assert.deepEqual(filteredIds, ['evt-custom-1']);
 });
 
 test('week page workflow loads the current range and covers populated, empty, and error states', async () => {

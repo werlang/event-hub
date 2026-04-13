@@ -14,6 +14,25 @@ function readText(value, fallback) {
 }
 
 /**
+ * Normalizes one browse-list category filter value.
+ */
+function normalizeDashboardCategoryFilter(value) {
+    return readText(value, DASHBOARD_FILTER_ALL).toLowerCase();
+}
+
+/**
+ * Normalizes the raw browse-filter values read directly from the DOM.
+ */
+function normalizeDashboardBrowseFilterInput(filters = {}) {
+    return {
+        status: normalizeDashboardStatusFilter(filters?.status),
+        category: normalizeDashboardCategoryFilter(filters?.category),
+        includePast: Boolean(filters?.includePast),
+        order: normalizeDashboardSortOrder(filters?.order),
+    };
+}
+
+/**
  * Returns the default browse-filter state used by the dashboard list.
  */
 export function createDefaultDashboardBrowseFilters() {
@@ -62,7 +81,7 @@ function readDashboardEventCategoryOptions(events) {
 
     (Array.isArray(events) ? events : []).forEach((event) => {
         const category = readDashboardEventCategory(event);
-        const optionValue = String(category?.id || '').trim().toLowerCase();
+        const optionValue = normalizeDashboardCategoryFilter(category?.id);
 
         if (!optionValue || seenCategories.has(optionValue)) {
             return;
@@ -87,7 +106,7 @@ export function syncDashboardBrowseFilters(events, filters = {}) {
         ...createDefaultDashboardBrowseFilters(),
         ...(filters && typeof filters === 'object' ? filters : {}),
     };
-    const selectedCategory = readText(nextFilters.category, DASHBOARD_FILTER_ALL).toLowerCase();
+    const selectedCategory = normalizeDashboardCategoryFilter(nextFilters.category);
     const hasSelectedCategory = selectedCategory === DASHBOARD_FILTER_ALL
         || categoryOptions.some(option => option.value === selectedCategory);
 
@@ -96,7 +115,7 @@ export function syncDashboardBrowseFilters(events, filters = {}) {
     }
 
     nextFilters.status = normalizeDashboardStatusFilter(nextFilters.status);
-    nextFilters.category = readText(nextFilters.category, DASHBOARD_FILTER_ALL).toLowerCase();
+    nextFilters.category = normalizeDashboardCategoryFilter(nextFilters.category);
     nextFilters.order = normalizeDashboardSortOrder(nextFilters.order);
     nextFilters.includePast = Boolean(nextFilters.includePast);
 
@@ -108,7 +127,7 @@ export function syncDashboardBrowseFilters(events, filters = {}) {
  */
 function hasActiveDashboardBrowseFilters(filters) {
     return normalizeDashboardStatusFilter(filters?.status) !== DASHBOARD_FILTER_ALL
-        || readText(filters?.category, DASHBOARD_FILTER_ALL).toLowerCase() !== DASHBOARD_FILTER_ALL
+    || normalizeDashboardCategoryFilter(filters?.category) !== DASHBOARD_FILTER_ALL
         || Boolean(filters?.includePast)
         || normalizeDashboardSortOrder(filters?.order) !== DASHBOARD_FILTER_DESC;
 }
@@ -125,7 +144,7 @@ export function filterDashboardBrowseEvents(events, filters) {
 
     const filteredEvents = (Array.isArray(events) ? events : []).filter((event) => {
         const eventStatus = String(event?.status || '').trim().toLowerCase();
-        const eventCategory = readDashboardEventCategory(event).id;
+        const eventCategory = normalizeDashboardCategoryFilter(readDashboardEventCategory(event)?.id);
 
         if (normalizedStatus !== DASHBOARD_FILTER_ALL && eventStatus !== normalizedStatus) {
             return false;
@@ -205,7 +224,7 @@ export function readDashboardBrowseEmptyState(filteredCount, totalCount, filters
  */
 function createDashboardSelectOption({ value, label, selected = false } = {}) {
     const option = document.createElement('option');
-    option.value = readText(value, DASHBOARD_FILTER_ALL).toLowerCase();
+    option.value = normalizeDashboardCategoryFilter(value);
     option.textContent = readText(label, 'Todas as categorias');
     option.selected = Boolean(selected);
     return option;
@@ -259,7 +278,7 @@ export class DashboardFilters extends BaseComponent {
      * Reads the current filter values from the DOM controls.
      */
     readFilters() {
-        return syncDashboardBrowseFilters([], {
+        return normalizeDashboardBrowseFilterInput({
             status: this.#fields.status?.value,
             category: this.#fields.category?.value,
             includePast: this.#fields.includePast?.checked,
