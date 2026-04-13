@@ -40,6 +40,7 @@ async function loadGoogleCalendarModule() {
 
 beforeEach(() => {
     jest.resetModules();
+    process.env.GOOGLE_CALENDAR_ENABLED = 'true';
     existsSyncMock.mockReset();
     readFileSyncMock.mockReset();
     jwtMock.mockClear();
@@ -50,9 +51,20 @@ beforeEach(() => {
 
 afterEach(() => {
     jest.resetModules();
+    delete process.env.GOOGLE_CALENDAR_ENABLED;
 });
 
 describe('helpers/google-calendar', () => {
+    test('isEnabled returns false when the environment flag is disabled', async () => {
+        process.env.GOOGLE_CALENDAR_ENABLED = 'false';
+
+        const { GoogleCalendarPublisher } = await loadGoogleCalendarModule();
+
+        expect(GoogleCalendarPublisher.isEnabled()).toBe(false);
+        expect(existsSyncMock).not.toHaveBeenCalled();
+        expect(readFileSyncMock).not.toHaveBeenCalled();
+    });
+
     test('isEnabled returns false when the credentials file is missing', async () => {
         existsSyncMock.mockReturnValue(false);
 
@@ -139,6 +151,22 @@ describe('helpers/google-calendar', () => {
                 },
             },
         });
+    });
+
+    test('publishApprovedEvent becomes a no-op when the environment flag is disabled', async () => {
+        process.env.GOOGLE_CALENDAR_ENABLED = 'false';
+
+        const { GoogleCalendarPublisher } = await loadGoogleCalendarModule();
+        const result = await GoogleCalendarPublisher.publishApprovedEvent({
+            id: 'event-disabled-1',
+            date: '2026-06-12T18:00:00.000Z',
+        });
+
+        expect(result).toBeNull();
+        expect(existsSyncMock).not.toHaveBeenCalled();
+        expect(readFileSyncMock).not.toHaveBeenCalled();
+        expect(jwtMock).not.toHaveBeenCalled();
+        expect(insertMock).not.toHaveBeenCalled();
     });
 
     test('publishApprovedEvent falls back to the default duration and summary for sparse events', async () => {
@@ -234,5 +262,18 @@ describe('helpers/google-calendar', () => {
             calendarId: 'calendar-id',
             eventId: 'calendar-event-2',
         });
+    });
+
+    test('deleteEvent becomes a no-op when the environment flag is disabled', async () => {
+        process.env.GOOGLE_CALENDAR_ENABLED = 'false';
+
+        const { GoogleCalendarPublisher } = await loadGoogleCalendarModule();
+
+        await expect(GoogleCalendarPublisher.deleteEvent('calendar-event-disabled')).resolves.toBeUndefined();
+
+        expect(existsSyncMock).not.toHaveBeenCalled();
+        expect(readFileSyncMock).not.toHaveBeenCalled();
+        expect(jwtMock).not.toHaveBeenCalled();
+        expect(deleteMock).not.toHaveBeenCalled();
     });
 });

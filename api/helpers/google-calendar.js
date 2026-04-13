@@ -7,6 +7,13 @@ const DEFAULT_EVENT_DURATION_MINUTES = 60;
 const CREDENTIALS_PATH = path.resolve(process.cwd(), 'config', 'google-credentials.json');
 
 /**
+ * Indicates whether Google Calendar publishing is explicitly enabled by environment.
+ */
+function isGoogleCalendarEnabled() {
+    return process.env.GOOGLE_CALENDAR_ENABLED === 'true';
+}
+
+/**
  * Normalizes a service-account private key loaded from environment variables.
  */
 function normalizePrivateKey(privateKey) {
@@ -77,6 +84,10 @@ function readCredentialsFile() {
  * Reads the Google Calendar runtime configuration from the credentials JSON file.
  */
 function readRuntimeConfig() {
+    if (!isGoogleCalendarEnabled()) {
+        return null;
+    }
+
     return readCredentialsFile();
 }
 
