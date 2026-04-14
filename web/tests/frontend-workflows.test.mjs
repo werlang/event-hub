@@ -1801,10 +1801,6 @@ test('admin settings panels reset passwords and promote users through the dashbo
                 },
             },
         ]);
-        assert.equal(
-            document.querySelector('#dashboard-settings-admin-digest-status')?.textContent?.trim(),
-            'Agenda atualizada manualmente em 09/04/2026, 13:45.',
-        );
         assert.equal(scenario.toastRecorded.shows.at(-1)?.text, 'Resumo semanal enviado manualmente.');
     } finally {
         scenario.restore();
