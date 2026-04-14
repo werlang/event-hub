@@ -23,7 +23,7 @@ export async function sendWeeklyDigest({
  */
 export const task = {
     enabled: process.env.WEEKLY_DIGEST_ENABLED === 'true',
-    rule: 'every sunday at 18:00',
+    rule: process.env.WEEKLY_DIGEST_SCHEDULE || 'every monday at 07:30',
     name: 'weekly-email-digest',
     callback: sendWeeklyDigest,
 }
