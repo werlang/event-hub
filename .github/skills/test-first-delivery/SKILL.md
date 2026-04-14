@@ -14,6 +14,7 @@ Use this skill whenever a task changes behavior in `api/` or `web/`.
 - API feature work must update and run the committed Jest unit suite in `api/tests/unit` via `docker compose -f compose.dev.yaml exec api npm test`.
 - API test runs must finish at `100%` passing tests before the task is considered complete.
 - New or changed API behavior should add real-life success cases plus meaningful edge cases, not only happy-path assertions.
+- Web workflow tests should assert browser-added request metadata when it is part of the client contract, such as the dashboard admin manual-digest `{ timezone }` body.
 - Prefer the highest practical coverage for the touched API area, especially branches around validation, authorization, fallback defaults, and error handling.
 - If automation is missing, choose between a small service-local bootstrap and explicit manual validation.
 - Run the narrowest relevant validation path, fix failures, and rerun before finishing.
@@ -25,6 +26,7 @@ Use this skill whenever a task changes behavior in `api/` or `web/`.
 - `api/` now has a committed Jest unit suite rooted at `api/tests/unit` with coverage output in `api/tests/coverage`.
 - The verified API validation command is `docker compose -f compose.dev.yaml exec api npm test`.
 - `web/` now has a committed Node test suite rooted at `web/tests` for route, template, bundle-contract, and UI-state coverage.
+- Dashboard browse workflow tests should use future-relative fixtures by default, or explicitly turn on the past-events filter before asserting historical entries.
 - The practical automated web validation path is `cd web && node --test tests/*.test.mjs`, plus bundle rebuilds when assets changed.
 - Manual validation is still required for browser-only interaction work, but it is no longer the default for SSR, template, or many client contract checks.
 - For frontend interaction changes, manual validation should include a real browser pass over the affected page, not only a compile or static DOM review.

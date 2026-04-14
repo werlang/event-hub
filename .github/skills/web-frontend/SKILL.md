@@ -63,7 +63,8 @@ Response handling:
 - Error UI should read `response.message` from normalized API results.
 - The shared browser API client is intentionally limited to `GET`, `POST`, `PUT`, and `DELETE`.
 - Login and register flows should redirect to `/dashboard` through the sanitized redirect helper.
-- Dashboard settings flows should align with `GET /auth/me`, `PUT /auth/me`, `PUT /auth/me/preferences`, `PUT /auth/password`, `GET /auth/users`, `PUT /auth/users/password/reset`, and `PUT /auth/users/:id/promote`.
+- Dashboard settings flows should align with `GET /auth/me`, `PUT /auth/me`, `PUT /auth/me/preferences`, `PUT /auth/password`, `GET /auth/users`, `PUT /auth/users/password/reset`, `PUT /auth/users/:id/promote`, and `POST /auth/weekly-digest/send`.
+- The admin manual-digest trigger must post `{ timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }` to `POST /auth/weekly-digest/send`.
 - Dashboard event and moderation flows should align with `GET /events/mine`, `GET /events/moderation`, `GET /events`, `PUT /events/:id`, `DELETE /events/:id`, and `PUT /events/:id/moderation`.
 
 When changing API integration behavior, keep this precedence explicit.
@@ -78,6 +79,7 @@ When changing API integration behavior, keep this precedence explicit.
 6. Do not document dormant routes or bundle entries that are not wired in `web/app.js` and `web/webpack.config.js`.
 7. Maintain Portuguese-facing text consistency already present in forms and messages.
 8. For interaction-heavy UI work, do not stop at DOM inspection or bundle success alone; verify the rendered page in a browser and exercise the affected interaction states before considering the task done.
+9. Dashboard browse tests and fixtures must assume the default list hides past events; use future-relative dates or explicitly enable the "incluir eventos passados" control before asserting past entries.
 
 ## Validation Expectations
 

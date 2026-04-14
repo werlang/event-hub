@@ -52,6 +52,7 @@
 - `GET /auth/users` → authenticated admin-only user list.
 - `PUT /auth/users/password/reset` → authenticated admin-only password reset for member accounts.
 - `PUT /auth/users/:id/promote` → authenticated admin-only promotion flow.
+- `POST /auth/weekly-digest/send` → authenticated admin-only manual weekly digest trigger; the dashboard client posts `{ timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }`.
 
 ### Event routes (`api/routes/events.js`)
 - `GET /events` → public list with filters: `search|q`, `category`, `from`, `to`.
@@ -114,6 +115,7 @@
 - The current home page flow is componentized around `EventList`, `FilterForm`, `QuickChips`, `Pagination`, and `Header`, and defaults to the current local week range.
 - The current week page is a dedicated public route that reads SSR-provided date bounds and the shared Google Calendar join URL.
 - The dashboard is organized around `DashboardActionTabs`, event-management modals, reusable filters, and `DashboardSettingsPanels` for profile, password, e-mail preferences, and admin account tools.
+- The dashboard browse list hides past events by default; frontend browse tests should use future-relative fixtures or explicitly enable the past-events filter before asserting older entries.
 - `web/src/js/helpers/template-var.js` reads server-injected template variables from `web/middleware/render.js`.
 - `web/src/js/helpers/api.js` resolves API URLs from template vars, then a meta tag, then relative paths.
 - The `.github/references/` folder is a style inspiration source for class-based DOM helpers and component ergonomics; use it as reference material, not as a copy target.

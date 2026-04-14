@@ -1441,11 +1441,12 @@ test('register workflow validates required fields and confirmation before starti
 });
 
 test('dashboard member workflow renders visible event metadata, dispatches rejected-owner actions, and navigates create/settings tabs', async () => {
+    const now = Date.now();
     const rejectedEvent = {
         id: 'evt-rejected',
         title: 'Evento Rejeitado',
         description: 'Precisa de ajustes.',
-        date: '2026-04-12T14:00:00.000Z',
+        date: new Date(now + (2 * 24 * 60 * 60 * 1000)).toISOString(),
         category: 'academico',
         location: 'Sala 3',
         status: 'rejected',
@@ -1455,7 +1456,7 @@ test('dashboard member workflow renders visible event metadata, dispatches rejec
         id: 'evt-published',
         title: 'Evento Publicado',
         description: 'Ja esta visivel.',
-        date: '2026-04-14T14:00:00.000Z',
+        date: new Date(now + (4 * 24 * 60 * 60 * 1000)).toISOString(),
         category: 'extensao',
         location: 'Auditorio',
         status: 'published',
@@ -1491,6 +1492,7 @@ test('dashboard member workflow renders visible event metadata, dispatches rejec
         const publishedCard = document.querySelector('[data-event-id="evt-published"]');
 
         assert.equal(document.querySelector('#dashboard-action-tab-moderation').hidden, true);
+        assert.equal(document.querySelector('#filter-show-past').checked, false);
         assert.equal(document.querySelectorAll('#dashboard-events-list .dashboard-event').length, 2);
         assert.ok(rejectedCard);
         assert.ok(publishedCard);
@@ -1686,6 +1688,7 @@ test('settings panels update profile, password, and email preferences through th
 });
 
 test('admin settings panels reset passwords and promote users through the dashboard tools', async () => {
+    const expectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const scenario = await loadSettingsScenario({
         requestApiImpl(path, options) {
             if (path === '/auth/users/password/reset') {
@@ -1792,6 +1795,9 @@ test('admin settings panels reset passwords and promote users through the dashbo
                 options: {
                     method: 'POST',
                     token: 'admin-token',
+                    body: {
+                        timezone: expectedTimezone,
+                    },
                 },
             },
         ]);
