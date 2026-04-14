@@ -218,6 +218,7 @@ export class WeeklyDigestManager {
     #logger;
     #webBaseUrl;
     #mailList;
+    #singleEmail;
 
     /**
      * Creates one digest manager around the shared email and template infrastructure.
@@ -230,6 +231,7 @@ export class WeeklyDigestManager {
      * @param {object} [options.logger=console] The logger used for digest lifecycle messages.
      * @param {string} [options.webBaseUrl=process.env.WEB_URL || ''] The base public web URL used for the optional week-page link.
      * @param {Array<{ email: string, name: string }>} [options.mailList] An optional explicit mail list that overrides the persisted user audience.
+     * @param {boolean} [options.singleEmail=false] Whether to send one email addressed to the full recipient list instead of one per recipient.
      */
     constructor({
         emailHelper = new Email({
@@ -241,6 +243,7 @@ export class WeeklyDigestManager {
         logger = console,
         webBaseUrl = process.env.WEB_URL || '',
         mailList = null,
+        singleEmail = false,
     } = {}) {
         this.#emailHelper = emailHelper;
         this.#templateManager = templateManager;
@@ -249,6 +252,7 @@ export class WeeklyDigestManager {
         this.#logger = logger;
         this.#webBaseUrl = webBaseUrl;
         this.#mailList = mailList;
+        this.#singleEmail = singleEmail;
     }
 
     /**
@@ -289,7 +293,7 @@ export class WeeklyDigestManager {
     /**
      * Renders the weekly digest email for one recipient.
      */
-    renderDigestEmail(recipient, digest) {
+    renderDigestEmail(digest) {
         const strings = digest.strings || this.#templateManager.loadJsonTemplate(DIGEST_TEMPLATE_KEY);
         const manualTriggerSubjectSuffix = digest.manualTriggeredAtLabel
             ? this.#templateManager.interpolateString(strings.manualTriggerSubjectSuffix || '', {
@@ -346,9 +350,31 @@ export class WeeklyDigestManager {
 
         const deliveries = [];
 
+        if (this.#singleEmail) {
+            const message = this.renderDigestEmail(digest);
+            const info = await this.#emailHelper.send(recipients, message.subject, message.content);
+
+            deliveries.push({
+                emails: recipients.map((recipient) => recipient.email),
+                messageId: info?.messageId || null,
+            });
+
+            this.#logger.info(`Weekly digest sent in a single email to ${recipients.length} recipient(s).`);
+
+            return {
+                deliveries,
+                eventCount: digest.events.length,
+                manualTriggeredAt: digest.manualTriggeredAt,
+                manualTriggeredAtLabel: digest.manualTriggeredAtLabel,
+                recipientCount: recipients.length,
+                sentCount: deliveries.length,
+                weekRange: digest.weekRange,
+            };
+        }
+
         for (const recipient of recipients) {
-            const message = this.renderDigestEmail(recipient, digest);
-            const info = await this.#emailHelper.send([recipient.email], message.subject, message.content);
+            const message = this.renderDigestEmail(digest);
+            const info = await this.#emailHelper.send([recipient], message.subject, message.content);
 
             deliveries.push({
                 email: recipient.email,

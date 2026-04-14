@@ -112,6 +112,21 @@ describe('helpers/email', () => {
         expect(getTestMessageUrlMock).toHaveBeenCalledTimes(1);
     });
 
+    test('send includes recipient names in mail headers when available', async () => {
+        const email = new Email({ testing: true });
+
+        await email.send([
+            {
+                email: 'user@example.com',
+                name: 'Ada Lovelace',
+            },
+        ], 'Hello', 'Plain text body');
+
+        expect(transporterMock.sendMail).toHaveBeenCalledWith(expect.objectContaining({
+            to: '"Ada Lovelace" <user@example.com>',
+        }));
+    });
+
     test('send normalizes string cc and bcc recipients before sending', async () => {
         const email = new Email({ testing: true });
 
@@ -123,6 +138,20 @@ describe('helpers/email', () => {
         expect(transporterMock.sendMail).toHaveBeenCalledWith(expect.objectContaining({
             cc: 'cc@example.com',
             bcc: 'bcc@example.com',
+        }));
+    });
+
+    test('send formats named cc and bcc recipients before sending', async () => {
+        const email = new Email({ testing: true });
+
+        await email.send(['user@example.com'], 'Hello', 'Plain text body', {
+            cc: [{ email: 'cc@example.com', name: 'Coordenação' }],
+            bcc: [{ email: 'bcc@example.com', name: 'Equipe Interna' }],
+        });
+
+        expect(transporterMock.sendMail).toHaveBeenCalledWith(expect.objectContaining({
+            cc: '"Coordenação" <cc@example.com>',
+            bcc: '"Equipe Interna" <bcc@example.com>',
         }));
     });
 

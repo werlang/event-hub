@@ -16,6 +16,54 @@ function resolveDefaultFrom() {
 }
 
 /**
+ * Resolves one recipient entry into a normalized address object.
+ *
+ * @param {string|{ email?: string, name?: string }} recipient The raw recipient entry.
+ * @returns {{ email: string, name: string }} The normalized recipient fields.
+ */
+function normalizeRecipient(recipient) {
+    if (typeof recipient === 'string') {
+        return {
+            email: recipient.trim(),
+            name: '',
+        };
+    }
+
+    return {
+        email: typeof recipient?.email === 'string' ? recipient.email.trim() : '',
+        name: typeof recipient?.name === 'string' ? recipient.name.trim() : '',
+    };
+}
+
+/**
+ * Formats one display name so it is safe for use in a mail header.
+ *
+ * @param {string} value The display name to format.
+ * @returns {string} The sanitized display name.
+ */
+function sanitizeHeaderName(value) {
+    return String(value || '')
+        .replace(/[\r\n]+/gu, ' ')
+        .replace(/"/gu, '\\"')
+        .trim();
+}
+
+/**
+ * Formats one recipient entry for Nodemailer mail headers.
+ *
+ * @param {string|{ email?: string, name?: string }} recipient The recipient to format.
+ * @returns {string} The formatted recipient header value.
+ */
+function formatRecipientHeader(recipient) {
+    const normalizedRecipient = normalizeRecipient(recipient);
+    const displayName = sanitizeHeaderName(normalizedRecipient.name);
+
+    return displayName
+        ? `"${displayName}" <${normalizedRecipient.email}>`
+        : normalizedRecipient.email;
+}
+
+/**
  * Sends emails through SMTP and compiles MJML bodies when needed.
  */
 export class Email {
@@ -129,18 +177,31 @@ export class Email {
      * Validates one recipient list.
      *
      * @private
-     * @param {string[]} recipients The recipient list to validate.
+     * @param {Array<string|{ email?: string, name?: string }>} recipients The recipient list to validate.
      */
     #validateRecipients(recipients) {
         if (!Array.isArray(recipients) || recipients.length === 0) {
             throw new Error('Recipients must be a non-empty array');
         }
 
-        for (const email of recipients) {
-            if (!this.#validateEmail(email)) {
-                throw new Error(`Invalid email address: ${email}`);
+        for (const recipient of recipients) {
+            const normalizedRecipient = normalizeRecipient(recipient);
+
+            if (!this.#validateEmail(normalizedRecipient.email)) {
+                throw new Error(`Invalid email address: ${normalizedRecipient.email || String(recipient)}`);
             }
         }
+    }
+
+    /**
+     * Formats one recipient list for Nodemailer headers.
+     *
+     * @private
+     * @param {Array<string|{ email?: string, name?: string }>} recipients The recipient list to format.
+     * @returns {string} The formatted header string.
+     */
+    #formatRecipients(recipients) {
+        return recipients.map((recipient) => formatRecipientHeader(recipient)).join(', ');
     }
 
     /**
@@ -280,12 +341,12 @@ export class Email {
 
         const mailOptions = {
             from: options.from || this.#from,
-            to: to.join(', '),
+            to: this.#formatRecipients(to),
             subject: finalSubject,
             text: options.text || text,
             html: html || options.html,
-            cc: ccRecipients ? ccRecipients.join(', ') : undefined,
-            bcc: bccRecipients ? bccRecipients.join(', ') : undefined,
+            cc: ccRecipients ? this.#formatRecipients(ccRecipients) : undefined,
+            bcc: bccRecipients ? this.#formatRecipients(bccRecipients) : undefined,
             attachments: options.attachments,
         };
 

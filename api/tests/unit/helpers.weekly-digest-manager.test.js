@@ -47,8 +47,8 @@ describe('helpers/weekly-digest-manager', () => {
 
     test('sendCurrentWeekDigest sends one message per persisted user email address with no hidden audience fallback', async () => {
         const emailHelper = {
-            send: jest.fn(async ([email]) => ({
-                messageId: `msg:${email}`,
+            send: jest.fn(async ([recipient]) => ({
+                messageId: `msg:${recipient.email}`,
             })),
         };
         const userModel = {
@@ -80,13 +80,61 @@ describe('helpers/weekly-digest-manager', () => {
         });
         expect(emailHelper.send).toHaveBeenCalledTimes(2);
         expect(emailHelper.send.mock.calls.map((call) => call[0])).toEqual([
-            ['ada@example.com'],
-            ['grace@example.com'],
+            [{ email: 'ada@example.com', name: 'Ada Lovelace' }],
+            [{ email: 'grace@example.com', name: 'Grace Hopper' }],
         ]);
         expect(result).toMatchObject({
             eventCount: 1,
             recipientCount: 2,
             sentCount: 2,
+        });
+    });
+
+    test('sendCurrentWeekDigest can send one named email addressed to the full recipient audience', async () => {
+        const emailHelper = {
+            send: jest.fn(async (recipients) => ({
+                messageId: `msg:${recipients.length}`,
+            })),
+        };
+        const manager = new WeeklyDigestManager({
+            emailHelper,
+            eventModel: {
+                listCurrentWeek: jest.fn(async () => ([
+                    buildEvent({
+                        title: 'Feira de Ciências',
+                        status: 'published',
+                    }),
+                ])),
+            },
+            mailList: [
+                { email: 'docentes@example.com', name: 'Docentes' },
+                { email: 'taes@example.com', name: 'Técnicos Administrativos' },
+            ],
+            singleEmail: true,
+            templateManager: new EmailTemplateManager(),
+            userModel: { list: jest.fn(async () => []) },
+        });
+
+        const result = await manager.sendCurrentWeekDigest(new Date(2026, 3, 7, 18, 0, 0, 0));
+
+        expect(emailHelper.send).toHaveBeenCalledTimes(1);
+        expect(emailHelper.send).toHaveBeenCalledWith(
+            [
+                { email: 'docentes@example.com', name: 'Docentes' },
+                { email: 'taes@example.com', name: 'Técnicos Administrativos' },
+            ],
+            expect.any(String),
+            expect.any(String),
+        );
+        expect(result).toMatchObject({
+            recipientCount: 2,
+            sentCount: 1,
+            deliveries: [
+                {
+                    emails: ['docentes@example.com', 'taes@example.com'],
+                    messageId: 'msg:2',
+                },
+            ],
         });
     });
 
@@ -128,7 +176,7 @@ describe('helpers/weekly-digest-manager', () => {
         const message = manager.renderDigestEmail(buildUser({ name: 'Ada <script>' }), digest);
 
         expect(message.subject).toBe('Agenda da semana · 5 de abril <2026> a 11 de abril de 2026');
-        expect(message.content).toContain('Olá Professores,');
+        expect(message.content).toContain('Olá,');
         expect(message.content).toContain('Campus &lt;Hub&gt;');
         expect(message.content).toContain('Boletim &lt;semanal&gt;');
         expect(message.content).toContain('5 de abril &lt;2026&gt; a 11 de abril de 2026');
@@ -175,9 +223,9 @@ describe('helpers/weekly-digest-manager', () => {
 
         expect(digest.manualTriggeredAt).toBe(manualTriggeredAt.toISOString());
         expect(digest.manualTriggeredAtLabel).toBeTruthy();
-        expect(message.subject).toContain(`Agenda atualizada em ${digest.manualTriggeredAtLabel}`);
+        expect(message.subject).toContain(`Atualização ${digest.manualTriggeredAtLabel}`);
         expect(emailHelper.send).toHaveBeenCalledWith(
-            ['docente@ifsul.edu.br'],
+            [{ email: 'docente@ifsul.edu.br', name: 'Ada Lovelace' }],
             message.subject,
             expect.any(String),
         );
