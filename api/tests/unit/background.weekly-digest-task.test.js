@@ -45,8 +45,9 @@ describe('background/weekly-digest-task', () => {
         const { sendWeeklyDigest, task } = await import('../../background/weekly-digest-task.js');
         const referenceDate = new Date('2026-04-07T12:00:00.000Z');
         const manualTriggeredAt = new Date('2026-04-09T16:30:00.000Z');
+        const timeZone = 'Pacific/Kiritimati';
 
-        await expect(sendWeeklyDigest({ referenceDate, manualTriggeredAt })).resolves.toEqual({
+        await expect(sendWeeklyDigest({ referenceDate, manualTriggeredAt, timeZone })).resolves.toEqual({
             manualTriggeredAt: '2026-04-09T16:30:00.000Z',
             sentCount: 1,
         });
@@ -59,10 +60,12 @@ describe('background/weekly-digest-task', () => {
             {
                 mailList: config.mailList,
                 singleEmail: true,
+                timeZone,
             },
             {
                 mailList: config.mailList,
                 singleEmail: true,
+                timeZone: null,
             },
         ]);
         expect(sendCurrentWeekDigest).toHaveBeenCalledTimes(2);

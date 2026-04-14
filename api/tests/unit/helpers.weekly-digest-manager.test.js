@@ -30,7 +30,7 @@ describe('helpers/weekly-digest-manager', () => {
         const digest = await manager.getCurrentWeekDigest(referenceDate);
         const message = manager.renderDigestEmail(digest);
 
-        expect(eventModel.listCurrentWeek).toHaveBeenCalledWith(referenceDate);
+        expect(eventModel.listCurrentWeek).toHaveBeenCalledWith(referenceDate, { timeZone: null });
         expect(digest.weekRange).toEqual({
             from: '2026-04-05',
             to: '2026-04-11',

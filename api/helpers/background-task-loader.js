@@ -7,15 +7,22 @@ async function taskLoader(file) {
     if (!file || typeof file !== 'string') {
         return `Invalid task file "${file}". Skipping.`;
     }
-    const { task } = await import(`../background/${file}.js`);
-    if (!task || task.enabled === false) {
-        return `Task "${file}" is disabled. Skipping.`;
-    }
-    if (!task?.rule || !task?.callback || !task?.name) {
-        return `Task "${file}" does not export a valid BackgroundTask configuration. Skipping.`;
-    }
 
-    return new BackgroundTask(task.rule, task.callback, { name: task.name });
+    try {
+        const { task } = await import(`../background/${file}.js`);
+
+        if (!task || task.enabled === false) {
+            return `Task "${file}" is disabled. Skipping.`;
+        }
+
+        if (!task?.rule || !task?.callback || !task?.name) {
+            return `Task "${file}" does not export a valid BackgroundTask configuration. Skipping.`;
+        }
+
+        return new BackgroundTask(task.rule, task.callback, { name: task.name });
+    } catch (error) {
+        return `Failed to load task "${file}". Skipping. ${error.message}`;
+    }
 }
 
 /**

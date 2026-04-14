@@ -7,10 +7,12 @@ import config from '../config/weekly-digest.config.js';
 export async function sendWeeklyDigest({
     referenceDate = new Date(),
     manualTriggeredAt = null,
+    timeZone = null,
 } = {}) {
     const digestManager = new WeeklyDigestManager({
         mailList: config.mailList || [],
         singleEmail: Boolean(config.singleEmail),
+        timeZone,
     });
 
     return digestManager.sendCurrentWeekDigest(referenceDate, {

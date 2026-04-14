@@ -1014,6 +1014,12 @@ describe('routes/events', () => {
         await runRouteHandlers(moderationDecisionHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'rejected' } }), createResponseDouble(), publishedNext);
         expect(publishedNext.mock.calls[0][0].status).toBe(400);
 
+        trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'rejected', organizerId: 'user-2' }));
+        const rejectedNext = jest.fn();
+        await runRouteHandlers(moderationDecisionHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-3' }, body: { status: 'published' } }), createResponseDouble(), rejectedNext);
+        expect(rejectedNext.mock.calls[0][0].status).toBe(400);
+        expect(rejectedNext.mock.calls[0][0].message).toBe('Somente eventos pendentes podem ser moderados.');
+
         trackReplacement(restores, Event, 'findById', async id => buildEvent({ id, status: 'pending', organizerId: 'user-2' }));
         const invalidStatusNext = jest.fn();
         await runRouteHandlers(moderationDecisionHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' }, params: { id: 'event-1' }, body: { status: 'pending' } }), createResponseDouble(), invalidStatusNext);

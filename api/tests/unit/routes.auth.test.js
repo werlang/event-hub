@@ -22,6 +22,7 @@ function createRequest(overrides = {}) {
 
 afterEach(() => {
     restoreTracked(restores);
+    jest.useRealTimers();
 });
 
 describe('routes/auth', () => {
@@ -468,15 +469,21 @@ describe('routes/auth', () => {
     });
 
     test('manual weekly digest sending requires an admin and returns the manual trigger summary', async () => {
+        jest.useFakeTimers({ now: new Date('2026-04-11T12:30:00.000Z').getTime() });
+
+        const listCurrentWeekCalls = [];
         trackReplacement(restores, User, 'findById', async id => buildUser({ id, role: 'admin' }));
         trackReplacement(restores, User, 'list', async () => [buildUser({ email: 'docente@ifsul.edu.br' })]);
-        trackReplacement(restores, Event, 'listCurrentWeek', async () => [buildEvent({ status: 'published' })]);
+        trackReplacement(restores, Event, 'listCurrentWeek', async (...args) => {
+            listCurrentWeekCalls.push(args);
+            return [buildEvent({ status: 'published' })];
+        });
         trackReplacement(restores, Email.prototype, 'send', async () => ({ messageId: 'msg:weekly-digest' }));
 
         const successRes = createResponseDouble();
         const successNext = jest.fn();
         await runRouteHandlers(manualDigestHandlers, createRequest({
-            body: { timezone: 'UTC' },
+            body: { timezone: 'Pacific/Kiritimati' },
             user: { id: 'admin-1', role: 'admin' },
         }), successRes, successNext);
 
@@ -487,8 +494,24 @@ describe('routes/auth', () => {
             recipientCount: 4,
             sentCount: 1,
         });
-        expect(successRes.body.data.digest.manualTriggeredAt).toBeTruthy();
-        expect(successRes.body.data.digest.manualTriggeredAtLabel).toBeTruthy();
+        expect(successRes.body.data.digest.weekRange).toEqual({
+            from: '2026-04-12',
+            to: '2026-04-18',
+        });
+        expect(successRes.body.data.digest.manualTriggeredAt).toBe('2026-04-11T12:30:00.000Z');
+        expect(successRes.body.data.digest.manualTriggeredAtLabel).toBe('12/04, 02:30');
+        expect(listCurrentWeekCalls).toEqual([[
+            new Date('2026-04-11T12:30:00.000Z'),
+            { timeZone: 'Pacific/Kiritimati' },
+        ]]);
+
+        const invalidTimeZoneNext = jest.fn();
+        await runRouteHandlers(manualDigestHandlers, createRequest({
+            body: { timezone: 'Mars/Olympus' },
+            user: { id: 'admin-1', role: 'admin' },
+        }), createResponseDouble(), invalidTimeZoneNext);
+        expect(invalidTimeZoneNext.mock.calls[0][0].status).toBe(400);
+        expect(invalidTimeZoneNext.mock.calls[0][0].message).toBe('Informe um fuso horário válido.');
 
         const forbiddenNext = jest.fn();
         await runRouteHandlers(manualDigestHandlers, createRequest({

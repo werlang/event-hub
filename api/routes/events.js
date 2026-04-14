@@ -435,7 +435,7 @@ router.delete('/:id',
 });
 
 /**
- * Approves or rejects an unpublished event from another organizer.
+ * Approves or rejects one pending event from another organizer.
  */
 router.put('/:id/moderation', 
     authMiddleware, 

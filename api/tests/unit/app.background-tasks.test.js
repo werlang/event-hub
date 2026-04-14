@@ -35,4 +35,13 @@ describe('app background tasks', () => {
         expect(startedTasks).toEqual([]);
         expect(warnSpy).toHaveBeenCalledWith('Invalid task file "null". Skipping.');
     });
+
+    test('startBackgroundTasks warns and skips missing task modules instead of crashing startup', async () => {
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+        const startedTasks = await startBackgroundTasks(['invalid-task']);
+
+        expect(startedTasks).toEqual([]);
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to load task "invalid-task". Skipping.'));
+    });
 });

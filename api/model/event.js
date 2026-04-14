@@ -351,8 +351,8 @@ export class Event extends Model {
     /**
      * Lists the approved events scheduled for the same local Sunday-to-Saturday window used by the public week page.
      */
-    static async listCurrentWeek(referenceDate = new Date()) {
-        return this.list(getCurrentWeekRangeLocal(referenceDate));
+    static async listCurrentWeek(referenceDate = new Date(), { timeZone = null } = {}) {
+        return this.list(getCurrentWeekRangeLocal(referenceDate, { timeZone }));
     }
 
     /**

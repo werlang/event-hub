@@ -51,7 +51,7 @@ function normalizeOptionalDate(value) {
 /**
  * Formats one manual digest trigger timestamp for the digest subject.
  */
-function formatManualTriggeredAtPtBr(value, fallback = '') {
+function formatManualTriggeredAtPtBr(value, fallback = '', timeZone = null) {
     const date = normalizeOptionalDate(value);
 
     if (!date) {
@@ -65,6 +65,7 @@ function formatManualTriggeredAtPtBr(value, fallback = '') {
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
+        ...(timeZone ? { timeZone } : {}),
     }).format(date);
 }
 
@@ -219,6 +220,7 @@ export class WeeklyDigestManager {
     #webBaseUrl;
     #mailList;
     #singleEmail;
+    #timeZone;
 
     /**
      * Creates one digest manager around the shared email and template infrastructure.
@@ -244,6 +246,7 @@ export class WeeklyDigestManager {
         webBaseUrl = process.env.WEB_URL || '',
         mailList = null,
         singleEmail = false,
+        timeZone = null,
     } = {}) {
         this.#emailHelper = emailHelper;
         this.#templateManager = templateManager;
@@ -253,20 +256,21 @@ export class WeeklyDigestManager {
         this.#webBaseUrl = webBaseUrl;
         this.#mailList = mailList;
         this.#singleEmail = singleEmail;
+        this.#timeZone = timeZone;
     }
 
     /**
      * Loads the same published current-week event dataset used by the public week page.
      */
     async getCurrentWeekDigest(referenceDate = new Date(), { manualTriggeredAt = null } = {}) {
-        const weekRange = getCurrentWeekRangeLocal(referenceDate);
+        const weekRange = getCurrentWeekRangeLocal(referenceDate, { timeZone: this.#timeZone });
         const strings = this.#templateManager.loadJsonTemplate(DIGEST_TEMPLATE_KEY);
-        const events = await this.#eventModel.listCurrentWeek(referenceDate);
+        const events = await this.#eventModel.listCurrentWeek(referenceDate, { timeZone: this.#timeZone });
         const normalizedManualTriggeredAt = normalizeOptionalDate(manualTriggeredAt);
 
         return {
             manualTriggeredAt: normalizedManualTriggeredAt?.toISOString() || null,
-            manualTriggeredAtLabel: formatManualTriggeredAtPtBr(normalizedManualTriggeredAt),
+            manualTriggeredAtLabel: formatManualTriggeredAtPtBr(normalizedManualTriggeredAt, '', this.#timeZone),
             pageUrl: buildWeekPageUrl(this.#webBaseUrl),
             calendarUrl: process.env.GOOGLE_CALENDAR_JOIN_URL || '',
             events,

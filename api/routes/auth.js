@@ -107,6 +107,29 @@ function parseAdminPasswordResetPayload(payload = {}) {
 }
 
 /**
+ * Validates the optional time zone used by manual weekly digest runs.
+ */
+function parseManualDigestTimeZone(value) {
+    if (value === undefined || value === null) {
+        return null;
+    }
+
+    const timeZone = typeof value === 'string' ? value.trim() : '';
+
+    if (!timeZone) {
+        return null;
+    }
+
+    try {
+        new Intl.DateTimeFormat('pt-BR', { timeZone }).format(new Date());
+    } catch {
+        throw new HttpError(400, 'Informe um fuso horário válido.');
+    }
+
+    return timeZone;
+}
+
+/**
  * Creates a JWT payload for an authenticated user.
  */
 function createSessionToken(user) {
@@ -330,11 +353,13 @@ router.post('/weekly-digest/send',
     async (req, res, next) => {
     try {
         await loadAuthenticatedUser(req.user.id);
-
-        const timezone = typeof req.body?.timezone === 'string' ? req.body.timezone : null;
+        const manualTriggeredAt = new Date();
+        const timeZone = parseManualDigestTimeZone(req.body?.timezone);
 
         const digest = await sendWeeklyDigest({
-            manualTriggeredAt: timezone ? new Date(new Date().toLocaleString('en-US', { timeZone: timezone })) : new Date(),
+            referenceDate: manualTriggeredAt,
+            manualTriggeredAt,
+            timeZone,
         });
 
         return sendSuccess(res, {

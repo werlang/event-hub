@@ -56,11 +56,11 @@ describe('middleware/event-authorization', () => {
     });
 
     test('assertAdminCanModerateEvent rejects already published events', () => {
-        expect(() => assertAdminCanModerateEvent(buildEvent({ status: 'published', organizerId: 'user-1' }), buildUser({ id: 'admin-1', role: 'admin' }))).toThrow('Somente eventos não publicados podem ser moderados.');
+        expect(() => assertAdminCanModerateEvent(buildEvent({ status: 'published', organizerId: 'user-1' }), buildUser({ id: 'admin-1', role: 'admin' }))).toThrow('Somente eventos pendentes podem ser moderados.');
     });
 
-    test('assertAdminCanModerateEvent accepts pending and rejected events from other organizers', () => {
+    test('assertAdminCanModerateEvent accepts pending events from other organizers only', () => {
         expect(() => assertAdminCanModerateEvent(buildEvent({ status: 'pending', organizerId: 'user-2' }), buildUser({ id: 'admin-1', role: 'admin' }))).not.toThrow();
-        expect(() => assertAdminCanModerateEvent(buildEvent({ status: 'rejected', organizerId: 'user-2' }), buildUser({ id: 'admin-1', role: 'admin' }))).not.toThrow();
+        expect(() => assertAdminCanModerateEvent(buildEvent({ status: 'rejected', organizerId: 'user-2' }), buildUser({ id: 'admin-1', role: 'admin' }))).toThrow('Somente eventos pendentes podem ser moderados.');
     });
 });

@@ -55,7 +55,7 @@ export function assertAdminCanModerateEvent(event, user, { allowSelfModeration =
         throw new HttpError(403, 'Administradores não podem moderar os próprios eventos.');
     }
 
-    if (Event.isPublishedStatus(event.status)) {
-        throw new HttpError(400, 'Somente eventos não publicados podem ser moderados.');
+    if (!Event.isPendingLikeStatus(event.status)) {
+        throw new HttpError(400, 'Somente eventos pendentes podem ser moderados.');
     }
 }
