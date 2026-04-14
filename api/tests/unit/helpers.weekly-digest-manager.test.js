@@ -28,7 +28,7 @@ describe('helpers/weekly-digest-manager', () => {
         const referenceDate = new Date(2026, 3, 6, 9, 0, 0, 0);
 
         const digest = await manager.getCurrentWeekDigest(referenceDate);
-        const message = manager.renderDigestEmail(buildUser(), digest);
+        const message = manager.renderDigestEmail(digest);
 
         expect(eventModel.listCurrentWeek).toHaveBeenCalledWith(referenceDate);
         expect(digest.weekRange).toEqual({
@@ -173,7 +173,7 @@ describe('helpers/weekly-digest-manager', () => {
             weekRangeLabel: '5 de abril <2026> a 11 de abril de 2026',
         };
 
-        const message = manager.renderDigestEmail(buildUser({ name: 'Ada <script>' }), digest);
+        const message = manager.renderDigestEmail(digest);
 
         expect(message.subject).toBe('Agenda da semana · 5 de abril <2026> a 11 de abril de 2026');
         expect(message.content).toContain('Olá,');
@@ -218,7 +218,7 @@ describe('helpers/weekly-digest-manager', () => {
         const manualTriggeredAt = new Date(2026, 3, 9, 15, 45, 0, 0);
 
         const digest = await manager.getCurrentWeekDigest(referenceDate, { manualTriggeredAt });
-        const message = manager.renderDigestEmail(buildUser(), digest);
+        const message = manager.renderDigestEmail(digest);
         const result = await manager.sendCurrentWeekDigest(referenceDate, { manualTriggeredAt });
 
         expect(digest.manualTriggeredAt).toBe(manualTriggeredAt.toISOString());

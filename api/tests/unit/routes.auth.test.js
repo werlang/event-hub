@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, jest, test } from '@jest/globals';
 import { router as authRouter } from '../../routes/auth.js';
+import { Email } from '../../helpers/email.js';
+import { Event } from '../../model/event.js';
 import { User } from '../../model/user.js';
-import { buildUser } from './support/fixtures.js';
+import { buildEvent, buildUser } from './support/fixtures.js';
 import { createResponseDouble, restoreTracked, trackReplacement } from './support/doubles.js';
 import { getRouteHandlers, runRouteHandlers } from './support/router.js';
 
@@ -467,36 +469,26 @@ describe('routes/auth', () => {
 
     test('manual weekly digest sending requires an admin and returns the manual trigger summary', async () => {
         trackReplacement(restores, User, 'findById', async id => buildUser({ id, role: 'admin' }));
+        trackReplacement(restores, User, 'list', async () => [buildUser({ email: 'docente@ifsul.edu.br' })]);
+        trackReplacement(restores, Event, 'listCurrentWeek', async () => [buildEvent({ status: 'published' })]);
+        trackReplacement(restores, Email.prototype, 'send', async () => ({ messageId: 'msg:weekly-digest' }));
 
         const successRes = createResponseDouble();
         const successNext = jest.fn();
         await runRouteHandlers(manualDigestHandlers, createRequest({
-            app: {
-                locals: {
-                    weeklyDigestSender: async ({ manualTriggeredAt }) => ({
-                        eventCount: 3,
-                        manualTriggeredAt: manualTriggeredAt.toISOString(),
-                        manualTriggeredAtLabel: '09/04/2026, 13:45',
-                        recipientCount: 2,
-                        sentCount: 2,
-                        weekRange: {
-                            from: '2026-04-05',
-                            to: '2026-04-11',
-                        },
-                    }),
-                },
-            },
+            body: { timezone: 'UTC' },
             user: { id: 'admin-1', role: 'admin' },
         }), successRes, successNext);
 
         expect(successNext).not.toHaveBeenCalled();
-        expect(successRes.body.message).toBe('Resumo semanal enviado manualmente.');
+        expect(successRes.body.message).toBe('Email da agenda semanal enviado com sucesso.');
         expect(successRes.body.data.digest).toMatchObject({
-            eventCount: 3,
-            manualTriggeredAtLabel: '09/04/2026, 13:45',
-            recipientCount: 2,
-            sentCount: 2,
+            eventCount: 1,
+            recipientCount: 4,
+            sentCount: 1,
         });
+        expect(successRes.body.data.digest.manualTriggeredAt).toBeTruthy();
+        expect(successRes.body.data.digest.manualTriggeredAtLabel).toBeTruthy();
 
         const forbiddenNext = jest.fn();
         await runRouteHandlers(manualDigestHandlers, createRequest({
