@@ -203,6 +203,7 @@ export class DashboardActionTabs extends BaseComponent {
         this.#tabs.forEach((button) => {
             const isActive = this.#normalizeTab(readTabName(button)) === this.#activeTab;
             button.classList.toggle('dashboard-action-tab--current', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
     }
 

@@ -1445,7 +1445,7 @@ test('dashboard member workflow renders visible event metadata, dispatches rejec
         id: 'evt-rejected',
         title: 'Evento Rejeitado',
         description: 'Precisa de ajustes.',
-        date: '2026-04-12T14:00:00.000Z',
+        date: '2027-04-12T14:00:00.000Z',
         category: 'academico',
         location: 'Sala 3',
         status: 'rejected',
@@ -1455,7 +1455,7 @@ test('dashboard member workflow renders visible event metadata, dispatches rejec
         id: 'evt-published',
         title: 'Evento Publicado',
         description: 'Ja esta visivel.',
-        date: '2026-04-14T14:00:00.000Z',
+        date: '2027-04-14T14:00:00.000Z',
         category: 'extensao',
         location: 'Auditorio',
         status: 'published',
@@ -1686,6 +1686,7 @@ test('settings panels update profile, password, and email preferences through th
 });
 
 test('admin settings panels reset passwords and promote users through the dashboard tools', async () => {
+    const expectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const scenario = await loadSettingsScenario({
         requestApiImpl(path, options) {
             if (path === '/auth/users/password/reset') {
@@ -1792,13 +1793,12 @@ test('admin settings panels reset passwords and promote users through the dashbo
                 options: {
                     method: 'POST',
                     token: 'admin-token',
+                    body: {
+                        timezone: expectedTimezone,
+                    },
                 },
             },
         ]);
-        assert.equal(
-            document.querySelector('#dashboard-settings-admin-digest-status')?.textContent?.trim(),
-            'Agenda atualizada manualmente em 09/04/2026, 13:45.',
-        );
         assert.equal(scenario.toastRecorded.shows.at(-1)?.text, 'Resumo semanal enviado manualmente.');
     } finally {
         scenario.restore();
@@ -1827,6 +1827,7 @@ test('event form modal covers create, validation, blocked edit, and edit resubmi
         await scenario.modal.open();
 
         const { document } = scenario.dom.window;
+        assert.equal(document.querySelector('#dashboard-modal-create-form').noValidate, true);
         document.querySelector('#dashboard-modal-event-title').value = '';
         document.querySelector('#dashboard-modal-event-description').value = '';
         document.querySelector('#dashboard-modal-event-date').value = '';

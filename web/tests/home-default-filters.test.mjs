@@ -7,7 +7,13 @@ import process from 'node:process';
 import { setTimeout as delay } from 'node:timers/promises';
 import test from 'node:test';
 
-import { createDefaultHomeFilters, readHomeFiltersFromUrl } from '../src/js/helpers/query-state.js';
+import {
+	createDefaultHomeFilters,
+	createHomeFilterParams,
+	hasSpecificHomeQuery,
+	readHomeFiltersFromUrl,
+	serializeHomeFilters,
+} from '../src/js/helpers/query-state.js';
 
 const WEB_ROOT = path.resolve(import.meta.dirname, '..');
 const INDEX_TEMPLATE_PATH = path.join(WEB_ROOT, 'src/html/index.html');
@@ -153,6 +159,56 @@ test('readHomeFiltersFromUrl preserves explicit date ranges from the URL', () =>
 	});
 });
 
+test('readHomeFiltersFromUrl keeps one-sided explicit dates and trims shareable filter values', () => {
+	const fallbackFilters = {
+		search: '',
+		category: '',
+		from: '2026-04-03',
+		to: '2026-04-09',
+	};
+
+	assert.deepEqual(readHomeFiltersFromUrl('?search=%20mostra%20&from=2026-05-10', fallbackFilters), {
+		search: 'mostra',
+		category: '',
+		from: '2026-05-10',
+		to: '',
+	});
+	assert.deepEqual(readHomeFiltersFromUrl('?category=%20academico%20&to=2026-05-14', fallbackFilters), {
+		search: '',
+		category: 'academico',
+		from: '',
+		to: '2026-05-14',
+	});
+});
+
+test('hasSpecificHomeQuery detects supported filters and ignores blank values', () => {
+	assert.equal(hasSpecificHomeQuery(''), false);
+	assert.equal(hasSpecificHomeQuery('?page=2'), false);
+	assert.equal(hasSpecificHomeQuery('?search=%20%20&category='), false);
+	assert.equal(hasSpecificHomeQuery('?q=feira'), true);
+	assert.equal(hasSpecificHomeQuery('?category=academico'), true);
+	assert.equal(hasSpecificHomeQuery('?from=2026-05-10'), true);
+	assert.equal(hasSpecificHomeQuery('?to=2026-05-14'), true);
+});
+
+test('home filter serialization keeps only supported non-empty values', () => {
+	assert.equal(createHomeFilterParams({
+		search: ' mostra ',
+		category: ' ',
+		from: '2026-05-10',
+		to: '',
+	}).toString(), 'search=mostra&from=2026-05-10');
+
+	assert.equal(serializeHomeFilters({
+		filterSearch: { value: ' feira ' },
+		filterCategory: { value: 'academico' },
+		filterFrom: { value: '2026-05-11' },
+		filterTo: { value: ' ' },
+	}).toString(), 'search=feira&category=academico&from=2026-05-11');
+
+	assert.equal(serializeHomeFilters(null).toString(), '');
+});
+
 test('index template keeps client-hydrated date fields without SSR value attributes', async () => {
 	const template = await readFile(INDEX_TEMPLATE_PATH, 'utf8');
 
@@ -164,8 +220,8 @@ test('index template keeps client-hydrated date fields without SSR value attribu
 
 test('home route renders empty date inputs that the client hydrates on boot', async (t) => {
 	const { port } = await startWebServer(t);
-    const response = await fetch(`http://127.0.0.1:${port}/`);
-    const html = await response.text();
+	const response = await fetch(`http://127.0.0.1:${port}/`);
+	const html = await response.text();
 
 	assert.equal(response.status, 200);
 	assert.equal(readInputValue(html, 'filter-from'), '');

@@ -477,6 +477,11 @@ export class DashboardSettingsPanels extends BaseComponent {
             return;
         }
 
+        if (!this.#readSessionToken()) {
+            this.#showToast('Não foi possível validar a sua sessão agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
+            return;
+        }
+
         const response = await requestApi('/auth/users/password/reset', {
             method: 'PUT',
             token: this.#readSessionToken(),
@@ -506,6 +511,11 @@ export class DashboardSettingsPanels extends BaseComponent {
         if (!email) {
             this.#showToast('Informe o e-mail do usuário que deve ser promovido.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
             form.getField('dashboard-settings-admin-promote-email')?.focus();
+            return;
+        }
+
+        if (!this.#readSessionToken()) {
+            this.#showToast('Não foi possível validar a sua sessão agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
             return;
         }
 

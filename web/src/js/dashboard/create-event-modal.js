@@ -252,6 +252,7 @@ export class DashboardEventFormModal {
         this.#applyModalCopy();
 
         this.#form = new Form(this.#modal.get('#dashboard-modal-create-form'));
+        this.#form.get()?.setAttribute('novalidate', 'novalidate');
         this.#populateFormFields();
 
         this.#form.getButton('dashboard-modal-create-cancel')?.click(() => {
