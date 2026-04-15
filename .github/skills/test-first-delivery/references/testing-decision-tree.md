@@ -11,6 +11,7 @@ Use this decision tree before finishing any feature, bug fix, or refactor that c
 ## 2. Prefer Existing Automation First
 
 - If the touched service already has automated tests by the time you are working, update them and run the narrowest relevant command.
+- For `web/`, prefer the committed Node suite first: helper/contract tests, `jsdom` plus VM workflow tests, or spawned route/template checks.
 - Do not add a root-level or shared test harness for a service-local change.
 
 ## 3. When Bootstrapping Tests Is Appropriate
@@ -50,8 +51,8 @@ Prefer manual validation when any of these are true:
 
 - no existing automation is present and a new harness would dominate the task,
 - the change spans both `api/` and `web/`,
-- the flow depends heavily on MySQL state, JWT auth, Compose networking, or browser rendering,
-- the work touches SSR templates, webpack entries, or static asset output,
+- the flow depends heavily on MySQL state, JWT auth, Compose networking, or real browser rendering,
+- the task is mostly about CSS/layout, focus timing, animation, storage persistence, redirects, or authenticated interaction branches that the current Node-based suite cannot prove end-to-end,
 - or the task is mostly UI behavior that is faster to verify in the running app than to bootstrap safely.
 
 ## 5. Bootstrap Rules

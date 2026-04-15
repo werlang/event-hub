@@ -1,6 +1,6 @@
 ---
 name: web-frontend
-description: Build and maintain the Academic Events web app (Express SSR shell plus bundled vanilla JavaScript UI). Use when changing the home, login, week, or dashboard pages, client auth and event flows, styles, webpack behavior, static serving, or API integration from the web layer.
+description: Build, review, and maintain the Academic Events web app (Express SSR shell plus bundled vanilla JavaScript UI). Use when changing or reviewing the home, login, week, or dashboard pages, client auth and event flows, frontend tests, browser validation, styles, webpack behavior, static serving, or API integration from the web layer.
 ---
 
 # Web Frontend Development
@@ -79,14 +79,29 @@ When changing API integration behavior, keep this precedence explicit.
 7. Maintain Portuguese-facing text consistency already present in forms and messages.
 8. For interaction-heavy UI work, do not stop at DOM inspection or bundle success alone; verify the rendered page in a browser and exercise the affected interaction states before considering the task done.
 
+## Review And Coverage Guidance
+
+- Read the SSR template, the client entry or helper module, and the nearest `web/tests/*.test.mjs` coverage together before changing or reviewing a flow.
+- Pair this skill with [../frontend-bug-review/SKILL.md](../frontend-bug-review/SKILL.md) for skeptical bug-finding and with [../test-first-delivery/SKILL.md](../test-first-delivery/SKILL.md) for validation expectations.
+- On the home page, prioritize default local week filters, query hydration, URL synchronization, chips, pagination, and empty-state rendering.
+- On `/login`, prioritize tab-hash synchronization, redirect sanitization, token persistence, and register-confirmation error paths.
+- On `/week`, prioritize the SSR-provided `weekFrom`, `weekTo`, `weekRangeLabel`, and `weekCalendarJoinUrl` contract plus the standalone bundle wiring.
+- On `/dashboard`, prioritize auth-gated boot, moderation scopes, settings panels, modal lifecycle, role-conditioned actions, `datetime-local` to ISO submission, and the default browse behavior that hides past events unless `includePast` is enabled.
+- When HTML ids, classes, template variables, or bundle entries change, verify the corresponding selectors, route tests, and checked-in bundle expectations change with them.
+- Prefer focused contract assertions over broad snapshots when you can prove the behavior with stable selectors, messages, or helper outputs.
+
 ## Validation Expectations
 
+- `web/tests` already covers helper contracts, `jsdom` plus VM workflow flows, and spawned SSR route checks; choose the narrowest matching pattern instead of writing one oversized integration test.
 - Update and run the committed Node test suite under `web/tests` when the touched behavior already has route, template, or contract coverage.
+- `web/package.json` does not currently define `npm test` or `npm run build`; run `node --test tests/*.test.mjs` and webpack directly.
 - Rebuild the affected web bundle through the repository workflow.
 - Open the changed page in a browser session when the environment allows it.
+- Use the maintained browser smoke path at [../test-first-delivery/references/browser-smoke-checklist.md](../test-first-delivery/references/browser-smoke-checklist.md) as the baseline route checklist for `/`, `/login`, `/week`, and `/dashboard`, then extend it only where the touched flow needs more detail.
 - Exercise the specific interaction that changed: tabs, modals, accordions, filters, form states, redirects, pagination, or dashboard settings flows.
 - If authentication gates the page, obtain a real session through the UI or documented local flow before evaluating the change.
 - Report both the automated validation and the manual browser checks that were actually performed.
+- If a real browser pass was not possible, say so explicitly instead of treating `jsdom` or webpack success as an equivalent substitute.
 
 ## Common Tasks
 

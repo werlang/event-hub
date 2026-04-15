@@ -4,6 +4,17 @@ Use the narrowest trustworthy validation path for the touched scope.
 
 ## Verified Automated Command
 
+### Web tests
+
+Run this when the task changes behavior already covered by `web/tests`:
+
+```bash
+cd web
+node --test tests/*.test.mjs
+```
+
+`web/package.json` does not currently define `npm test`, so invoke the Node runner directly.
+
 ### Web bundle rebuild
 
 Run this when the task changes `web/src/**`, webpack output expectations, Font Awesome assets, or checked-in files under `web/public/`:
@@ -57,10 +68,12 @@ Use this when the task depends on the repo's normal multi-service development en
 
 ### Web changes
 
-- Open the touched page or flow: `/`, `/login`, `/dashboard`, or `/publish`.
+- Open the touched page or flow: `/`, `/login`, `/week`, or `/dashboard`.
+- Use [browser-smoke-checklist.md](browser-smoke-checklist.md) for the maintained route-by-route browser pass before adding task-specific manual notes.
 - Confirm the page renders without console-visible breakage and the targeted interaction works.
 - Rebuild the web bundle when the change affects bundled assets.
-- Remember that `/publish` still has no dedicated client bundle; validate only the SSR shell unless the task adds one.
+- Exercise real clicks, typing, focus movement, or redirects for interaction-heavy changes instead of relying on DOM inspection alone.
+- There is no committed Playwright or Cypress suite in `web/` yet, so browser validation currently means a real manual pass unless the task adds browser automation.
 
 ### Cross-service changes
 
@@ -72,4 +85,4 @@ Use this when the task depends on the repo's normal multi-service development en
 
 - Run the exact service-local test command added by that task.
 - Keep the command local to `api/` or `web/`.
-- Include the command and result in the final report, because this repo does not have a pre-existing standard test script yet.
+- Include the command and result in the final report, because this repo does not have a pre-existing standard `npm test` script for both services.
