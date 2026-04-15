@@ -1,5 +1,5 @@
 {
-  "name": "academic-events-api",
+  "name": "agendacharq-api",
   "version": "0.1.0",
   "description": "API para autenticação e cadastro de eventos acadêmicos.",
   "type": "module",
