@@ -414,28 +414,28 @@ function readModerationEventSourcePath(scope) {
 /**
  * Filters published discovery results down to events owned by other users.
  */
-function filterAdminPublishedDiscoveryEvents(events, currentUserId) {
+function filterAdminPublishedDiscoveryEvents(events, currentUserId, showOwnEvents = true) {
     const normalizedUserId = readText(currentUserId, '');
 
     return (Array.isArray(events) ? events : []).filter((event) => {
         const organizerId = readText(event?.organizerId, '');
         const normalizedStatus = String(event?.status || '').trim().toLowerCase();
 
-        return normalizedStatus === 'published' && organizerId !== normalizedUserId;
+        return normalizedStatus === 'published' && (showOwnEvents || organizerId !== normalizedUserId);
     });
 }
 
 /**
  * Filters rejected discovery results down to events owned by other users.
  */
-function filterAdminRejectedDiscoveryEvents(events, currentUserId) {
+function filterAdminRejectedDiscoveryEvents(events, currentUserId, showOwnEvents = true) {
     const normalizedUserId = readText(currentUserId, '');
 
     return (Array.isArray(events) ? events : []).filter((event) => {
         const organizerId = readText(event?.organizerId, '');
         const normalizedStatus = String(event?.status || '').trim().toLowerCase();
 
-        return normalizedStatus === 'rejected' && organizerId !== normalizedUserId;
+        return normalizedStatus === 'rejected' && (showOwnEvents || organizerId !== normalizedUserId);
     });
 }
 
