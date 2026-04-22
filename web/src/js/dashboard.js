@@ -124,26 +124,26 @@ function readEventSectionCopy(view, { moderationScope = DASHBOARD_MODERATION_SCO
     if (view === DASHBOARD_VIEW_MODERATION && isPublishedModerationScope(moderationScope)) {
         return {
             eyebrow: 'Moderação',
-            heading: 'Publicados de outras contas',
-            description: 'Encontre eventos já publicados por outros organizadores e abra a edição administrativa quando um ajuste precisar voltar para moderação.',
+            heading: 'Eventos Publicados',
+            description: 'Encontre eventos já publicados e abra a edição administrativa quando um ajuste precisar voltar para moderação.',
             badgeSingular: 'publicado',
             badgePlural: 'publicados',
-            populatedCaption: 'Abaixo ficam os eventos publicados por outras contas, ordenados da data mais recente para a mais antiga, para ajustes administrativos sem depender de IDs conhecidos.',
-            emptyCaption: 'Quando outras contas tiverem eventos publicados, eles aparecerão aqui para edição administrativa.',
-            emptyState: 'Nenhum evento publicado por outras contas está disponível para edição agora.',
+            populatedCaption: 'Abaixo ficam os eventos publicados, ordenados da data mais recente para a mais antiga, para ajustes administrativos sem depender de IDs conhecidos.',
+            emptyCaption: 'Quando houverem eventos publicados, eles aparecerão aqui para edição administrativa.',
+            emptyState: 'Nenhum evento publicado está disponível para edição agora.',
         };
     }
 
     if (view === DASHBOARD_VIEW_MODERATION && isRejectedModerationScope(moderationScope)) {
         return {
             eyebrow: 'Moderação',
-            heading: 'Rejeitados de outras contas',
-            description: 'Encontre eventos rejeitados de outras contas para ajustes administrativos e devolva-os ao fluxo de moderação sem depender de IDs conhecidos.',
+            heading: 'Eventos Rejeitados',
+            description: 'Encontre eventos rejeitados para ajustes administrativos e devolva-os ao fluxo de moderação sem depender de IDs conhecidos.',
             badgeSingular: 'rejeitado',
             badgePlural: 'rejeitados',
-            populatedCaption: 'Abaixo ficam os eventos rejeitados de outras contas, ordenados da data mais recente para a mais antiga, para reabertura administrativa do fluxo de moderação.',
-            emptyCaption: 'Quando outras contas tiverem eventos rejeitados, eles aparecerão aqui para edição administrativa.',
-            emptyState: 'Nenhum evento rejeitado por outras contas está disponível para edição agora.',
+            populatedCaption: 'Abaixo ficam os eventos rejeitados, ordenados da data mais recente para a mais antiga, para reabertura administrativa do fluxo de moderação.',
+            emptyCaption: 'Quando houverem eventos rejeitados, eles aparecerão aqui para edição administrativa.',
+            emptyState: 'Nenhum evento rejeitado está disponível para edição agora.',
         };
     }
 
@@ -151,7 +151,7 @@ function readEventSectionCopy(view, { moderationScope = DASHBOARD_MODERATION_SCO
         return {
             eyebrow: 'Moderação',
             heading: 'Fila de moderação',
-            description: 'Analise os eventos pendentes enviados por outras contas e decida se cada um deve ser publicado ou devolvido para ajustes.',
+            description: 'Analise os eventos pendentes enviados e decida se cada um deve ser publicado ou devolvido para ajustes.',
             badgeSingular: 'pendente',
             badgePlural: 'pendentes',
             populatedCaption: 'Abaixo ficam os envios que ainda aguardam avaliação administrativa, ordenados da data mais recente para a mais antiga.',
@@ -659,9 +659,9 @@ function createModerationEventActionToolbar({ scope = DASHBOARD_MODERATION_SCOPE
 
     toolbar.append(createEventActionGuide({
         content: isPublishedModerationScope(scope)
-            ? 'Use esta lista para localizar eventos já publicados por outras contas. Você pode editar para devolver o evento à moderação ou excluir o envio definitivamente.'
+            ? 'Use esta lista para localizar eventos já publicados. Você pode editar para devolver o evento à moderação ou excluir o envio definitivamente.'
             : (isRejectedModerationScope(scope)
-                ? 'Use esta lista para localizar eventos rejeitados de outras contas. Você pode editar para devolver o evento à moderação ou excluir o envio definitivamente.'
+                ? 'Use esta lista para localizar eventos rejeitados. Você pode editar para devolver o evento à moderação ou excluir o envio definitivamente.'
                 : 'Edite para reenviar o evento ao fluxo de moderação, aprove para publicar imediatamente, rejeite com uma justificativa opcional ou exclua o envio.'),
         label: 'Ver orientações da moderação',
         customClass: 'dashboard-event__action-tooltip',

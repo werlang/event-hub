@@ -149,8 +149,8 @@ test('dashboard ships admin discovery surfaces for published and rejected events
     ], 'admin-1'));
 
     assert.match(html, /id="dashboard-events-filter-moderation-scope"/);
-    assert.match(html, /option value="rejected">Rejeitados de outras contas<\/option>/);
-    assert.match(html, /option value="published">Publicados de outras contas<\/option>/);
+    assert.match(html, /option value="rejected">Eventos Rejeitados<\/option>/);
+    assert.match(html, /option value="published">Eventos Publicados<\/option>/);
     assert.equal(hooks.readModerationEventSourcePath('rejected'), '/events/moderation?status=rejected');
     assert.equal(hooks.readModerationEventSourcePath('published'), '/events');
     assert.deepEqual(
