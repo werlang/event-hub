@@ -128,7 +128,7 @@ function readEventSectionCopy(view, { moderationScope = DASHBOARD_MODERATION_SCO
             description: 'Encontre eventos já publicados e abra a edição administrativa quando um ajuste precisar voltar para moderação.',
             badgeSingular: 'publicado',
             badgePlural: 'publicados',
-            populatedCaption: 'Abaixo ficam os eventos publicados, ordenados da data mais recente para a mais antiga, para ajustes administrativos sem depender de IDs conhecidos.',
+            populatedCaption: 'Abaixo ficam os eventos publicados, ordenados da data mais recente para a mais antiga.',
             emptyCaption: 'Quando houverem eventos publicados, eles aparecerão aqui para edição administrativa.',
             emptyState: 'Nenhum evento publicado está disponível para edição agora.',
         };
@@ -138,7 +138,7 @@ function readEventSectionCopy(view, { moderationScope = DASHBOARD_MODERATION_SCO
         return {
             eyebrow: 'Moderação',
             heading: 'Eventos Rejeitados',
-            description: 'Encontre eventos rejeitados para ajustes administrativos e devolva-os ao fluxo de moderação sem depender de IDs conhecidos.',
+            description: 'Encontre eventos rejeitados para ajustes administrativos e devolva-os ao fluxo de moderação.',
             badgeSingular: 'rejeitado',
             badgePlural: 'rejeitados',
             populatedCaption: 'Abaixo ficam os eventos rejeitados, ordenados da data mais recente para a mais antiga, para reabertura administrativa do fluxo de moderação.',
