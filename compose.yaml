@@ -38,8 +38,8 @@ services:
         volumes:
             - mysql:/var/lib/mysql
             # - .:/app
-        # ports:
-        #     - 127.0.0.1:3306:3306
+        ports:
+            - 127.0.0.1:3306:3306
 volumes:
     node_modules_web:
     node_modules_api:
