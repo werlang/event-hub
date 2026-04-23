@@ -69,6 +69,7 @@
         line-height: 1.7;
         display: -webkit-box;
         overflow: hidden;
+        white-space: pre-wrap;
     }
 
     & :is(.card__meta-item, .dashboard-meta-pill) {
