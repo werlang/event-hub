@@ -150,9 +150,6 @@
 
     & .card__description {
         margin: 0;
-        line-clamp: 4;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 4;
     }
 
     & .card__state {
