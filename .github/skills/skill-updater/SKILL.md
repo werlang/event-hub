@@ -1,6 +1,6 @@
 ---
 name: skill-updater
-description: Update repository documentation and agent guidance when README, SKILL.md files, prompts, Copilot instructions, or durable coding conventions drift from the codebase. Use when asked to update docs, update a skill, update instructions, audit .github guidance, or record long-lived maintainability and architecture rules.
+description: Auto-detect when generated code, prompts, or repeated agent behavior indicate a reusable workflow or durable rule. Update README, SKILL.md files, prompts, Copilot instructions, or durable coding conventions to reflect those lessons. Auto-invoke when user or agent text contains the exact phrases: "update docs", "update the skill", "fix Copilot instructions", "create new skill", "update skill", "document recurring pattern", "capture reusable workflow", or "this should be a skill".
 ---
 
 # Skill Updater
@@ -31,7 +31,30 @@ Do not use this skill for one-off implementation details, temporary workarounds,
 
 ## Discovery Note
 
-The frontmatter `description` is the discovery surface. If this skill is not being auto-invoked for obvious requests like "update docs", "update the skill", or "fix Copilot instructions", add those exact phrases to the description instead of leaving them only in the body text.
+The frontmatter `description` is the discovery surface. Include the exact trigger phrases users or the agent might use so this skill can be auto-invoked. Add phrases such as "update docs", "update the skill", "fix Copilot instructions", "create new skill", "update skill", "document recurring pattern", "capture reusable workflow", and "this should be a skill".
+
+## Auto-Invocation (agent-enabled)
+
+This skill should be auto-invoked when the agent's own output, or the user's prompt, matches any of these conditions:
+
+- Prompt contains any exact trigger phrase listed above.
+- Agent-generated code implements a reusable pattern (new helper, component, prompt, or orchestration) that is:
+  - non-trivial in size (e.g., >= 5 lines) and/or
+  - present across multiple files or modules, and/or
+  - accompanied by new prompt files or `.github/` guidance, and/or
+  - clearly named or structured for reuse (e.g., names like "util", "service", "client", "middleware", "skill").
+- The agent performed the same or very similar transformation two or more times in the current session.
+- Files under `.github/skills/`, `.github/copilot-instructions.md`, or other `.github/` prompt directories are added or modified.
+- Documentation or tests are updated to codify behavior beyond the immediate diff.
+
+When auto-invoked the agent should:
+
+1. Identify the durable rule and the smallest correct home (an existing skill, `.github/copilot-instructions.md`, or README).
+2. Decide whether to update an existing skill or create a new one; prefer updating when a clear owner exists.
+3. Propose a concise name and short description for any new skill, and a one-paragraph diff summary for any update.
+4. Write or patch the relevant SKILL.md using directive, example-driven guidance and minimal boilerplate.
+5. Link the skill change to the motivating task (include citations to changed files and prompts).
+6. Commit the change and surface it in the task summary so reviewers can confirm the guidance.
 
 ## Primary Goal
 
