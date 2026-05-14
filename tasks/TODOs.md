@@ -1,9 +1,9 @@
 # TODOs
 
-This file contains lists of tasks inserted by the user to be implemented by the agent.
+This is the user-maintained task queue. Follow the workflow in `tasks/README.md`.
 
-## From TODOs to backlog
-
-Agent must pick each of these tasks and create a backlog.md entry for each.
+Default rule: implement only the first unchecked item unless the user explicitly says otherwise.
 
 ## Task List
+
+<!-- Add one short task per line using: - [ ] short task description -->
