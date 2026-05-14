@@ -79,6 +79,7 @@ describe('helpers/pending-event-notification-manager', () => {
         expect(emailHelper.send.mock.calls[0][1]).toBe('AgendaCharq - Novo evento aguardando moderação');
         expect(emailHelper.send.mock.calls[0][2]).toContain('Feira de Ciências');
         expect(emailHelper.send.mock.calls[0][2]).toContain('Ada Lovelace');
+        expect(emailHelper.send.mock.calls[0][2]).toMatch(/16:00\s*(BRT|GMT-3)/u);
         expect(emailHelper.send.mock.calls[0][2]).toContain('https://agenda-ch.test/dashboard');
         expect(result).toMatchObject({
             failedCount: 0,

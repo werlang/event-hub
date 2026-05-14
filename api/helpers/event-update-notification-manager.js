@@ -8,6 +8,7 @@ const EVENT_APPROVED_STRINGS_TEMPLATE_KEY = 'event-approved-email';
 const EVENT_REJECTED_STRINGS_TEMPLATE_KEY = 'event-rejected-email';
 const EVENT_DELETE_STRINGS_TEMPLATE_KEY = 'event-delete-email';
 const NOTIFICATION_SECTION_TEMPLATE_KEY = 'notification-email-section';
+const EMAIL_EVENT_TIME_ZONE = 'America/Sao_Paulo';
 
 /**
  * Normalizes one persisted email address before it is used as a recipient.
@@ -24,9 +25,10 @@ function normalizeEmailAddress(email) {
  *
  * @param {string|Date} value The date-like value to format.
  * @param {string} [fallback=''] The fallback label used when the date is invalid.
+ * @param {string} [timeZone='America/Sao_Paulo'] The IANA time zone used by the email.
  * @returns {string} The localized date label.
  */
-function formatEventDateTimePtBr(value, fallback = '') {
+function formatEventDateTimePtBr(value, fallback = '', timeZone = EMAIL_EVENT_TIME_ZONE) {
     const date = new Date(value);
 
     if (Number.isNaN(date.getTime())) {
@@ -41,6 +43,8 @@ function formatEventDateTimePtBr(value, fallback = '') {
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
+        timeZone,
+        timeZoneName: 'short',
     }).format(date);
 
     return dateTime[0].toUpperCase() + dateTime.slice(1);

@@ -7,6 +7,7 @@ import { User } from '../model/user.js';
 const DIGEST_TEMPLATE_KEY = 'weekly-digest-email';
 const DIGEST_EVENT_TEMPLATE_KEY = 'weekly-digest-email-event';
 const DIGEST_DAY_SEPARATOR_TEMPLATE_KEY = 'weekly-digest-email-day-separator';
+const EMAIL_EVENT_TIME_ZONE = 'America/Sao_Paulo';
 
 /**
  * Normalizes one persisted email address for audience resolution.
@@ -121,7 +122,7 @@ function formatEventDaySeparatorPtBr(value, fallback = '') {
 /**
  * Formats one event date the same way the public UI explains the full date and time.
  */
-function formatEventDateTimePtBr(value, fallback = '') {
+function formatEventDateTimePtBr(value, fallback = '', timeZone = EMAIL_EVENT_TIME_ZONE) {
     const date = new Date(value);
 
     if (Number.isNaN(date.getTime())) {
@@ -136,6 +137,8 @@ function formatEventDateTimePtBr(value, fallback = '') {
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
+        timeZone,
+        timeZoneName: 'short',
     }).format(date);
     
     // capitalize the first letter
@@ -437,7 +440,7 @@ export class WeeklyDigestManager {
                 eventCardLabel: strings.eventCardLabel || '',
                 eventTitle: String(event?.title || '').trim() || strings.untitledEventTitle || '',
                 eventDateLabel: strings.eventDateLabel || '',
-                eventDateValue: formatEventDateTimePtBr(event?.date, strings.dateFallback || ''),
+                eventDateValue: formatEventDateTimePtBr(event?.date, strings.dateFallback || '', this.#timeZone || EMAIL_EVENT_TIME_ZONE),
                 categoryLabel: strings.categoryLabel || '',
                 categoryValue: String(event?.categoryLabel || event?.category || strings.categoryFallback || '').trim(),
                 locationLabel: strings.locationLabel || '',

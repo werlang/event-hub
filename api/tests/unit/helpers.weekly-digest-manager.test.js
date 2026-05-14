@@ -41,6 +41,7 @@ describe('helpers/weekly-digest-manager', () => {
         expect(message.content).toContain('Oficinas, painéis e demonstrações abertas.');
         expect(message.content).toContain('Equipe de Extensão');
         expect(message.content).toContain('Laboratório Maker');
+        expect(message.content).toMatch(/16:30\s*(BRT|GMT-3)/u);
         expect(message.content).toContain('Abrir página da agenda');
         expect(message.content).toContain('https://agenda-ch.test/week');
     });

@@ -21,11 +21,12 @@ export async function sendWeeklyDigest({
 }
 
 /**
- * Creates a background task for sending the weekly digest email on Sundays at 6 PM.
+ * Creates a background task for sending the weekly digest email
+ * time is in UTC
  */
 export const task = {
     enabled: config.enabled || false,
-    rule: config.rule || 'every monday at 07:30',
+    rule: config.rule || 'every monday at 15:00', // 12:00 BRT
     name: 'weekly-email-digest',
     callback: sendWeeklyDigest,
 }

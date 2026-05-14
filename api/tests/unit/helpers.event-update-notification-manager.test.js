@@ -49,6 +49,7 @@ describe('helpers/event-update-notification-manager', () => {
             'Atualização do seu evento na AgendaCharq',
             expect.stringContaining('Feira de Ciências Atualizada'),
         );
+        expect(emailHelper.send.mock.calls[0][2]).toMatch(/16:00\s*(BRT|GMT-3)/u);
         expect(emailHelper.send.mock.calls[0][2]).toContain('Grace Hopper');
         expect(emailHelper.send.mock.calls[0][2]).toContain('https://agenda-ch.test/dashboard');
         expect(result).toEqual({

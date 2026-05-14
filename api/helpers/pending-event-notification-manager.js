@@ -4,6 +4,7 @@ import { User } from '../model/user.js';
 
 const NOTIFICATION_TEMPLATE_KEY = 'notification-email';
 const NOTIFICATION_SECTION_TEMPLATE_KEY = 'notification-email-section';
+const EMAIL_EVENT_TIME_ZONE = 'America/Sao_Paulo';
 
 /**
  * Normalizes one persisted email address for recipient de-duplication.
@@ -20,9 +21,10 @@ function normalizeEmailAddress(email) {
  *
  * @param {string|Date} value The date-like value to format.
  * @param {string} [fallback=''] The fallback label used when the date is invalid.
+ * @param {string} [timeZone='America/Sao_Paulo'] The IANA time zone used by the email.
  * @returns {string} The localized date label.
  */
-function formatEventDateTimePtBr(value, fallback = '') {
+function formatEventDateTimePtBr(value, fallback = '', timeZone = EMAIL_EVENT_TIME_ZONE) {
     const date = new Date(value);
 
     if (Number.isNaN(date.getTime())) {
@@ -37,6 +39,8 @@ function formatEventDateTimePtBr(value, fallback = '') {
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
+        timeZone,
+        timeZoneName: 'short',
     }).format(date);
 
     return dateTime[0].toUpperCase() + dateTime.slice(1);
