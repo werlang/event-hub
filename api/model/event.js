@@ -7,6 +7,8 @@ import { getCurrentWeekRangeLocal } from '../helpers/week-range.js';
 
 export class Event extends Model {
 
+    static #DATE_ONLY_FILTER_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
     static table = 'events';
     static view = [
         'id',
@@ -304,6 +306,24 @@ export class Event extends Model {
     }
 
     /**
+     * Checks whether one list filter value is a calendar day without an explicit time component.
+     */
+    static #isDateOnlyFilterValue(value) {
+        return typeof value === 'string' && Event.#DATE_ONLY_FILTER_PATTERN.test(value.trim());
+    }
+
+    /**
+     * Normalizes an inclusive list end filter so date-only values cover the full selected day.
+     */
+    static #normalizeListEndFilterValue(value) {
+        if (!Event.#isDateOnlyFilterValue(value)) {
+            return value;
+        }
+
+        return `${value.trim()}T23:59:59.999Z`;
+    }
+
+    /**
      * Lists events filtered by period, category, and free-text search.
      */
     static async list(filters = {}) {
@@ -311,16 +331,17 @@ export class Event extends Model {
         const queryFilter = {
             status: this.STATUS_PUBLISHED,
         };
+        const normalizedTo = Event.#normalizeListEndFilterValue(to);
 
         if (from && to) {
             queryFilter.date = this.driver.between(
                 this.driver.toDateTime(from),
-                this.driver.toDateTime(to),
+                this.driver.toDateTime(normalizedTo),
             );
         } else if (from) {
             queryFilter.date = this.driver.gte(this.driver.toDateTime(from));
         } else if (to) {
-            queryFilter.date = this.driver.lte(this.driver.toDateTime(to));
+            queryFilter.date = this.driver.lte(this.driver.toDateTime(normalizedTo));
         }
 
         const rows = await this.find({

@@ -261,6 +261,33 @@ describe('model/event', () => {
         ]);
     });
 
+    test('list expands a date-only end filter to the end of the selected day', async () => {
+        const driver = {
+            toDateTime(value) {
+                return `mysql:${value}`;
+            },
+            lte(value) {
+                return { '<=': value };
+            },
+        };
+        trackReplacement(restores, Event, 'driver', driver);
+
+        const calls = [];
+        trackReplacement(restores, Event, 'find', async options => {
+            calls.push(options);
+            return [];
+        });
+
+        await expect(Event.list({ to: '2026-05-31' })).resolves.toEqual([]);
+
+        expect(calls).toEqual([
+            {
+                filter: { status: 'published', date: { '<=': 'mysql:2026-05-31T23:59:59.999Z' } },
+                opt: { order: { date: 1 } },
+            },
+        ]);
+    });
+
     test('listCurrentWeek delegates to the public Sunday-to-Saturday week range', async () => {
         const listSpy = jest.spyOn(Event, 'list').mockResolvedValue([]);
         const referenceDate = new Date(2026, 3, 7, 18, 0, 0, 0);
