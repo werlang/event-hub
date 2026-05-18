@@ -304,57 +304,164 @@ export class Event extends Model {
     }
 
     /**
-     * Checks whether one list filter value is a calendar day without an explicit time component.
+     * Checks whether one list filter value contains a dash-separated local date and time.
      */
-    static #isDateOnlyFilterValue(value) {
-        const dateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/;
-        return typeof value === 'string' && dateOnlyPattern.test(value.trim());
-    }
-
-    /**
-     * Checks whether value is dash separated date and time
-     */
-
-    static #isDateTimeFilterValue(value) {
+    static #isDateTimeValue(value) {
         const dateTimePattern = /^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}$/;
         return typeof value === 'string' && dateTimePattern.test(value.trim());
     }
 
     /**
-     * Normalizes an inclusive list end filter so date-only values cover the full selected day.
+     * Checks whether one list filter value is a calendar day without an explicit time component.
      */
-    static #normalizeListEndFilterValue(value) {
-        if (Event.#isDateOnlyFilterValue(value)) {
-            return `${value.trim()}T23:59:59.999Z`;
-        }
-        else if (Event.#isDateTimeFilterValue(value)) {
-            const [year, month, day, hour, minute] = value.trim().split('-').map(Number);
-            const date = new Date(Date.UTC(year, month - 1, day, hour, minute));
-            date.setSeconds(59, 999);
-            return date.toISOString();
+    static #isDateOnlyValue(value) {
+        const dateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/;
+        return typeof value === 'string' && dateOnlyPattern.test(value.trim());
+    }
+
+    /**
+     * Parses any date-like filter value into a local Date instance or returns null for invalid inputs.
+     */
+    static parseDateTimeInput(value) {
+        if (Event.#isDateTimeValue(value)) {
+            const dateTimePattern = /^(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})$/;
+            const match = dateTimePattern.exec(value.trim());
+
+            if (!match) {
+                return null;
+            }
+
+            const year = Number.parseInt(match[1], 10);
+            const month = Number.parseInt(match[2], 10);
+            const day = Number.parseInt(match[3], 10);
+            const hour = Number.parseInt(match[4], 10);
+            const minute = Number.parseInt(match[5], 10);
+            const date = new Date(year, month - 1, day, hour, minute);
+
+            if (
+                Number.isNaN(date.getTime())
+                || date.getFullYear() !== year
+                || date.getMonth() !== month - 1
+                || date.getDate() !== day
+                || date.getHours() !== hour
+                || date.getMinutes() !== minute
+            ) {
+                return null;
+            }
+
+            return date;
         }
 
-        return value;
+        if (Event.#isDateOnlyValue(value)) {
+            const dateOnlyPattern = /^(\d{4})-(\d{2})-(\d{2})$/;
+            const match = dateOnlyPattern.exec(value.trim());
 
+            if (!match) {
+                return null;
+            }
+
+            const year = Number.parseInt(match[1], 10);
+            const month = Number.parseInt(match[2], 10);
+            const day = Number.parseInt(match[3], 10);
+            const date = new Date(year, month - 1, day);
+
+            if (
+                Number.isNaN(date.getTime())
+                || date.getFullYear() !== year
+                || date.getMonth() !== month - 1
+                || date.getDate() !== day
+            ) {
+                return null;
+            }
+
+            return date;
+        }
+
+        return null;
+    }
+
+    /**
+     * Converts a date-like value into the local start or end of day and returns an ISO string.
+     */
+    static #getDayBoundary(value, boundary) {
+        const normalizedValue = Event.parseDateTimeInput(value);
+        if (!normalizedValue) {
+            return value;
+        }
+
+        if (boundary === 'start') {
+            normalizedValue.setHours(0, 0, 0, 0);
+        }
+        else if (boundary === 'end') {
+            normalizedValue.setHours(23, 59, 59, 999);
+        }
+        return normalizedValue.toISOString();
+    }
+
+    /**
+     * Checks whether one requested time zone value is usable for Intl-based normalization.
+     */
+    static #hasTimeZoneValue(timeZone) {
+        return typeof timeZone === 'string' && timeZone.trim().length > 0;
+    }
+
+    /**
+     * Converts a date-like value into the local equivalent in the requested time zone.
+     */
+    static #getLocalDateTimeForTimeZone(dateTimeValue, timeZone) {
+        if (!dateTimeValue || !Event.#hasTimeZoneValue(timeZone)) {
+            return dateTimeValue;
+        }
+
+        try {
+            const localDateTime = new Date(dateTimeValue);
+            if (Number.isNaN(localDateTime.getTime())) {
+                return dateTimeValue;
+            }
+
+            const utcDateTime = new Date(localDateTime.toLocaleString('en-US', { timeZone: 'UTC' }));
+            const targetDateTime = new Date(localDateTime.toLocaleString('en-US', { timeZone }));
+            const offset = utcDateTime.getTime() - targetDateTime.getTime();
+            const normalizedDateTime = new Date(localDateTime.getTime() + offset);
+            return normalizedDateTime.toISOString();
+        } catch {
+            return dateTimeValue;
+        }
+    }
+
+    /**
+     * Normalizes a datetime or date-only value into an ISO string representing the local start or end of day in the requested time zone.
+     */
+    static #normalizeDateTime(value, { boundary = 'start', timeZone = null } = {}) {
+        const dayBoundary = Event.#getDayBoundary(value, boundary);
+        const normalizedDateTime = Event.#getLocalDateTimeForTimeZone(dayBoundary, timeZone);
+        return normalizedDateTime;
     }
 
     /**
      * Lists events filtered by period, category, and free-text search.
      */
     static async list(filters = {}) {
-        const { search, category, from, to } = filters;
+        const { search, category, from, to, timezone } = filters;
         const queryFilter = {
             status: this.STATUS_PUBLISHED,
         };
-        const normalizedTo = Event.#normalizeListEndFilterValue(to);
+        const normalizedFrom = Event.#normalizeDateTime(from, {
+            boundary: 'start',
+            timeZone: timezone,
+        });
+        const normalizedTo = Event.#normalizeDateTime(to, {
+            boundary: 'end',
+            timeZone: timezone,
+        });
 
         if (from && to) {
             queryFilter.date = this.driver.between(
-                this.driver.toDateTime(from),
+                this.driver.toDateTime(normalizedFrom),
                 this.driver.toDateTime(normalizedTo),
             );
         } else if (from) {
-            queryFilter.date = this.driver.gte(this.driver.toDateTime(from));
+            queryFilter.date = this.driver.gte(this.driver.toDateTime(normalizedFrom));
         } else if (to) {
             queryFilter.date = this.driver.lte(this.driver.toDateTime(normalizedTo));
         }

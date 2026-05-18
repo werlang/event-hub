@@ -45,10 +45,26 @@ describe('routes/events', () => {
 
         const res = createResponseDouble();
         const next = jest.fn();
-        await runRouteHandlers(listHandlers, createRequest({ query: { q: 'comp', category: 'Tecnologia', from: '2026-05-01', to: '2026-05-31' } }), res, next);
+        await runRouteHandlers(listHandlers, createRequest({
+            query: {
+                q: 'comp',
+                category: 'Tecnologia',
+                from: '2026-05-01',
+                to: '2026-05-31',
+            },
+            headers: {
+                timezone: 'America/Sao_Paulo',
+            },
+        }), res, next);
 
         expect(next).not.toHaveBeenCalled();
-        expect(calls).toEqual([{ search: 'comp', category: 'Tecnologia', from: '2026-05-01', to: '2026-05-31' }]);
+        expect(calls).toEqual([{
+            search: 'comp',
+            category: 'Tecnologia',
+            from: '2026-05-01',
+            to: '2026-05-31',
+            timezone: 'America/Sao_Paulo',
+        }]);
         expect(res.body.data.events).toHaveLength(1);
         expect(res.body.data.events[0].organizerName).toBe('Ada Lovelace');
     });

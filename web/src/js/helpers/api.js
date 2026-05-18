@@ -103,6 +103,33 @@ function runStorageOperation(callback, fallbackValue = null) {
     }
 }
 
+/**
+ * Reads the browser IANA time zone when it is available.
+ */
+function readClientTimeZone() {
+    try {
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        return typeof timeZone === 'string' ? timeZone.trim() : '';
+    } catch {
+        return '';
+    }
+}
+
+/**
+ * Appends the browser time zone header to API requests
+ */
+export function appendTimeZoneHeader() {
+    const timeZone = readClientTimeZone();
+
+    if (!timeZone) {
+        return {};
+    }
+
+    return {
+        Timezone: timeZone,
+    };
+}
+
 class AuthTokenStore {
     #storageKey = TOKEN_STORAGE_KEY;
 
@@ -160,7 +187,7 @@ export class ApiClient {
         const requestOptions = {
             headers: {
                 Accept: 'application/json',
-                ...headers,
+                ...appendTimeZoneHeader(),
             },
         };
 

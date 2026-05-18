@@ -286,6 +286,7 @@ router.get('/', async (req, res, next) => {
             category: req.query.category,
             from: req.query.from,
             to: req.query.to,
+            timezone: typeof req.headers?.timezone === 'string' ? req.headers.timezone : undefined,
         };
 
         const events = await Event.list(filters);

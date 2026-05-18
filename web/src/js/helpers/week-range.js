@@ -45,7 +45,7 @@ function formatDateInput(dateValue) {
 }
 
 /**
- * Expands a date-only list end filter into an inclusive end-of-day timestamp.
+ * Normalizes a date-only list filter value for query serialization.
  */
 export function normalizeInclusiveEndDateTime(value) {
     const normalized = typeof value === 'string' ? value.trim() : '';
@@ -54,7 +54,7 @@ export function normalizeInclusiveEndDateTime(value) {
         return normalized;
     }
 
-    return `${normalized}-23-59`;
+    return `${normalized}`;
 }
 
 /**

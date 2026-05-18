@@ -191,20 +191,20 @@ test('hasSpecificHomeQuery detects supported filters and ignores blank values', 
 	assert.equal(hasSpecificHomeQuery('?to=2026-05-14'), true);
 });
 
-test('home filter serialization keeps only supported non-empty values', () => {
+test('home filter serialization keeps only supported non-empty values and expands end dates', () => {
 	assert.equal(createHomeFilterParams({
 		search: ' mostra ',
 		category: ' ',
 		from: '2026-05-10',
-		to: '',
-	}).toString(), 'search=mostra&from=2026-05-10');
+		to: '2026-05-14',
+	}).toString(), 'search=mostra&from=2026-05-10&to=2026-05-14');
 
 	assert.equal(serializeHomeFilters({
 		filterSearch: { value: ' feira ' },
 		filterCategory: { value: 'academico' },
 		filterFrom: { value: '2026-05-11' },
-		filterTo: { value: ' ' },
-	}).toString(), 'search=feira&category=academico&from=2026-05-11');
+		filterTo: { value: '2026-05-15' },
+	}).toString(), 'search=feira&category=academico&from=2026-05-11&to=2026-05-15');
 
 	assert.equal(serializeHomeFilters(null).toString(), '');
 });

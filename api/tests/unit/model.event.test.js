@@ -288,6 +288,137 @@ describe('model/event', () => {
         ]);
     });
 
+    test('list normalizes date-only range filters to the selected local calendar day', async () => {
+        const driver = {
+            toDateTime(value) {
+                return `mysql:${value}`;
+            },
+            between(start, end) {
+                return { between: [start, end] };
+            },
+        };
+        trackReplacement(restores, Event, 'driver', driver);
+
+        const calls = [];
+        trackReplacement(restores, Event, 'find', async options => {
+            calls.push(options);
+            return [];
+        });
+
+        await expect(Event.list({ from: '2026-05-31', to: '2026-05-31' })).resolves.toEqual([]);
+
+        expect(calls).toEqual([
+            {
+                filter: {
+                    status: 'published',
+                    date: {
+                        between: [
+                            `mysql:${new Date(2026, 4, 31, 0, 0, 0, 0).toISOString()}`,
+                            `mysql:${new Date(2026, 4, 31, 23, 59, 59, 999).toISOString()}`,
+                        ],
+                    },
+                },
+                opt: { order: { date: 1 } },
+            },
+        ]);
+    });
+
+    test('list uses the requested time zone for date-only week boundaries', async () => {
+        const driver = {
+            toDateTime(value) {
+                return `mysql:${value}`;
+            },
+            between(start, end) {
+                return { between: [start, end] };
+            },
+        };
+        trackReplacement(restores, Event, 'driver', driver);
+
+        const calls = [];
+        trackReplacement(restores, Event, 'find', async options => {
+            calls.push(options);
+            return [];
+        });
+
+        await expect(Event.list({
+            from: '2026-05-17',
+            to: '2026-05-23',
+            timezone: 'America/Sao_Paulo',
+        })).resolves.toEqual([]);
+
+        expect(calls).toEqual([
+            {
+                filter: {
+                    status: 'published',
+                    date: {
+                        between: [
+                            'mysql:2026-05-17T03:00:00.000Z',
+                            'mysql:2026-05-24T02:59:59.999Z',
+                        ],
+                    },
+                },
+                opt: { order: { date: 1 } },
+            },
+        ]);
+    });
+
+    test('list ignores blank or invalid time zone values without throwing', async () => {
+        const driver = {
+            toDateTime(value) {
+                return `mysql:${value}`;
+            },
+            between(start, end) {
+                return { between: [start, end] };
+            },
+        };
+        trackReplacement(restores, Event, 'driver', driver);
+
+        const calls = [];
+        trackReplacement(restores, Event, 'find', async options => {
+            calls.push(options);
+            return [];
+        });
+
+        await expect(Event.list({
+            from: '2026-05-31',
+            to: '2026-05-31',
+            timezone: '',
+        })).resolves.toEqual([]);
+
+        await expect(Event.list({
+            from: '2026-05-31',
+            to: '2026-05-31',
+            timezone: 'Invalid/Timezone',
+        })).resolves.toEqual([]);
+
+        expect(calls).toEqual([
+            {
+                filter: {
+                    status: 'published',
+                    date: {
+                        between: [
+                            `mysql:${new Date(2026, 4, 31, 0, 0, 0, 0).toISOString()}`,
+                            `mysql:${new Date(2026, 4, 31, 23, 59, 59, 999).toISOString()}`,
+                        ],
+                    },
+                },
+                opt: { order: { date: 1 } },
+            },
+            {
+                filter: {
+                    status: 'published',
+                    date: {
+                        between: [
+                            `mysql:${new Date(2026, 4, 31, 0, 0, 0, 0).toISOString()}`,
+                            `mysql:${new Date(2026, 4, 31, 23, 59, 59, 999).toISOString()}`,
+                        ],
+                    },
+                },
+                opt: { order: { date: 1 } },
+            },
+        ]);
+    });
+
     test('listCurrentWeek delegates to the public Sunday-to-Saturday week range', async () => {
         const listSpy = jest.spyOn(Event, 'list').mockResolvedValue([]);
         const referenceDate = new Date(2026, 3, 7, 18, 0, 0, 0);

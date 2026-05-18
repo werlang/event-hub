@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
     ApiClient,
     TOKEN_STORAGE_KEY,
+    appendTimeZoneHeader,
     apiClient,
     clearToken,
     readToken,
@@ -175,6 +176,48 @@ test('ApiClient converts timeout failures into the shared public network-error s
         raw: response.raw,
     });
     assert.equal(response.raw.message, 'Request timeout');
+});
+
+test('appendEventRequestTimeZoneHeader adds the browser timezone only for event requests', () => {
+    const expectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    assert.deepEqual(appendTimeZoneHeader('/events?from=2026-05-17&to=2026-05-23'), {
+        Timezone: expectedTimezone,
+    });
+    assert.deepEqual(appendTimeZoneHeader('/events', { Timezone: 'America/Manaus' }), {
+        Timezone: 'America/Manaus',
+    });
+    assert.deepEqual(appendTimeZoneHeader('/auth/me'), {});
+});
+
+test('ApiClient appends the browser timezone header to event requests before dispatch', async () => {
+    const expectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const recordedCalls = [];
+    const client = new ApiClient({
+        endpointResolver: {
+            resolve(path) {
+                return `https://api.example${path.startsWith('/') ? path : `/${path}`}`;
+            },
+        },
+        request: {
+            async get(endpoint, options) {
+                recordedCalls.push({ endpoint, options });
+                return { error: false, status: 200, data: { events: [] } };
+            },
+        },
+    });
+
+    const response = await client.request('/events?from=2026-05-17&to=2026-05-23');
+
+    assert.equal(recordedCalls[0].endpoint, 'https://api.example/events?from=2026-05-17&to=2026-05-23');
+    assert.deepEqual(recordedCalls[0].options, {
+        headers: {
+            Accept: 'application/json',
+            Timezone: expectedTimezone,
+        },
+    });
+    assert.equal(response.ok, true);
+    assert.deepEqual(response.data, { events: [] });
 });
 
 test('token helpers trim persisted values and clear them cleanly', () => {

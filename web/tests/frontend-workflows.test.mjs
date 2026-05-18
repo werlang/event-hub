@@ -28,7 +28,7 @@ import {
 } from '../src/js/dashboard/event-management.js';
 import { Event } from '../src/js/helpers/event.js';
 import { createHomeFilterParams } from '../src/js/helpers/query-state.js';
-import { getCurrentWeekRangeLocal } from '../src/js/helpers/week-range.js';
+import { getCurrentWeekRangeLocal, normalizeInclusiveEndDateTime } from '../src/js/helpers/week-range.js';
 
 const WEB_ROOT = path.resolve(import.meta.dirname, '..');
 const HOME_ENTRY_PATH = path.join(WEB_ROOT, 'src/js/index.js');
@@ -1206,6 +1206,7 @@ async function loadWeekScenario({ templateVars, responseFactory }) {
                 Toast,
                 Tooltip: TooltipStub,
                 getCurrentWeekRangeLocal,
+                normalizeInclusiveEndDateTime,
             },
         });
 
