@@ -7,8 +7,6 @@ import { getCurrentWeekRangeLocal } from '../helpers/week-range.js';
 
 export class Event extends Model {
 
-    static #DATE_ONLY_FILTER_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-
     static table = 'events';
     static view = [
         'id',
@@ -309,18 +307,35 @@ export class Event extends Model {
      * Checks whether one list filter value is a calendar day without an explicit time component.
      */
     static #isDateOnlyFilterValue(value) {
-        return typeof value === 'string' && Event.#DATE_ONLY_FILTER_PATTERN.test(value.trim());
+        const dateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/;
+        return typeof value === 'string' && dateOnlyPattern.test(value.trim());
+    }
+
+    /**
+     * Checks whether value is dash separated date and time
+     */
+
+    static #isDateTimeFilterValue(value) {
+        const dateTimePattern = /^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}$/;
+        return typeof value === 'string' && dateTimePattern.test(value.trim());
     }
 
     /**
      * Normalizes an inclusive list end filter so date-only values cover the full selected day.
      */
     static #normalizeListEndFilterValue(value) {
-        if (!Event.#isDateOnlyFilterValue(value)) {
-            return value;
+        if (Event.#isDateOnlyFilterValue(value)) {
+            return `${value.trim()}T23:59:59.999Z`;
+        }
+        else if (Event.#isDateTimeFilterValue(value)) {
+            const [year, month, day, hour, minute] = value.trim().split('-').map(Number);
+            const date = new Date(Date.UTC(year, month - 1, day, hour, minute));
+            date.setSeconds(59, 999);
+            return date.toISOString();
         }
 
-        return `${value.trim()}T23:59:59.999Z`;
+        return value;
+
     }
 
     /**

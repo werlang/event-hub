@@ -1,4 +1,4 @@
-import { getCurrentWeekRangeLocal } from './week-range.js';
+import { getCurrentWeekRangeLocal, normalizeInclusiveEndDateTime } from './week-range.js';
 
 /**
  * Normalizes a possible query-string value into trimmed text.
@@ -57,7 +57,7 @@ function normalizeFilters(source = {}) {
         search: source.search,
         category: source.category,
         from: source.from,
-        to: source.to,
+        to: normalizeInclusiveEndDateTime(source.to),
     };
 
     Object.entries(map).forEach(([key, value]) => {

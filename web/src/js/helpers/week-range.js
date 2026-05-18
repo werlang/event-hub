@@ -45,6 +45,19 @@ function formatDateInput(dateValue) {
 }
 
 /**
+ * Expands a date-only list end filter into an inclusive end-of-day timestamp.
+ */
+export function normalizeInclusiveEndDateTime(value) {
+    const normalized = typeof value === 'string' ? value.trim() : '';
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+        return normalized;
+    }
+
+    return `${normalized}-23-59`;
+}
+
+/**
  * Returns the current local Sunday-to-Saturday range.
  */
 export function getCurrentWeekRangeLocal(referenceDate = new Date()) {

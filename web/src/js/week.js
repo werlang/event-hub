@@ -7,7 +7,7 @@ import { Toast } from './components/toast.js';
 import { Tooltip } from './components/tooltip.js';
 import { apiClient } from './helpers/api.js';
 import { TemplateVar } from './helpers/template-var.js';
-import { getCurrentWeekRangeLocal } from './helpers/week-range.js';
+import { getCurrentWeekRangeLocal, normalizeInclusiveEndDateTime } from './helpers/week-range.js';
 
 const WEEK_TOAST_GROUP = 'week-status';
 const WEEK_EVENTS_PER_PAGE = 10;
@@ -112,7 +112,10 @@ function readCurrentWeekRange() {
  * Creates the public API path used to load the approved weekly event list.
  */
 function createWeekEventsPath({ from, to }) {
-    const params = new URLSearchParams({ from, to });
+    const params = new URLSearchParams({
+        from,
+        to: normalizeInclusiveEndDateTime(to),
+    });
     return `/events?${params.toString()}`;
 }
 
