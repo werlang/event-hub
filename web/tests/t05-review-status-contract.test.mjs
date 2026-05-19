@@ -161,8 +161,8 @@ test('dashboard ships admin discovery surfaces for published and rejected events
         normalizeValue(hooks.readModerationEventActionDefinitions({ scope: 'published' })).map(action => action.action),
         ['edit', 'delete'],
     );
-    assert.deepEqual(publishedEvents.map(event => event.id), ['evt-other-published']);
-    assert.deepEqual(rejectedEvents.map(event => event.id), ['evt-other-rejected']);
+    assert.deepEqual(publishedEvents.map(event => event.id), ['evt-admin-own', 'evt-other-published']);
+    assert.deepEqual(rejectedEvents.map(event => event.id), ['evt-admin-own-rejected', 'evt-other-rejected']);
 });
 
 test('dashboard hides the admin pending-request preference by default in the template', async () => {

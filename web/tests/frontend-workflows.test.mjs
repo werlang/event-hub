@@ -2327,14 +2327,14 @@ test('dashboard browse filters cover status, category, past visibility, and orde
             title: 'Rejeitado futuro',
             status: 'rejected',
             category: 'extensao',
-            date: '2026-04-20T12:00:00.000Z',
+            date: '2099-04-20T12:00:00.000Z',
         },
         {
             id: 'evt-future-pending',
             title: 'Pendente futuro',
             status: 'pending',
             category: 'academico',
-            date: '2026-04-18T12:00:00.000Z',
+            date: '2099-04-18T12:00:00.000Z',
         },
     ];
 

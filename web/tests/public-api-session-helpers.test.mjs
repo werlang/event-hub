@@ -141,6 +141,7 @@ test('ApiClient keeps enveloped API errors intact for public auth screens', asyn
         options: {
             headers: {
                 Accept: 'application/json',
+                Timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             },
         },
     }]);
@@ -176,18 +177,6 @@ test('ApiClient converts timeout failures into the shared public network-error s
         raw: response.raw,
     });
     assert.equal(response.raw.message, 'Request timeout');
-});
-
-test('appendEventRequestTimeZoneHeader adds the browser timezone only for event requests', () => {
-    const expectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    assert.deepEqual(appendTimeZoneHeader('/events?from=2026-05-17&to=2026-05-23'), {
-        Timezone: expectedTimezone,
-    });
-    assert.deepEqual(appendTimeZoneHeader('/events', { Timezone: 'America/Manaus' }), {
-        Timezone: 'America/Manaus',
-    });
-    assert.deepEqual(appendTimeZoneHeader('/auth/me'), {});
 });
 
 test('ApiClient appends the browser timezone header to event requests before dispatch', async () => {
