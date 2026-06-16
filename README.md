@@ -48,9 +48,11 @@ The API reads only this JSON file for the Google Calendar flow; there is no envi
 ## Tarefas em background da API
 
 - A API inicializa tarefas em background no boot normal via `startBackgroundTasks(...)`.
-- A tarefa recorrente atualmente registrada é `weekly-email-digest`, definida em `api/background/weekly-digest-task.js` com a regra textual `every sunday at 18:00`.
+- As tarefas recorrentes registradas são `weekly-email-digest`, definida em `api/background/weekly-digest-task.js`, e `database-backup`, definida em `api/background/database-backup-task.js`.
 - A classe `BackgroundTask` aceita regras textuais legíveis e expressões cron.
 - O digest semanal usa `WeeklyDigestManager` para ler os eventos publicados da semana atual, montar o e-mail localizado e apontar de volta para `/week` e para o link compartilhado do Google Calendar quando configurado.
+- O backup de banco fica desativado por padrão. Quando `DATABASE_BACKUP_ENABLED=true`, a API executa o dump MySQL, comprime o arquivo e envia para Google Cloud Storage pela regra `DATABASE_BACKUP_RULE` (`every day at 00:00` por padrão).
+- Para o backup, salve o JSON da service account em `api/config/database-backup-credentials.json` ou ajuste `DATABASE_BACKUP_GCLOUD_ACCOUNT_FILE`. O projeto, bucket e pasta de destino vêm de `DATABASE_BACKUP_GCLOUD_PROJECT_ID`, `DATABASE_BACKUP_GCLOUD_BUCKET` e `DATABASE_BACKUP_GCLOUD_STORAGE_DIR`.
 - Fora de produção, o scheduler só executa callbacks quando `EMAIL_TESTING=true`; caso contrário, ele apenas registra em log os disparos ignorados.
 
 ## Fluxos principais
@@ -117,6 +119,8 @@ The API reads only this JSON file for the Google Calendar flow; there is no envi
 - `EMAIL_TESTING`
 - `SMTP_FROM`, `SMTP_FROM_NAME`, `SMTP_FROM_EMAIL`
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`
+- `DATABASE_BACKUP_ENABLED`, `DATABASE_BACKUP_RULE`
+- `DATABASE_BACKUP_GCLOUD_PROJECT_ID`, `DATABASE_BACKUP_GCLOUD_BUCKET`, `DATABASE_BACKUP_GCLOUD_STORAGE_DIR`, `DATABASE_BACKUP_GCLOUD_ACCOUNT_FILE`
 
 ## Roles
 

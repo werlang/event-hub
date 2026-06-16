@@ -15,6 +15,7 @@ describe('background/task-host', () => {
 
     afterEach(() => {
         jest.useRealTimers();
+        delete process.env.EMAIL_TESTING;
     });
 
     test('start schedules a human-friendly weekly rule in production', async () => {
@@ -62,6 +63,7 @@ describe('background/task-host', () => {
     });
 
     test('start still invokes callbacks outside production when background tasks are enabled', async () => {
+        process.env.EMAIL_TESTING = 'true';
         const callback = jest.fn().mockResolvedValue(undefined);
         const task = new BackgroundTask('every sunday at 18:00', callback, {
             environment: 'development',

@@ -11,7 +11,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 const host = '0.0.0.0';
 
-const BACKGROUND_TASK_FILES = ['weekly-digest-task'];
+const BACKGROUND_TASK_FILES = ['weekly-digest-task', 'database-backup-task'];
 
 app.use(cors());
 app.use(express.json());
