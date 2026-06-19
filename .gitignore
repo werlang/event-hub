@@ -17,6 +17,3 @@ web/public/assets/fonts
 web/public/**/generated
 
 # AI workflow files
-.github/references
-.agents
-.github/tasks/????-??????*.md
