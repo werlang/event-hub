@@ -20,7 +20,13 @@
             <form id="login-form" class="form form--visible" aria-hidden="false">
                 <h2>Bem-vindo de volta!</h2>
                 <label>E-mail<input type="email" name="email" required></label>
-                <label>Senha<input type="password" name="password" required></label>
+                <label>
+                    Senha
+                    <div class="password-input">
+                        <input type="password" name="password" required>
+                        <button class="auth-link" id="forgot-password-link" type="button">Esqueci minha senha</button>
+                    </div>
+                </label>
                 <button class="button button--primary" type="submit"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i><span>Entrar</span></button>
             </form>
             <form id="register-form" class="form" aria-hidden="true">
@@ -30,6 +36,30 @@
                 <label>Senha<input type="password" name="password" required></label>
                 <label>Confirmar senha<input type="password" name="confirmPassword" required></label>
                 <button class="button button--primary" type="submit"><i class="fa-solid fa-user-plus" aria-hidden="true"></i><span>Criar conta</span></button>
+            </form>
+            <form id="password-reset-request-form" class="form" aria-hidden="true" hidden>
+                <div class="auth-form__header">
+                    <button class="auth-link auth-link--back" data-auth-view="login" type="button">
+                        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                        <span>Voltar para entrar</span>
+                    </button>
+                    <h2>Redefinir senha</h2>
+                </div>
+                <label>E-mail<input type="email" name="email" autocomplete="email" required></label>
+                <button class="button button--primary" type="submit"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Enviar link</span></button>
+            </form>
+            <form id="password-reset-form" class="form" aria-hidden="true" hidden>
+                <div class="auth-form__header">
+                    <button class="auth-link auth-link--back" data-auth-view="login" type="button">
+                        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                        <span>Voltar para entrar</span>
+                    </button>
+                    <h2>Escolha uma nova senha</h2>
+                </div>
+                <input type="hidden" name="token" id="password-reset-token">
+                <label>Nova senha<input type="password" name="newPassword" required></label>
+                <label>Confirmar senha<input type="password" name="confirmPassword" required></label>
+                <button class="button button--primary" type="submit"><i class="fa-solid fa-key" aria-hidden="true"></i><span>Atualizar senha</span></button>
             </form>
         </section>
     </main>

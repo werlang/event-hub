@@ -90,6 +90,58 @@ main > .panel {
     }
 }
 
+.auth-form__header {
+    display: grid;
+    gap: 10px;
+    align-items: start;
+    padding-bottom: 8px;
+    margin-bottom: 2px;
+
+    & h2 {
+        margin-bottom: 0;
+    }
+}
+
+.password-input {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+#forgot-password-link {
+    padding-right: 4px;
+    margin-bottom: -32px;
+}
+
+.auth-link {
+    justify-self: start;
+    width: fit-content;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--color-main-alt);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.auth-link--back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    font-size: 0.92rem;
+    letter-spacing: 0.01em;
+}
+
+.auth-link:hover,
+.auth-link:focus-visible {
+    color: var(--color-main);
+}
+
 @media (min-width: 560px) {
     .form {
         & .button {
@@ -108,6 +160,10 @@ main > .panel {
             flex: 1 1 0;
             justify-content: center;
         }
+    }
+
+    .auth-form__header {
+        gap: 8px;
     }
 
     main > .panel {

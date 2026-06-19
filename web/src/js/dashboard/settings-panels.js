@@ -482,7 +482,7 @@ export class DashboardSettingsPanels extends BaseComponent {
             return;
         }
 
-        const response = await requestApi('/auth/users/password/reset', {
+        const response = await requestApi('/users/password/reset', {
             method: 'PUT',
             token: this.#readSessionToken(),
             body: { email, newPassword },
@@ -536,7 +536,7 @@ export class DashboardSettingsPanels extends BaseComponent {
             return;
         }
 
-        const response = await requestApi(`/auth/users/${lookup.user.id}/promote`, {
+        const response = await requestApi(`/users/${lookup.user.id}/promote`, {
             method: 'PUT',
             token: this.#readSessionToken(),
         });
@@ -594,7 +594,7 @@ export class DashboardSettingsPanels extends BaseComponent {
             };
         }
 
-        const response = await requestApi('/auth/users', {
+        const response = await requestApi('/users', {
             token: this.#readSessionToken(),
         });
 

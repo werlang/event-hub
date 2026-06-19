@@ -12,8 +12,11 @@ new Header();
 
 const LOGIN_TAB = 'login';
 const REGISTER_TAB = 'register';
+const RESET_REQUEST_VIEW = 'reset-request';
+const RESET_PASSWORD_VIEW = 'reset-password';
 const AUTH_TOAST_GROUP = 'auth-status';
 const AUTH_REDIRECT_TOAST_GROUP = 'auth-redirect';
+const VISIBILITY_STATE_KEY = 'visibility';
 
 /**
  * Collects the login page elements used by the auth flow.
@@ -21,8 +24,14 @@ const AUTH_REDIRECT_TOAST_GROUP = 'auth-redirect';
 function createElements() {
     return {
         tabs: Array.from(document.querySelectorAll('.tabs .tab[data-tab]')),
+        tabsContainer: document.querySelector('.tabs'),
         loginForm: document.querySelector('#login-form'),
         registerForm: document.querySelector('#register-form'),
+        passwordResetRequestForm: document.querySelector('#password-reset-request-form'),
+        passwordResetForm: document.querySelector('#password-reset-form'),
+        passwordResetTokenInput: document.querySelector('#password-reset-token'),
+        forgotPasswordButton: document.querySelector('#forgot-password-link'),
+        authViewButtons: Array.from(document.querySelectorAll('[data-auth-view]')),
     };
 }
 
@@ -31,6 +40,18 @@ function createElements() {
  */
 function readInitialAuthTab() {
     return window.location.hash === '#register' ? REGISTER_TAB : LOGIN_TAB;
+}
+
+/**
+ * Reads the one-time reset token supplied by the reset-password route.
+ */
+function readResetToken() {
+    const templateToken = TemplateVar.get('resetToken');
+    if (typeof templateToken === 'string' && templateToken.trim()) {
+        return templateToken.trim();
+    }
+
+    return new URLSearchParams(window.location.search).get('token') || '';
 }
 
 /**
@@ -98,6 +119,44 @@ function showAuthToast(text, tone = 'error') {
  */
 function configureSubmitButton(form, label) {
     form.getSubmitButton()?.setLoadingLabel(label);
+}
+
+/**
+ * Synchronizes one form's visual and interactive visibility state.
+ */
+function setFormVisible(form, isVisible) {
+    if (!form?.isReady()) {
+        return;
+    }
+
+    const element = form.get();
+    element.classList.toggle('form--visible', isVisible);
+    element.hidden = !isVisible;
+    element.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
+    form.setEnabled(isVisible, { stateKey: VISIBILITY_STATE_KEY });
+}
+
+/**
+ * Shows the requested authentication page state and hides the others.
+ */
+function showAuthView(view, { elements, forms, authTabs }) {
+    const isResetRequest = view === RESET_REQUEST_VIEW;
+    const isResetPassword = view === RESET_PASSWORD_VIEW;
+    const isAuthTabsView = !isResetRequest && !isResetPassword;
+
+    if (elements.tabsContainer) {
+        elements.tabsContainer.hidden = !isAuthTabsView;
+    }
+
+    if (isAuthTabsView) {
+        authTabs.setActive(view === REGISTER_TAB ? REGISTER_TAB : LOGIN_TAB);
+    } else {
+        setFormVisible(forms.login, false);
+        setFormVisible(forms.register, false);
+    }
+
+    setFormVisible(forms.passwordResetRequest, isResetRequest);
+    setFormVisible(forms.passwordReset, isResetPassword);
 }
 
 /**
@@ -186,6 +245,76 @@ async function submitRegister({ form, values }) {
 }
 
 /**
+ * Requests a one-time password-reset link for the submitted e-mail.
+ */
+async function submitPasswordResetRequest({ form, values, showLoginView = null }) {
+    const email = String(values.email || '').trim();
+
+    if (!email) {
+        showAuthToast('Informe o e-mail da conta.');
+        form.getField('email')?.focus();
+        return;
+    }
+
+    clearAuthToasts();
+
+    const response = await requestApi('/users/password-reset', {
+        method: 'POST',
+        body: { email },
+    });
+
+    if (!response.ok) {
+        showAuthToast(response.message || 'Não foi possível solicitar a redefinição.');
+        return;
+    }
+
+    form.reset();
+    showAuthToast(response.message || 'Se o e-mail estiver cadastrado, enviaremos um link para redefinir a senha.', 'success');
+    showLoginView?.();
+}
+
+/**
+ * Consumes a one-time reset token and stores the submitted new password.
+ */
+async function submitPasswordResetConfirmation({ form, values, showLoginView = null }) {
+    const token = String(values.token || readResetToken() || '').trim();
+    const newPassword = String(values.newPassword || '');
+    const confirmPassword = String(values.confirmPassword || '');
+
+    if (!token || !newPassword) {
+        showAuthToast('Informe a nova senha para continuar.');
+        form.getField('newPassword')?.focus();
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        showAuthToast('A confirmação de senha não confere.');
+        form.getField('confirmPassword')?.focus();
+        return;
+    }
+
+    clearAuthToasts();
+
+    const response = await requestApi('/users/password-reset', {
+        method: 'PUT',
+        body: {
+            token,
+            newPassword,
+        },
+    });
+
+    if (!response.ok) {
+        showAuthToast(response.message || 'Não foi possível redefinir a senha.');
+        return;
+    }
+
+    form.reset();
+    window.history?.replaceState?.(null, '', '/login');
+    showAuthToast(response.message || 'Senha redefinida. Você já pode entrar com a nova senha.', 'success');
+    showLoginView?.();
+}
+
+/**
  * Validates the current stored session to inform the login screen.
  */
 async function checkCurrentSession() {
@@ -207,13 +336,21 @@ function initAuthTabs() {
     const elements = createElements();
     const loginForm = new Form(elements.loginForm);
     const registerForm = new Form(elements.registerForm);
+    const passwordResetRequestForm = new Form(elements.passwordResetRequestForm);
+    const passwordResetForm = new Form(elements.passwordResetForm);
 
-    if (!elements.tabs.length || !loginForm.isReady() || !registerForm.isReady()) {
+    if (!elements.tabs.length
+        || !loginForm.isReady()
+        || !registerForm.isReady()
+        || !passwordResetRequestForm.isReady()
+        || !passwordResetForm.isReady()) {
         return;
     }
 
     configureSubmitButton(loginForm, 'Entrando...');
     configureSubmitButton(registerForm, 'Criando conta...');
+    configureSubmitButton(passwordResetRequestForm, 'Enviando...');
+    configureSubmitButton(passwordResetForm, 'Atualizando...');
 
     const authTabs = new AuthTabs({
         tabs: elements.tabs,
@@ -221,10 +358,26 @@ function initAuthTabs() {
         registerForm,
         onChange: syncAuthHash,
     });
+    const forms = {
+        login: loginForm,
+        register: registerForm,
+        passwordResetRequest: passwordResetRequestForm,
+        passwordReset: passwordResetForm,
+    };
+    const showLoginView = () => showAuthView(LOGIN_TAB, { elements, forms, authTabs });
 
     authTabs.setRegisterEnabled(true);
     authTabs.wire();
-    authTabs.setActive(readInitialAuthTab());
+
+    elements.forgotPasswordButton?.addEventListener('click', () => {
+        showAuthView(RESET_REQUEST_VIEW, { elements, forms, authTabs });
+    });
+
+    elements.authViewButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            showAuthView(button.dataset.authView || LOGIN_TAB, { elements, forms, authTabs });
+        });
+    });
 
     loginForm.submit(async (values, form) => {
         await submitLogin({
@@ -240,7 +393,30 @@ function initAuthTabs() {
         });
     });
 
-    checkCurrentSession();
+    passwordResetRequestForm.submit(async (values, form) => {
+        await submitPasswordResetRequest({
+            form,
+            values,
+            showLoginView,
+        });
+    });
+
+    passwordResetForm.submit(async (values, form) => {
+        await submitPasswordResetConfirmation({
+            form,
+            values,
+            showLoginView,
+        });
+    });
+
+    const resetToken = readResetToken();
+    if (resetToken) {
+        elements.passwordResetTokenInput.value = resetToken;
+        showAuthView(RESET_PASSWORD_VIEW, { elements, forms, authTabs });
+    } else {
+        showAuthView(readInitialAuthTab(), { elements, forms, authTabs });
+        checkCurrentSession();
+    }
 }
 
 initAuthTabs();

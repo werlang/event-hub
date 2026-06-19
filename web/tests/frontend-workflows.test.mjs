@@ -202,7 +202,7 @@ function transformLoginEntrypointSource(source) {
     return stripImports(source)
     .replace('\nnew Header();\n', '\n')
         .replace(/\ninitAuthTabs\(\);\s*$/, '\n')
-        .concat('\nglobalThis.__workflowLogin = { readRedirectTarget, submitLogin, submitRegister };\n');
+        .concat('\nglobalThis.__workflowLogin = { readRedirectTarget, submitLogin, submitRegister, submitPasswordResetRequest, submitPasswordResetConfirmation };\n');
 }
 
 /**
@@ -1441,6 +1441,114 @@ test('register workflow validates required fields and confirmation before starti
     assert.equal(scenario.toastRecorded.flashes.at(-1)?.text, 'Conta criada com sucesso. Redirecionando...');
 });
 
+test('password reset workflow requests a link and consumes reset tokens', async () => {
+    const scenario = await loadLoginScenario({
+        requestApiImpl(path, options) {
+            if (path === '/users/password-reset' && options.method === 'POST') {
+                return {
+                    ok: true,
+                    message: 'Se o e-mail estiver cadastrado, enviaremos um link para redefinir a senha.',
+                    data: {},
+                };
+            }
+
+            if (path === '/users/password-reset' && options.method === 'PUT') {
+                return {
+                    ok: true,
+                    message: 'Senha redefinida. Você já pode entrar com a nova senha.',
+                    data: {},
+                };
+            }
+
+            throw new Error(`Unexpected request path: ${path}`);
+        },
+    });
+    const focusedFields = [];
+    let resetCalls = 0;
+    const form = {
+        getField(fieldName) {
+            return {
+                focus() {
+                    focusedFields.push(fieldName);
+                },
+            };
+        },
+        reset() {
+            resetCalls += 1;
+        },
+    };
+    let loginViewCalls = 0;
+
+    await scenario.hooks.submitPasswordResetRequest({
+        form,
+        values: {
+            email: '',
+        },
+    });
+    assert.equal(scenario.recorded.requests.length, 0);
+    assert.equal(focusedFields.at(-1), 'email');
+    assert.equal(scenario.toastRecorded.shows.at(-1)?.text, 'Informe o e-mail da conta.');
+
+    await scenario.hooks.submitPasswordResetRequest({
+        form,
+        values: {
+            email: ' membro@ifsul.edu.br ',
+        },
+        showLoginView() {
+            loginViewCalls += 1;
+        },
+    });
+    assert.deepEqual(scenario.recorded.requests.at(-1), {
+        path: '/users/password-reset',
+        options: {
+            method: 'POST',
+            body: {
+                email: 'membro@ifsul.edu.br',
+            },
+        },
+    });
+    assert.equal(resetCalls, 1);
+    assert.equal(loginViewCalls, 1);
+    assert.equal(scenario.toastRecorded.shows.at(-1)?.text, 'Se o e-mail estiver cadastrado, enviaremos um link para redefinir a senha.');
+
+    await scenario.hooks.submitPasswordResetConfirmation({
+        form,
+        values: {
+            token: 'reset-token',
+            newPassword: 'nova-senha',
+            confirmPassword: 'outra-senha',
+        },
+    });
+    assert.equal(scenario.recorded.requests.length, 1);
+    assert.equal(focusedFields.at(-1), 'confirmPassword');
+    assert.equal(scenario.toastRecorded.shows.at(-1)?.text, 'A confirmação de senha não confere.');
+
+    await scenario.hooks.submitPasswordResetConfirmation({
+        form,
+        values: {
+            token: 'reset-token',
+            newPassword: 'nova-senha',
+            confirmPassword: 'nova-senha',
+        },
+        showLoginView() {
+            loginViewCalls += 1;
+        },
+    });
+    assert.deepEqual(scenario.recorded.requests.at(-1), {
+        path: '/users/password-reset',
+        options: {
+            method: 'PUT',
+            body: {
+                token: 'reset-token',
+                newPassword: 'nova-senha',
+            },
+        },
+    });
+    assert.equal(resetCalls, 2);
+    assert.equal(loginViewCalls, 2);
+    assert.equal(scenario.toastRecorded.shows.at(-1)?.text, 'Senha redefinida. Você já pode entrar com a nova senha.');
+});
+
 test('dashboard member workflow renders visible event metadata, dispatches rejected-owner actions, and navigates create/settings tabs', async () => {
     const rejectedEvent = {
         id: 'evt-rejected',
@@ -1690,7 +1798,7 @@ test('admin settings panels reset passwords and promote users through the dashbo
     const expectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const scenario = await loadSettingsScenario({
         requestApiImpl(path, options) {
-            if (path === '/auth/users/password/reset') {
+            if (path === '/users/password/reset') {
                 return {
                     ok: true,
                     message: 'Senha redefinida.',
@@ -1698,7 +1806,7 @@ test('admin settings panels reset passwords and promote users through the dashbo
                 };
             }
 
-            if (path === '/auth/users') {
+            if (path === '/users') {
                 return {
                     ok: true,
                     data: {
@@ -1714,7 +1822,7 @@ test('admin settings panels reset passwords and promote users through the dashbo
                 };
             }
 
-            if (path === '/auth/users/member-2/promote') {
+            if (path === '/users/member-2/promote') {
                 return {
                     ok: true,
                     message: 'Usuario promovido.',
@@ -1766,7 +1874,7 @@ test('admin settings panels reset passwords and promote users through the dashbo
 
         assert.deepEqual(scenario.requestCalls, [
             {
-                path: '/auth/users/password/reset',
+                path: '/users/password/reset',
                 options: {
                     method: 'PUT',
                     token: 'admin-token',
@@ -1777,13 +1885,13 @@ test('admin settings panels reset passwords and promote users through the dashbo
                 },
             },
             {
-                path: '/auth/users',
+                path: '/users',
                 options: {
                     token: 'admin-token',
                 },
             },
             {
-                path: '/auth/users/member-2/promote',
+                path: '/users/member-2/promote',
                 options: {
                     method: 'PUT',
                     token: 'admin-token',
