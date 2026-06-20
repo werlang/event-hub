@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { router as auth } from './routes/auth.js';
 import { router as events } from './routes/events.js';
+import { router as users } from './routes/users.js';
 import { HttpError } from './helpers/error.js';
 import { sendSuccess } from './helpers/response.js';
 import { errorMiddleware } from './middleware/error.js';
@@ -19,6 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/auth', auth);
 app.use('/events', events);
+app.use('/users', users);
 
 /**
  * Serves the readiness probe used by local and container health checks.

@@ -3,11 +3,7 @@ import { sendWeeklyDigest } from '../background/weekly-digest-task.js';
 import { User } from '../model/user.js';
 import { signToken } from '../helpers/token.js';
 import { authMiddleware } from '../middleware/auth.js';
-import {
-    assertPasswordResettableUser,
-    assertPromotableUser,
-    requireAdminUser,
-} from '../middleware/authorization.js';
+import { requireAdminUser } from '../middleware/authorization.js';
 import { HttpError } from '../helpers/error.js';
 import { sendCreated, sendSuccess } from '../helpers/response.js';
 
@@ -86,24 +82,6 @@ function parseEmailPreferencesPayload(payload = {}) {
     }
 
     return User.normalizeEmailPreferences(preferences);
-}
-
-/**
- * Validates the administrator password reset payload.
- */
-function parseAdminPasswordResetPayload(payload = {}) {
-    const email = typeof payload.email === 'string'
-        ? payload.email.trim().toLowerCase()
-        : '';
-    const newPassword = typeof payload.newPassword === 'string'
-        ? payload.newPassword
-        : '';
-
-    if (!email || !newPassword) {
-        throw new HttpError(400, 'Informe o e-mail do usuário e a nova senha.');
-    }
-
-    return { email, newPassword };
 }
 
 /**
@@ -303,48 +281,6 @@ router.put('/password',
 });
 
 /**
- * Resets a member password through the administrator tooling.
- */
-router.put('/users/password/reset',
-    authMiddleware,
-    requireAdminUser,
-    async (req, res, next) => {
-    try {
-        await loadAuthenticatedUser(req.user.id);
-        const { email, newPassword } = parseAdminPasswordResetPayload(req.body);
-        const targetUser = await User.findByEmail(email);
-
-        assertPasswordResettableUser(targetUser);
-
-        const updatedUser = await User.updatePassword(targetUser.id, newPassword);
-        return sendSuccess(res, {
-            data: { user: publicUser(updatedUser) },
-            message: 'Senha do usuário atualizada.',
-        });
-    } catch (err) {
-        return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível redefinir a senha do usuário.', err));
-    }
-});
-
-/**
- * Lists safe user records for administrator dashboard tools.
- */
-router.get('/users', 
-    authMiddleware, 
-    requireAdminUser,
-    async (req, res, next) => {
-    try {
-        const currentUser = await loadAuthenticatedUser(req.user.id);
-        const users = await User.listForAdministration({ excludeId: currentUser.id });
-        return sendSuccess(res, {
-            data: { users: users.map(publicUser) },
-        });
-    } catch (err) {
-        return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível carregar os usuários.', err));
-    }
-});
-
-/**
  * Sends the weekly digest immediately through the administrator settings tools.
  */
 router.post('/weekly-digest/send',
@@ -368,28 +304,5 @@ router.post('/weekly-digest/send',
         });
     } catch (err) {
         return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível enviar o email da agenda semanal.', err));
-    }
-});
-
-/**
- * Promotes a member account to administrator.
- */
-router.put('/users/:id/promote', 
-    authMiddleware, 
-    requireAdminUser,
-    async (req, res, next) => {
-    try {
-        const currentUser = await loadAuthenticatedUser(req.user.id);
-        const targetUser = await User.findById(req.params.id);
-
-        assertPromotableUser(targetUser, currentUser);
-
-        const updatedUser = await User.promoteToAdmin(targetUser.id);
-        return sendSuccess(res, {
-            data: { user: publicUser(updatedUser) },
-            message: 'Usuário promovido a administrador.',
-        });
-    } catch (err) {
-        return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível promover o usuário.', err));
     }
 });

@@ -68,6 +68,20 @@ app.get('/login', (req, res) => {
 });
 
 /**
+ * Renders the password-reset form reached from one-time reset links.
+ */
+app.get('/reset-password', (req, res) => {
+    res.templateRender('login', {
+        page: 'login',
+        resetToken: req.query.token || '',
+        metaTitle: `Redefinir senha · ${SITE_NAME}`,
+        metaDescription: 'Escolha uma nova senha para acessar sua conta na AgendaCharq.',
+        metaRobots: 'noindex, nofollow',
+        canonicalPath: '/reset-password',
+    });
+});
+
+/**
  * Renders the public page listing approved events scheduled for the current week.
  */
 app.get('/week', (req, res) => {
