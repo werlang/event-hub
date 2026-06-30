@@ -6,12 +6,14 @@ export class Mysql {
         
     static connected = false;
     static connection = null;
+    static #rawSqlSentinel = Symbol('raw-sql-fragment');
     static config = {
-        host: 'mysql',
-        user: 'root',
+        host: process.env.MYSQL_HOST || 'mysql',
+        user: process.env.MYSQL_USER || 'root',
         password: process.env.MYSQL_ROOT_PASSWORD,
         database: process.env.MYSQL_DATABASE,
-        port: 3306,
+        port: Number(process.env.MYSQL_INTERNAL_PORT || 3306),
+        multipleStatements: false,
     }
 
     /**
@@ -25,7 +27,7 @@ export class Mysql {
             Mysql.config.database = Mysql.originalDatabase + '_test_' + process.env.TEST_DATABASE_ID;
         }
 
-        Mysql.connection = mysql.createPool({ ...config, ...Mysql.config });
+        Mysql.connection = mysql.createPool({ ...Mysql.config, ...config });
         Mysql.connected = true;
         return this;
     }
@@ -35,8 +37,10 @@ export class Mysql {
      */
     static async close() {
         if (!Mysql.connected) return this;
-        Mysql.connection.end();
+        await Mysql.connection.end();
+        Mysql.connection = null;
         Mysql.connected = false;
+        return this;
     }
 
     /**
@@ -45,22 +49,44 @@ export class Mysql {
     static #quoteIdentifier(identifier) {
         return String(identifier)
             .split('.')
-            .map(part => part === '*' ? '*' : `\`${part}\``)
+            .map(part => part === '*' ? '*' : `\`${part.replace(/`/g, '``')}\``)
             .join('.');
+    }
+
+    /**
+     * Drops undefined write fields and rejects empty payloads.
+     */
+    static #sanitizeWriteData(data, operation) {
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+            throw new CustomError(`Invalid data for ${operation} operation.`);
+        }
+
+        const sanitized = Object.fromEntries(
+            Object.entries(data).filter(([, value]) => value !== undefined)
+        );
+
+        if (!Object.keys(sanitized).length) {
+            throw new CustomError(`No data to ${operation}.`);
+        }
+
+        return sanitized;
     }
 
     /**
      * Executes a formatted SQL statement through mysql2.
      */
-    static async #query(sql, data) {
+    static async #query(sql, data = [], { connection } = {}) {
         // console.log(sql, data);
-        await Mysql.connect();
+        if (!connection) {
+            await Mysql.connect();
+        }
 
+        const executor = connection || Mysql.connection;
         const raw = Mysql.formatRaw(sql, data);
         // console.log(raw);
         // console.log(Mysql.format(sql, data));
         try {
-            const result = await Mysql.connection.execute(raw.sql.trim(), raw.data);
+            const result = await executor.execute(raw.sql.trim(), raw.data);
             if (result) return result[0];
             return result;
         }
@@ -76,78 +102,105 @@ export class Mysql {
     /**
      * Inserts one or many rows into the provided table.
      */
-    static async insert(table, data) {
+    static async insert(table, data, context = {}) {
         if (!data) {
             throw new CustomError('Invalid data for insert operation.');
         }
         if (!Array.isArray(data)) data = [ data ];
 
         return Promise.all(data.map(row => {
-            const values = Object.values(row);
-            const fields = Object.keys(row).map(k => `\`${k}\``);
-            let sql = `INSERT INTO \`${table}\` (${fields.join(',')}) VALUES (${values.map(() => '?').join(',')})`;
-            return Mysql.#query(sql, values);
+            const sanitized = Mysql.#sanitizeWriteData(row, 'insert');
+            const values = Object.values(sanitized);
+            const fields = Object.keys(sanitized).map(k => Mysql.#quoteIdentifier(k));
+            let sql = `INSERT INTO ${Mysql.#quoteIdentifier(table)} (${fields.join(',')}) VALUES (${values.map(() => '?').join(',')})`;
+            return Mysql.#query(sql, values, context);
         }));
+    }
+
+    /**
+     * Inserts a row or updates selected fields on duplicate-key conflicts.
+     */
+    static async upsert(table, data, { conflictFields = [], updateFields = [] } = {}, context = {}) {
+        const sanitized = Mysql.#sanitizeWriteData(data, 'upsert');
+        const fields = Object.keys(sanitized);
+        const updatableFields = (updateFields.length ? updateFields : fields)
+            .filter(field => !conflictFields.includes(field));
+
+        if (!updatableFields.length) {
+            throw new CustomError('No update fields provided for upsert operation.');
+        }
+
+        const fieldSql = fields.map(field => Mysql.#quoteIdentifier(field)).join(',');
+        const valueSql = fields.map(() => '?').join(',');
+        const updateSql = updatableFields
+            .map(field => `${Mysql.#quoteIdentifier(field)} = VALUES(${Mysql.#quoteIdentifier(field)})`)
+            .join(', ');
+        const sql = `INSERT INTO ${Mysql.#quoteIdentifier(table)} (${fieldSql}) VALUES (${valueSql}) ON DUPLICATE KEY UPDATE ${updateSql}`;
+
+        return Mysql.#query(sql, fields.map(field => sanitized[field]), context);
     }
 
     /**
      * Updates rows in the provided table using an id or filter clause.
      */
-    static async update(table, data, id) {
+    static async update(table, data, id, context = {}) {
         if (!id) {
             throw new CustomError('No identifier provided for update.');
         }
-        if (!Object.keys(data).length) {
-            throw new CustomError('No data to update.');
-        }
-
-        // remove undefined values
-        data = Object.fromEntries(Object.entries(data).filter(([k,v]) => v !== undefined));
+        data = Mysql.#sanitizeWriteData(data, 'update');
 
         const values = Object.values(data);
-        const fielsdSql = Object.entries(data).map(([k,v],i) => {
+        const fieldsSql = Object.entries(data).map(([k,v],i) => {
+            if (v instanceof Date) {
+                return `${Mysql.#quoteIdentifier(k)} = ?`;
+            }
+
             if (v !== null && typeof v === 'object') {
-                if (Object.keys(v)[0] === 'inc'){
+                if (Object.hasOwn(v, 'inc')){
                     values[i] = v.inc;
-                    return `\`${k}\` = ${k} + ?`;
+                    return `${Mysql.#quoteIdentifier(k)} = ${Mysql.#quoteIdentifier(k)} + ?`;
                 }
-                else if (Object.keys(v)[0] === 'dec'){
+                else if (Object.hasOwn(v, 'dec')){
                     values[i] = v.dec;
-                    return `\`${k}\` = ${k} - ?`;
+                    return `${Mysql.#quoteIdentifier(k)} = ${Mysql.#quoteIdentifier(k)} - ?`;
+                }
+                else if (typeof v.toSqlString === 'function') {
+                    values[i] = Mysql.#rawSqlSentinel;
+                    return `${Mysql.#quoteIdentifier(k)} = ${v.toSqlString()}`;
                 }
                 else {
                     throw new CustomError('Invalid update operation.');
                 }
             }
 
-            return `\`${k}\` = ?`;
+            return `${Mysql.#quoteIdentifier(k)} = ?`;
         }).join(', ');
 
+        let whereSql = `${Mysql.#quoteIdentifier('id')} = ?`;
         if (typeof id === 'object') {
             const { statement, values: v } = this.getWhereStatements(id);
-            id = statement;
+            whereSql = statement;
             values.push(...v);
         }
         else {
             values.push(id);
-            id = '\`id\` = ?';
         }
 
-        const sql = `UPDATE \`${table}\` SET ${fielsdSql} WHERE ${id}`;
+        const sql = `UPDATE ${Mysql.#quoteIdentifier(table)} SET ${fieldsSql} WHERE ${whereSql}`;
         // console.log(Mysql.format(sql, data));
         // replicateDB.saveUpdate(table, sql, data, this);
-        return Mysql.#query(sql, values);
+        return Mysql.#query(sql, values.filter(value => value !== Mysql.#rawSqlSentinel), context);
     }
 
     /**
      * Deletes rows in the provided table using an id or filter clause.
      */
-    static async delete(table, clause, opt={}) {
+    static async delete(table, clause, opt={}, context = {}) {
         if (!clause) {
             throw new CustomError('Invalid clause for delete operation.');
         }
 
-        const limit = opt.limit ? `LIMIT ${ opt.limit }` : '';
+        const limit = opt.limit ? ` LIMIT ${ parseInt(opt.limit, 10) }` : '';
 
         let sql = '';
         const data = [];
@@ -155,15 +208,15 @@ export class Mysql {
         // check if clause is an object
         if (typeof clause === 'object'){
             const { statement, values } = Mysql.getWhereStatements(clause);
-            sql = `DELETE FROM \`${table}\` WHERE ${statement} ${limit}`;
+            sql = `DELETE FROM ${Mysql.#quoteIdentifier(table)} WHERE ${statement}${limit}`;
             data.push(...values);
         }
         else {
-            sql = `DELETE FROM \`${table}\` WHERE id = ?`;
+            sql = `DELETE FROM ${Mysql.#quoteIdentifier(table)} WHERE ${Mysql.#quoteIdentifier('id')} = ?`;
             data.push(clause);
         }
         
-        return Mysql.#query(sql, data);
+        return Mysql.#query(sql, data, context);
     }
 
     /**
@@ -186,7 +239,7 @@ export class Mysql {
             }
             else if (typeof v === 'object'){
                 // age: { in: [18, 19, 20] }
-                if (Object.keys(v)[0] === 'in'){
+                if (Object.hasOwn(v, 'in')){
                     if (!Array.isArray(v.in) || v.in.length === 0) return '1=0';
                     
                     // add all values to the values array
@@ -195,21 +248,21 @@ export class Mysql {
                 }
 
                 // age: { between: [18, 20] }
-                if (Object.keys(v)[0] === 'between'){
+                if (Object.hasOwn(v, 'between')){
                     // add 2 values to the values array
                     values.push(v.between[0], v.between[1]);
                     return `${Mysql.#quoteIdentifier(k)} BETWEEN ? AND ?`;
                 }
 
                 // name: { like: '%John%' }
-                if (Object.keys(v)[0] === 'like'){
+                if (Object.hasOwn(v, 'like')){
                     // replace the value with the like value
                     values.push(`%${v.like}%`);
                     return `${Mysql.#quoteIdentifier(k)} LIKE ?`;
                 }
 
                 // name: { not: 'John' }
-                if (Object.keys(v)[0] === 'not'){
+                if (Object.hasOwn(v, 'not')){
                     // name: { not: null }
                     if (v.not === null) return `${Mysql.#quoteIdentifier(k)} IS NOT NULL`;
                     values.push(v.not);
@@ -218,6 +271,9 @@ export class Mysql {
 
                 // age: { '>=': 18 }
                 const e = Object.keys(v)[0];
+                if (!['<', '<=', '>', '>='].includes(e)) {
+                    throw new CustomError('Invalid filter operation.');
+                }
                 values.push(Object.values(v)[0]);
                 return `${Mysql.#quoteIdentifier(k)} ${e} ?`;
             }
@@ -233,12 +289,12 @@ export class Mysql {
     /**
      * Finds rows in the provided table using filter, projection, and paging options.
      */
-    static async find(table, { filter={}, view=[], opt={}} = {}) {
+    static async find(table, { filter={}, view=[], opt={}} = {}, context = {}) {
         view = Array.isArray(view) ? view : [ view ];
         view = view.length > 0 ? view.map(v => Mysql.#quoteIdentifier(v)).join(',') : '*';
 
         // filter not an object
-        if (typeof filter !== 'object') {
+        if (typeof filter !== 'object' || Array.isArray(filter)) {
             throw new CustomError('Invalid filter for find operation.');
         }
 
@@ -254,19 +310,85 @@ export class Mysql {
         const where = filterNames.length > 0 ? `WHERE ${ whereStatements }` : '';
 
         // ORDER BY id DESC
-        const order = opt.order
-            ? `ORDER BY ${ Mysql.#quoteIdentifier(Object.keys(opt.order)[0]) } ${ Object.values(opt.order)[0] === 1 ? 'ASC' : 'DESC' }`
+        const order = opt.order && Object.keys(opt.order).length
+            ? `ORDER BY ${ Object.entries(opt.order).map(([field, direction]) => `${ Mysql.#quoteIdentifier(field) } ${ direction === 1 ? 'ASC' : 'DESC' }`).join(', ') }`
             : '';
         
         // LIMIT 10
-        const limit = opt.limit ? `LIMIT ${ opt.limit }` : '';
+        const limit = opt.limit ? `LIMIT ${ parseInt(opt.limit, 10) }` : '';
         
         // OFFSET 10
-        const offset = opt.skip ? `OFFSET ${ opt.skip }` : '';
+        const offset = opt.skip ? `OFFSET ${ parseInt(opt.skip, 10) }` : '';
 
-        const sql = `SELECT ${view} FROM \`${table}\` ${where} ${order} ${limit} ${offset}`;
+        const lock = opt.forUpdate ? 'FOR UPDATE' : '';
+
+        const sql = `SELECT ${view} FROM ${Mysql.#quoteIdentifier(table)} ${where} ${order} ${limit} ${offset} ${lock}`;
         // console.log(sql, values);
-        return Mysql.#query(sql, values);
+        return Mysql.#query(sql, values, context);
+    }
+
+    /**
+     * Finds a single row or returns null when no row matches.
+     */
+    static async findOne(table, options = {}, context = {}) {
+        const rows = await Mysql.find(table, {
+            ...options,
+            opt: {
+                ...(options.opt || {}),
+                limit: 1,
+            },
+        }, context);
+        return rows[0] || null;
+    }
+
+    /**
+     * Gets a single row by id or throws when it is missing.
+     */
+    static async get(table, id, context = {}) {
+        const row = await Mysql.findOne(table, { filter: { id } }, context);
+        if (!row) {
+            throw new CustomError('Item not found.');
+        }
+
+        return row;
+    }
+
+    /**
+     * Resets tables for integration tests while keeping SQL construction here.
+     */
+    static async resetTables(tables) {
+        await Mysql.connect();
+        await Mysql.#query('SET FOREIGN_KEY_CHECKS = 0', []);
+        for (const table of tables) {
+            await Mysql.#query(`TRUNCATE TABLE ${Mysql.#quoteIdentifier(table)}`, []);
+        }
+        await Mysql.#query('SET FOREIGN_KEY_CHECKS = 1', []);
+    }
+
+    /**
+     * Runs an operation in a transaction using a dedicated pool connection.
+     */
+    static async withTransaction(operation) {
+        if (typeof operation !== 'function') {
+            throw new CustomError('Invalid transaction operation.');
+        }
+
+        await Mysql.connect();
+        const connection = await Mysql.connection.getConnection();
+
+        try {
+            await connection.beginTransaction();
+            const result = await operation({ connection });
+            await connection.commit();
+            return result;
+        }
+        catch (error) {
+            await connection.rollback();
+            throw error;
+        }
+        finally {
+            connection.release();
+        }
     }
 
     /**

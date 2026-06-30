@@ -52,24 +52,24 @@ describe('model/model', () => {
     });
 
     test('get retrieves the first row and returns null when empty', async () => {
-        let rows = [{ id: '1' }];
+        let row = { id: '1' };
         ExampleModel.driver = {
-            async find() {
-                return rows;
+            async findOne() {
+                return row;
             },
         };
 
         await expect(ExampleModel.get('1')).resolves.toEqual({ id: '1', normalized: true });
-        rows = [];
+        row = null;
         await expect(ExampleModel.get('2')).resolves.toBeNull();
     });
 
     test('get accepts object clauses and custom projections', async () => {
         let received;
         ExampleModel.driver = {
-            async find(table, options) {
+            async findOne(table, options) {
                 received = { table, options };
-                return [{ id: '1' }];
+                return { id: '1' };
             },
         };
 
@@ -80,7 +80,6 @@ describe('model/model', () => {
             options: {
                 filter: { slug: 'ada' },
                 view: ['id'],
-                opt: { limit: 1 },
             },
         });
     });

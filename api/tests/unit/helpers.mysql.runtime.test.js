@@ -21,6 +21,9 @@ beforeEach(() => {
     process.env.NODE_ENV = 'test';
     process.env.MYSQL_DATABASE = 'agenda_ch';
     process.env.MYSQL_ROOT_PASSWORD = 'root';
+    process.env.MYSQL_HOST = 'mysql';
+    process.env.MYSQL_USER = 'root';
+    process.env.MYSQL_INTERNAL_PORT = '3306';
     process.env.TEST_DATABASE_ID = 'suite';
 });
 
@@ -42,11 +45,12 @@ describe('helpers/mysql runtime lifecycle', () => {
         expect(second).toBe(Mysql);
         expect(createPoolMock).toHaveBeenCalledTimes(1);
         expect(createPoolMock.mock.calls[0][0]).toMatchObject({
-            host: 'mysql',
+            host: 'override-host',
             user: 'root',
             password: 'root',
             database: 'agenda_ch_test_suite',
             port: 3306,
+            multipleStatements: false,
         });
     });
 
@@ -62,6 +66,7 @@ describe('helpers/mysql runtime lifecycle', () => {
 
         expect(pool.end).toHaveBeenCalledTimes(1);
         expect(Mysql.connected).toBe(false);
+        expect(Mysql.connection).toBeNull();
     });
 
     test('find executes trimmed SQL and wraps driver failures as CustomError', async () => {

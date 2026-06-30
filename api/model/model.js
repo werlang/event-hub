@@ -33,13 +33,12 @@ export class Model {
      */
     static async get(clause, { view = this.view } = {}) {
         const filter = typeof clause === 'object' ? clause : { id: clause };
-        const rows = await this.driver.find(this.table, {
+        const row = await this.driver.findOne(this.table, {
             filter,
             view,
-            opt: { limit: 1 },
         });
 
-        return this.normalize(rows[0]) || null;
+        return row ? this.normalize(row) : null;
     }
 
     /**

@@ -51,6 +51,12 @@ describe('helpers/mysql', () => {
         expect(result.values).toEqual(['pending', 'rejected']);
     });
 
+    test('getWhereStatements rejects unsupported comparison operators', () => {
+        expect(() => Mysql.getWhereStatements({
+            status: { contains: 'pending' },
+        })).toThrow('Invalid filter operation.');
+    });
+
     test('formatRaw inlines raw SQL fragments and keeps placeholder values', () => {
         const formatted = Mysql.formatRaw(
             'INSERT INTO `events` (`created_at`, `title`) VALUES (?, ?)',
@@ -138,7 +144,7 @@ describe('helpers/mysql', () => {
         });
 
         expect(execute).toHaveBeenCalledWith(
-            'UPDATE `events` SET `views` = views + ?, `category` = ? WHERE `organizer_id` != ?',
+            'UPDATE `events` SET `views` = `views` + ?, `category` = ? WHERE `organizer_id` != ?',
             [2, 'Tecnologia', 'user-1'],
         );
     });
@@ -154,7 +160,7 @@ describe('helpers/mysql', () => {
         await Mysql.update('events', { seats: { dec: 1 } }, 'event-1');
 
         expect(execute).toHaveBeenCalledWith(
-            'UPDATE `events` SET `seats` = seats - ? WHERE `id` = ?',
+            'UPDATE `events` SET `seats` = `seats` - ? WHERE `id` = ?',
             [1, 'event-1'],
         );
 
@@ -186,7 +192,102 @@ describe('helpers/mysql', () => {
 
         await Mysql.delete('events', 'event-1');
 
-        expect(execute).toHaveBeenCalledWith('DELETE FROM `events` WHERE id = ?', ['event-1']);
+        expect(execute).toHaveBeenCalledWith('DELETE FROM `events` WHERE `id` = ?', ['event-1']);
+    });
+
+    test('findOne and get reuse SELECT helpers with a single-row limit', async () => {
+        const execute = jest.fn()
+            .mockResolvedValueOnce([[{ id: 'event-1' }]])
+            .mockResolvedValueOnce([[]]);
+        trackReplacement(restores, Mysql, 'connect', async () => {
+            Mysql.connected = true;
+            Mysql.connection = { execute, format: jest.fn() };
+            return Mysql;
+        });
+
+        await expect(Mysql.findOne('events', {
+            filter: { status: 'published' },
+            view: ['id'],
+            opt: { order: { date: -1 } },
+        })).resolves.toEqual({ id: 'event-1' });
+        await expect(Mysql.get('events', 'missing')).rejects.toThrow('Item not found.');
+
+        expect(execute.mock.calls).toEqual([
+            [
+                'SELECT `id` FROM `events` WHERE `status` = ? ORDER BY `date` DESC LIMIT 1',
+                ['published'],
+            ],
+            [
+                'SELECT * FROM `events` WHERE `id` = ? LIMIT 1',
+                ['missing'],
+            ],
+        ]);
+    });
+
+    test('upsert builds a duplicate-key update statement', async () => {
+        const execute = jest.fn().mockResolvedValue([[]]);
+        trackReplacement(restores, Mysql, 'connect', async () => {
+            Mysql.connected = true;
+            Mysql.connection = { execute, format: jest.fn() };
+            return Mysql;
+        });
+
+        await Mysql.upsert('users', {
+            id: 'user-1',
+            email: 'ada@example.com',
+            name: 'Ada',
+        }, {
+            conflictFields: ['id'],
+            updateFields: ['email', 'name'],
+        });
+
+        expect(execute).toHaveBeenCalledWith(
+            'INSERT INTO `users` (`id`,`email`,`name`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE `email` = VALUES(`email`), `name` = VALUES(`name`)',
+            ['user-1', 'ada@example.com', 'Ada'],
+        );
+    });
+
+    test('resetTables and withTransaction centralize context-aware SQL execution', async () => {
+        const poolExecute = jest.fn().mockResolvedValue([[]]);
+        const transactionExecute = jest.fn().mockResolvedValue([[]]);
+        const connection = {
+            beginTransaction: jest.fn(),
+            commit: jest.fn(),
+            rollback: jest.fn(),
+            release: jest.fn(),
+            execute: transactionExecute,
+        };
+        trackReplacement(restores, Mysql, 'connect', async () => {
+            Mysql.connected = true;
+            Mysql.connection = {
+                execute: poolExecute,
+                getConnection: jest.fn().mockResolvedValue(connection),
+                format: jest.fn(),
+            };
+            return Mysql;
+        });
+
+        await Mysql.resetTables(['events', 'users']);
+        const result = await Mysql.withTransaction(async context => {
+            await Mysql.insert('events', { id: 'event-1' }, context);
+            return 'done';
+        });
+
+        expect(result).toBe('done');
+        expect(poolExecute.mock.calls.map(call => call[0])).toEqual([
+            'SET FOREIGN_KEY_CHECKS = 0',
+            'TRUNCATE TABLE `events`',
+            'TRUNCATE TABLE `users`',
+            'SET FOREIGN_KEY_CHECKS = 1',
+        ]);
+        expect(connection.beginTransaction).toHaveBeenCalledTimes(1);
+        expect(connection.commit).toHaveBeenCalledTimes(1);
+        expect(connection.rollback).not.toHaveBeenCalled();
+        expect(connection.release).toHaveBeenCalledTimes(1);
+        expect(transactionExecute).toHaveBeenCalledWith(
+            'INSERT INTO `events` (`id`) VALUES (?)',
+            ['event-1'],
+        );
     });
 
     test('format requires an active mysql connection', () => {

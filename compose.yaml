@@ -8,7 +8,7 @@ services:
         working_dir: /app
         env_file:
             - .env
-        command: npm run ${NODE_ENV}
+        command: npm run production
         depends_on:
             - mysql
         networks:
@@ -23,7 +23,7 @@ services:
         working_dir: /app
         env_file:
             - .env
-        command: npm run ${NODE_ENV}
+        command: npm run production
         depends_on:
             - api
         networks:
@@ -37,9 +37,9 @@ services:
             - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
         volumes:
             - mysql:/var/lib/mysql
-            # - .:/app
+            - ./api/data/schema.sql:/docker-entrypoint-initdb.d/init.sql:ro
         ports:
-            - 127.0.0.1:3306:3306
+            - 127.0.0.1:${MYSQL_PORT:-3306}:3306
 volumes:
     node_modules_web:
     node_modules_api:
