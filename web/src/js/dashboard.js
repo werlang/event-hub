@@ -3,6 +3,7 @@ import '../css/dashboard.css';
 import { BaseComponent } from './components/base-component.js';
 import { Button } from './components/button.js';
 import { Header } from './components/header.js';
+import { createLinkedTextContent } from './components/linked-text.js';
 import { DashboardActionTabs } from './dashboard/action-tabs.js';
 import { DashboardEventFormModal } from './dashboard/create-event-modal.js';
 import { DashboardDeleteEventModal } from './dashboard/delete-event-modal.js';
@@ -838,7 +839,10 @@ function createDashboardEventElement(event, {
 
     const description = document.createElement('p');
     description.className = 'dashboard-event__description';
-    description.textContent = eventRecord.readDescription('Sem descrição.');
+    description.appendChild(createLinkedTextContent(
+        eventRecord.readDescriptionSegments('Sem descrição.'),
+        { linkClass: 'dashboard-event__description-link' },
+    ));
 
     const meta = document.createElement('div');
     meta.className = 'dashboard-event__meta';

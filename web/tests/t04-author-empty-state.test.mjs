@@ -3,7 +3,9 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
 import vm from 'node:vm';
+import { JSDOM } from 'jsdom';
 
+import { createLinkedTextContent } from '../src/js/components/linked-text.js';
 import { Event } from '../src/js/helpers/event.js';
 
 const WEB_ROOT = path.resolve(import.meta.dirname, '..');
@@ -252,6 +254,49 @@ test('Event.readTimelineMeta returns compact future and past labels', () => {
     assert.equal(pastTimeline.modifier, 'past');
 });
 
+test('Event.readDescriptionSegments returns safe text and link presentation segments', () => {
+    const segments = new Event({
+        description: 'Leia https://ifsul.edu.br/guia, depois www.example.com/teste. Ignore ftp://invalido.',
+    }).readDescriptionSegments();
+
+    assert.deepEqual(segments, [
+        { type: 'text', text: 'Leia ' },
+        { type: 'link', text: 'https://ifsul.edu.br/guia', href: 'https://ifsul.edu.br/guia' },
+        { type: 'text', text: ', depois ' },
+        { type: 'link', text: 'www.example.com/teste', href: 'https://www.example.com/teste' },
+        { type: 'text', text: '. Ignore ftp://invalido.' },
+    ]);
+});
+
+test('createLinkedTextContent renders description link segments without using HTML injection', () => {
+    const originalDocument = globalThis.document;
+    const dom = new JSDOM('<!doctype html><body></body>');
+    globalThis.document = dom.window.document;
+
+    try {
+        const container = document.createElement('p');
+        container.appendChild(createLinkedTextContent([
+            { type: 'text', text: 'Leia ' },
+            { type: 'link', text: 'https://ifsul.edu.br/guia', href: 'https://ifsul.edu.br/guia' },
+            { type: 'text', text: ', depois ' },
+            { type: 'link', text: 'www.example.com/teste', href: 'https://www.example.com/teste' },
+            { type: 'text', text: '. Ignore <script>alert(1)</script>.' },
+        ]));
+
+        const links = Array.from(container.querySelectorAll('a'));
+        assert.equal(links.length, 2);
+        assert.equal(links[0].textContent, 'https://ifsul.edu.br/guia');
+        assert.equal(links[0].href, 'https://ifsul.edu.br/guia');
+        assert.equal(links[1].textContent, 'www.example.com/teste');
+        assert.equal(links[1].href, 'https://www.example.com/teste');
+        assert.match(container.textContent, /Ignore <script>alert\(1\)<\/script>\./);
+        assert.equal(container.querySelector('script'), null);
+    } finally {
+        globalThis.document = originalDocument;
+        dom.window.close();
+    }
+});
+
 test('home cards and dashboard moderation both call the shared Event class', async () => {
     const [eventCardSource, dashboardSource] = await Promise.all([
         readFile(EVENT_CARD_PATH, 'utf8'),
@@ -259,10 +304,14 @@ test('home cards and dashboard moderation both call the shared Event class', asy
     ]);
 
     assert.match(eventCardSource, /import\s+\{\s*Event\s*\}\s+from\s+'\.\.\/helpers\/event\.js';/);
+    assert.match(eventCardSource, /import\s+\{\s*createLinkedTextContent\s*\}\s+from\s+'\.\/linked-text\.js';/);
     assert.match(eventCardSource, /author\.textContent\s*=\s*this\.#event\.readAuthorText\(\);/);
+    assert.match(eventCardSource, /this\.#event\.readDescriptionSegments\('Sem descrição\.'\)/);
     assert.match(eventCardSource, /const timeline = event\.readTimelineMeta\(\);/);
     assert.match(dashboardSource, /import\s+\{\s*Event\s*\}\s+from\s+'\.\/helpers\/event\.js';/);
+    assert.match(dashboardSource, /import\s+\{\s*createLinkedTextContent\s*\}\s+from\s+'\.\/components\/linked-text\.js';/);
     assert.match(dashboardSource, /author\.textContent\s*=\s*eventRecord\.readAuthorText\(\);/);
+    assert.match(dashboardSource, /eventRecord\.readDescriptionSegments\('Sem descrição\.'\)/);
     assert.match(dashboardSource, /const timelineMeta = eventRecord\.readTimelineMeta\(\);/);
 });
 

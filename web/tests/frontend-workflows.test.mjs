@@ -9,6 +9,7 @@ import { JSDOM } from 'jsdom';
 import { BaseComponent } from '../src/js/components/base-component.js';
 import { Button } from '../src/js/components/button.js';
 import { Form } from '../src/js/components/form.js';
+import { createLinkedTextContent } from '../src/js/components/linked-text.js';
 import { Pagination } from '../src/js/components/pagination.js';
 import { DashboardActionTabs } from '../src/js/dashboard/action-tabs.js';
 import {
@@ -1093,6 +1094,7 @@ async function loadDashboardPageScenario({ session, requestApiImpl }) {
                 DashboardDeleteEventModal: DeleteEventModalStub,
                 DashboardRejectEventModal: RejectEventModalStub,
                 DashboardSettingsPanels: SettingsPanelsStub,
+                createLinkedTextContent,
                 DashboardFilters,
                 Pagination,
                 Toast,
@@ -1553,7 +1555,7 @@ test('dashboard member workflow renders visible event metadata, dispatches rejec
     const rejectedEvent = {
         id: 'evt-rejected',
         title: 'Evento Rejeitado',
-        description: 'Precisa de ajustes.',
+        description: 'Precisa de ajustes. Guia: https://eventos.ifsul.edu.br/ajustes.',
         date: '2027-04-12T14:00:00.000Z',
         category: 'academico',
         location: 'Sala 3',
@@ -1605,6 +1607,8 @@ test('dashboard member workflow renders visible event metadata, dispatches rejec
         assert.ok(publishedCard);
         assert.match(rejectedCard.querySelector('.dashboard-event__title').textContent, /Evento Rejeitado/);
         assert.match(rejectedCard.querySelector('.dashboard-event__description').textContent, /Precisa de ajustes/);
+        assert.equal(rejectedCard.querySelector('.dashboard-event__description a')?.textContent, 'https://eventos.ifsul.edu.br/ajustes');
+        assert.equal(rejectedCard.querySelector('.dashboard-event__description a')?.href, 'https://eventos.ifsul.edu.br/ajustes');
         assert.match(rejectedCard.querySelector('.dashboard-status-pill--warning').textContent, /Rejeitado/);
         assert.equal(rejectedCard.querySelectorAll('.dashboard-status-pill').length, 2);
         assert.match(rejectedCard.querySelector('.dashboard-meta-pill--category').textContent, new RegExp(Event.from(rejectedEvent).readCategoryMeta().label));

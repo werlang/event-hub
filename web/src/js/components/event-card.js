@@ -1,4 +1,5 @@
 import { BaseComponent } from './base-component.js';
+import { createLinkedTextContent } from './linked-text.js';
 import { Tooltip } from './tooltip.js';
 import { Event } from '../helpers/event.js';
 
@@ -192,7 +193,10 @@ export class EventCard extends BaseComponent {
 
 		const description = document.createElement('p');
 		description.className = 'card__description';
-		description.textContent = this.#event.readDescription('Sem descrição.');
+		description.appendChild(createLinkedTextContent(
+			this.#event.readDescriptionSegments('Sem descrição.'),
+			{ linkClass: 'card__description-link' },
+		));
 		fragment.appendChild(description);
 
 		const meta = document.createElement('div');

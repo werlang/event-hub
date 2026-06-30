@@ -265,6 +265,98 @@ function readLocationHref(value) {
     }
 }
 
+const TRAILING_URL_PUNCTUATION_PATTERN = /[),.;:!?]+$/;
+const URL_TOKEN_PATTERN = /(?:https?:\/\/|www\.)[^\s<]+/gi;
+
+/**
+* Splits one URL-like token into its linkable core and trailing punctuation.
+*/
+function splitUrlToken(rawValue) {
+    const value = String(rawValue || '');
+    const trailingMatch = value.match(TRAILING_URL_PUNCTUATION_PATTERN);
+
+    if (!trailingMatch) {
+        return {
+            linkText: value,
+            trailingText: '',
+        };
+    }
+
+    return {
+        linkText: value.slice(0, -trailingMatch[0].length),
+        trailingText: trailingMatch[0],
+    };
+}
+
+/**
+* Appends text while keeping adjacent text fragments compact.
+*/
+function appendTextSegment(segments, text) {
+    if (!text) {
+        return;
+    }
+
+    const previousSegment = segments.at(-1);
+    if (previousSegment?.type === 'text') {
+        previousSegment.text += text;
+        return;
+    }
+
+    segments.push({
+        type: 'text',
+        text,
+    });
+}
+
+/**
+* Converts one free-form text block into text/link presentation segments.
+*/
+function readLinkedTextSegments(value, fallback = '') {
+    const segments = [];
+    const text = readText(value) || fallback;
+
+    if (!text) {
+        return segments;
+    }
+
+    let cursor = 0;
+
+    // Preserve the original text and only mark recognized HTTP(S)/www tokens as links.
+    text.replace(URL_TOKEN_PATTERN, (match, offset) => {
+        if (offset > cursor) {
+            appendTextSegment(segments, text.slice(cursor, offset));
+        }
+
+        const { linkText, trailingText } = splitUrlToken(match);
+        const href = readLocationHref(linkText);
+
+        if (!href) {
+            appendTextSegment(segments, match);
+            cursor = offset + match.length;
+            return match;
+        }
+
+        segments.push({
+            type: 'link',
+            text: linkText,
+            href,
+        });
+
+        if (trailingText) {
+            appendTextSegment(segments, trailingText);
+        }
+
+        cursor = offset + match.length;
+        return match;
+    });
+
+    if (cursor < text.length) {
+        appendTextSegment(segments, text.slice(cursor));
+    }
+
+    return segments;
+}
+
 /**
 * Returns a compact hostname label for one external location link.
 */
@@ -434,6 +526,13 @@ export class Event {
      */
     readDescription(fallback = 'Sem descrição.') {
         return readText(this.#data?.description) || fallback;
+    }
+
+    /**
+     * Returns text/link segments used by card components to render the event description.
+     */
+    readDescriptionSegments(fallback = 'Sem descrição.') {
+        return readLinkedTextSegments(this.#data?.description, fallback);
     }
 
     /**

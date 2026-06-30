@@ -73,6 +73,19 @@
         white-space: pre-wrap;
     }
 
+    & :is(.card__description-link, .dashboard-event__description-link) {
+        color: var(--color-link);
+        text-decoration: underline;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 0.16em;
+        word-break: break-word;
+
+        &:hover,
+        &:focus-visible {
+            color: color-mix(in srgb, var(--color-link), var(--color-main) 24%);
+        }
+    }
+
     & :is(.card__meta-item, .dashboard-meta-pill) {
         display: flex;
         align-items: center;
