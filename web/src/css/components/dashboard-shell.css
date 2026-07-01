@@ -3,8 +3,8 @@
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
-    gap: 18px;
-    padding: 18px;
+    gap: var(--surface-shell-section-gap-mobile);
+    padding: var(--space-8);
     isolation: isolate;
     animation: dashboard-rise 0.55s ease both;
     width: min(100%, 1200px);
@@ -30,16 +30,16 @@
 }
 
 .dashboard-command-bar {
-    width: 100%;
-    display: grid;
-    gap: 14px;
-    padding: 14px;
-    border-radius: var(--radius-lg);
-    border: 1px solid color-mix(in srgb, var(--color-main), transparent 80%);
-    background:
+    --surface-content-border-color: color-mix(in srgb, var(--color-main), transparent 80%);
+    --surface-content-radius: var(--radius-lg);
+    --surface-content-background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--color-main), transparent 90%) 0%, transparent 38%),
         linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 14%) 0%, color-mix(in srgb, var(--color-background), var(--color-text) 2%) 100%);
-    box-shadow: 0 14px 30px color-mix(in srgb, var(--color-text), transparent 93%);
+    --surface-content-shadow: 0 14px 30px color-mix(in srgb, var(--color-text), transparent 93%);
+    width: 100%;
+    display: grid;
+    gap: var(--surface-command-gap-mobile);
+    padding: var(--surface-command-padding-mobile);
 
     & .dashboard-command-bar__copy {
         display: grid;
@@ -116,18 +116,18 @@
 
 @media (min-width: 640px) {
     .dashboard-shell {
-        gap: 24px;
+        gap: var(--surface-shell-section-gap-desktop);
         padding: clamp(24px, 4vw, 38px);
     }
 
     .dashboard-command-bar {
-        padding: 18px 20px 0;
+        padding: var(--surface-command-padding-desktop);
 
         & .dashboard-command-bar__tabs {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             align-items: stretch;
-            gap: 8px;
+            gap: var(--space-3);
             padding-top: 6px;
         }
 

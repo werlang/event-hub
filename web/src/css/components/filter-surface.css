@@ -1,15 +1,20 @@
 .filter-surface {
+    --surface-content-border-color: color-mix(in srgb, var(--color-main), transparent 84%);
+    --surface-content-radius: calc(var(--radius) - 2px);
+    --surface-content-background: linear-gradient(
+        180deg,
+        color-mix(in srgb, #ffffff, var(--color-background) 20%) 0%,
+        color-mix(in srgb, var(--color-background), var(--color-main) 4%) 100%
+    );
+    --surface-content-shadow: none;
     display: grid;
-    gap: 14px;
-    padding: 14px;
-    border: 1px solid color-mix(in srgb, var(--color-main), transparent 84%);
-    border-radius: calc(var(--radius) - 2px);
-    background: linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 20%) 0%, color-mix(in srgb, var(--color-background), var(--color-main) 4%) 100%);
+    gap: var(--surface-filter-gap-mobile);
+    padding: var(--surface-filter-padding-mobile);
 
     & .filter-surface__grid {
         display: grid;
         grid-template-columns: 1fr;
-        gap: 14px;
+        gap: var(--surface-filter-gap-mobile);
         align-items: end;
 
         & label {
@@ -53,16 +58,14 @@
 
 @media (min-width: 768px) {
     .filter-surface {
-        padding: 18px;
+        padding: var(--surface-filter-padding-desktop);
 
         & .filter-surface__grid {
-            gap: 16px;
+            gap: var(--surface-filter-gap-desktop);
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         }
     }
 }
-
-
 
 
 

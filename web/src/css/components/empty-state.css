@@ -1,6 +1,6 @@
 .empty-state {
 	margin: 24px 0 0;
-	padding: 18px 20px;
+	padding: var(--space-8) var(--space-9);
 	border: 1px dashed color-mix(in srgb, var(--color-main), transparent 76%);
 	border-radius: calc(var(--radius) - 2px);
 	background: color-mix(in srgb, var(--color-background), #ffffff 45%);

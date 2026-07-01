@@ -3,6 +3,7 @@
 
 @import './components/header.css';
 @import './components/footer.css';
+@import './components/surface.css';
 @import './components/button.css';
 @import './components/toast.css';
 @import './components/panel.css';
@@ -19,14 +20,14 @@ main {
     flex-grow: 1;
     position: relative;
     overflow: clip;
-    padding: clamp(32px, 8vw, 108px) clamp(14px, 4vw, 32px) clamp(52px, 8vw, 120px);
+    padding: 0;
 }
 
 main > .panel {
     max-width: 560px;
     display: grid;
-    gap: 14px;
-    padding: 18px;
+    gap: var(--surface-filter-gap-mobile);
+    padding: var(--space-8);
     isolation: isolate;
     background: linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 58%) 0%, var(--color-background) 100%);
 }
@@ -144,8 +145,12 @@ main > .panel {
 }
 
 @media (min-width: 640px) {
+    main {
+        padding: clamp(32px, 8vw, 108px) clamp(14px, 4vw, 32px) clamp(52px, 8vw, 120px);
+    }
+
     main > .panel {
-        gap: 18px;
+        gap: var(--surface-shell-section-gap-mobile);
         padding: clamp(24px, 4vw, 34px);
     }
 

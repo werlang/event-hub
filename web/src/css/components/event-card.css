@@ -1,19 +1,16 @@
 #events-grid {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: var(--surface-filter-gap-mobile);
 }
 
 .card,
 .dashboard-event {
+    --surface-content-overflow: visible;
     position: relative;
     display: grid;
-    gap: 12px;
-    padding: 16px;
-    border: 1px solid color-mix(in srgb, var(--color-main), transparent 82%);
-    border-radius: var(--radius);
-    background: linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 18%) 0%, color-mix(in srgb, var(--color-background), var(--color-text) 3%) 100%);
-    box-shadow: 0 12px 28px color-mix(in srgb, var(--color-text), transparent 93%);
+    gap: var(--surface-card-gap);
+    padding: var(--surface-card-padding-mobile);
 
     &::before {
         content: '';
@@ -140,6 +137,7 @@
 }
 
 .card {
+    --surface-content-overflow: hidden;
     overflow: hidden;
     transition: transform 0.16s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 
@@ -256,7 +254,7 @@
 @media (min-width: 640px) {
     .card,
     .dashboard-event {
-        padding: 20px;
+        padding: var(--surface-card-padding-desktop);
 
         & :is(.card__headline, .dashboard-event__headline) {
             gap: 12px;

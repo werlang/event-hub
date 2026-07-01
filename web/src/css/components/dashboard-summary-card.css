@@ -1,25 +1,24 @@
 .dashboard-summary-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: var(--surface-filter-gap-mobile);
 }
 
 .dashboard-summary-card {
     --dashboard-summary-accent: var(--color-main);
+    --surface-content-radius: var(--radius-lg);
+    --surface-content-background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--dashboard-summary-accent), transparent 88%) 0%, transparent 38%),
+        linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 16%) 0%, color-mix(in srgb, var(--color-background), var(--color-text) 3%) 100%);
+    --surface-content-shadow: 0 14px 30px color-mix(in srgb, var(--color-text), transparent 93%);
+    --surface-content-overflow: hidden;
     grid-column: span 1;
     position: relative;
     display: grid;
     align-content: start;
-    gap: 12px;
+    gap: var(--surface-card-gap);
     min-height: auto;
-    padding: 16px;
-    border-radius: var(--radius-lg);
-    border: 1px solid color-mix(in srgb, var(--color-main), transparent 82%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--dashboard-summary-accent), transparent 88%) 0%, transparent 38%),
-        linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 16%) 0%, color-mix(in srgb, var(--color-background), var(--color-text) 3%) 100%);
-    box-shadow: 0 14px 30px color-mix(in srgb, var(--color-text), transparent 93%);
-    overflow: hidden;
+    padding: var(--surface-summary-padding-mobile);
     isolation: isolate;
 
     &::before {
@@ -132,7 +131,7 @@
     &.dashboard-summary-card--featured {
         grid-column: span 1;
         min-height: auto;
-        padding: 16px;
+        padding: var(--surface-summary-padding-mobile);
         background:
             radial-gradient(circle at top right, color-mix(in srgb, var(--dashboard-summary-accent), transparent 84%) 0%, transparent 42%),
             linear-gradient(145deg, color-mix(in srgb, #ffffff, var(--color-background) 10%) 0%, color-mix(in srgb, var(--dashboard-summary-accent), #ffffff 94%) 100%);
@@ -200,7 +199,7 @@
     .dashboard-summary-card {
         grid-column: span 6;
         min-height: 214px;
-        padding: 22px;
+        padding: var(--surface-summary-padding-desktop);
 
         & .dashboard-summary-card__metric {
             gap: 10px;
@@ -213,7 +212,7 @@
         &.dashboard-summary-card--featured {
             grid-column: span 12;
             min-height: 242px;
-            padding: 24px;
+            padding: var(--surface-summary-padding-featured-desktop);
         }
     }
 }

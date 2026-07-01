@@ -1,0 +1,34 @@
+.panel,
+.dashboard-section,
+.dashboard-settings-panel,
+.dashboard-settings-admin,
+.dashboard-settings-overview {
+    border: 1px solid var(--surface-host-border-color);
+    border-radius: var(--surface-host-radius-mobile);
+    background: var(--surface-host-background);
+    box-shadow: var(--surface-host-shadow);
+    overflow: var(--surface-host-overflow);
+}
+
+.card,
+.dashboard-event,
+.dashboard-summary-card,
+.filter-surface,
+.dashboard-command-bar,
+.panel__block {
+    border: 1px solid var(--surface-content-border-color);
+    border-radius: var(--surface-content-radius);
+    background: var(--surface-content-background);
+    box-shadow: var(--surface-content-shadow);
+    overflow: var(--surface-content-overflow);
+}
+
+@media (min-width: 640px) {
+    .panel,
+    .dashboard-section,
+    .dashboard-settings-panel,
+    .dashboard-settings-admin,
+    .dashboard-settings-overview {
+        border-radius: var(--surface-host-radius-desktop);
+    }
+}

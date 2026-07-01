@@ -3,6 +3,7 @@
 
 @import './components/header.css';
 @import './components/footer.css';
+@import './components/surface.css';
 @import './components/button.css';
 @import './components/panel.css';
 @import './components/empty-state.css';

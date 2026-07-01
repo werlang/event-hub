@@ -1,27 +1,26 @@
 .dashboard-settings-layout {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: var(--surface-settings-shell-gap-mobile);
     align-items: start;
 }
 
 .dashboard-settings-overview {
+    --surface-host-border-color: color-mix(in srgb, var(--color-main), transparent 82%);
+    --surface-host-background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--color-main), transparent 91%) 0%, transparent 44%),
+        linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 16%) 0%, color-mix(in srgb, var(--color-background), var(--color-text) 2%) 100%);
+    --surface-host-shadow: 0 14px 28px color-mix(in srgb, var(--color-text), transparent 93%);
+    --surface-host-overflow: hidden;
     position: static;
     top: 24px;
     display: grid;
     gap: 0;
     padding: 0;
-    border: 1px solid color-mix(in srgb, var(--color-main), transparent 82%);
-    border-radius: var(--radius-sm);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--color-main), transparent 91%) 0%, transparent 44%),
-        linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 16%) 0%, color-mix(in srgb, var(--color-background), var(--color-text) 2%) 100%);
-    box-shadow: 0 14px 28px color-mix(in srgb, var(--color-text), transparent 93%);
-    overflow: hidden;
 
     & .dashboard-settings-overview__eyebrow {
         margin: 0;
-        padding: 14px 12px 0;
+        padding: var(--space-6) var(--space-5) 0;
         font-family: var(--font-mono);
         font-size: 0.78rem;
         font-weight: 700;
@@ -32,14 +31,14 @@
 
     & .dashboard-settings-overview__title {
         margin: 0;
-        padding: 6px 12px 0;
+        padding: var(--space-2) var(--space-5) 0;
         font-family: var(--font-display);
         color: var(--color-main-alt);
     }
 
     & .dashboard-settings-overview__intro {
         margin: 0;
-        padding: 10px 12px 14px;
+        padding: var(--space-4) var(--space-5) var(--space-6);
         color: var(--color-text-secondary);
         line-height: 1.7;
         border-bottom: 1px solid color-mix(in srgb, var(--color-main), transparent 88%);
@@ -48,15 +47,15 @@
 
 .dashboard-settings-overview__facts {
     display: grid;
-    gap: 10px;
+    gap: var(--space-4);
     margin: 0;
-    padding: 14px 12px;
+    padding: var(--surface-settings-block-padding-mobile);
     border-bottom: 1px solid color-mix(in srgb, var(--color-main), transparent 88%);
 
     & .dashboard-settings-overview__fact {
         display: grid;
-        gap: 6px;
-        padding: 10px 12px;
+        gap: var(--space-2);
+        padding: var(--space-4) var(--space-5);
         border-radius: var(--radius);
         border: 1px solid color-mix(in srgb, var(--color-main-alt), transparent 84%);
         background: color-mix(in srgb, #ffffff, var(--color-background) 24%);
@@ -80,8 +79,8 @@
 
 .dashboard-settings-nav {
     display: grid;
-    gap: 8px;
-    padding: 14px 12px;
+    gap: var(--space-3);
+    padding: var(--surface-settings-block-padding-mobile);
 
     & .dashboard-settings-nav__button {
         justify-content: flex-start;
@@ -101,20 +100,19 @@
 
 .dashboard-settings-panels {
     display: grid;
-    gap: 14px;
+    gap: var(--surface-settings-shell-gap-mobile);
 }
 
 .dashboard-settings-panel,
 .dashboard-settings-admin {
+    --surface-host-border-color: color-mix(in srgb, var(--color-main), transparent 82%);
+    --surface-host-background: linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 18%) 0%, color-mix(in srgb, var(--color-background), var(--color-text) 2%) 100%);
+    --surface-host-shadow: 0 14px 28px color-mix(in srgb, var(--color-text), transparent 93%);
+    --surface-host-overflow: hidden;
     display: grid;
     gap: 0;
     padding: 0;
-    border: 1px solid color-mix(in srgb, var(--color-main), transparent 82%);
-    border-radius: var(--radius-sm);
-    background: linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 18%) 0%, color-mix(in srgb, var(--color-background), var(--color-text) 2%) 100%);
-    box-shadow: 0 14px 28px color-mix(in srgb, var(--color-text), transparent 93%);
     scroll-margin-top: 20px;
-    overflow: hidden;
 }
 
 .dashboard-settings-panel {
@@ -122,8 +120,8 @@
 
     & .dashboard-settings-panel__header {
         display: grid;
-        gap: 10px;
-        padding: 14px 12px;
+        gap: var(--space-4);
+        padding: var(--surface-settings-block-padding-mobile);
         border-bottom: 1px solid color-mix(in srgb, var(--color-main), transparent 88%);
     }
 
@@ -154,7 +152,7 @@
 
 .dashboard-settings-form {
     margin-top: 0;
-    padding: 14px 12px;
+    padding: var(--surface-settings-block-padding-mobile);
 
     & .button {
         min-width: 212px;
@@ -166,7 +164,7 @@
 
 .dashboard-settings-preferences-list {
     display: grid;
-    gap: 10px;
+    gap: var(--space-4);
 }
 
 .dashboard-settings-preferences-item {
@@ -194,41 +192,40 @@
 .dashboard-settings-admin {
     & .dashboard-settings-admin__header {
         display: grid;
-        gap: 10px;
-        padding: 14px 12px;
+        gap: var(--space-4);
+        padding: var(--surface-settings-block-padding-mobile);
         border-bottom: 1px solid color-mix(in srgb, var(--color-main), transparent 88%);
     }
 
     & .dashboard-settings-admin__grid {
         display: grid;
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: var(--surface-section-content-gap);
         padding: 14px 0px 12px;
     }
 
     & .dashboard-settings-admin__actions {
         display: grid;
-        gap: 10px;
+        gap: var(--space-4);
         align-content: start;
     }
 }
 
 @media (min-width: 640px) {
     .dashboard-settings-layout {
-        gap: 18px;
+        gap: var(--space-8);
     }
 
     .dashboard-settings-panels {
-        gap: 16px;
+        gap: var(--surface-settings-shell-gap-desktop);
     }
 
     .dashboard-settings-panel,
     .dashboard-settings-admin,
     .dashboard-settings-overview {
-        gap: 16px;
-        padding: clamp(20px, 3vw, 28px);
-        border-radius: var(--radius-lg);
-        overflow: visible;
+        gap: var(--surface-settings-shell-gap-desktop);
+        padding: var(--surface-settings-shell-padding-desktop);
+        --surface-host-overflow: visible;
     }
 
     .dashboard-settings-overview {

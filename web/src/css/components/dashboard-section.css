@@ -1,15 +1,14 @@
 .dashboard-sections {
     display: grid;
-    gap: 16px;
+    gap: var(--surface-section-content-gap);
     width: min(100%, 1200px);
 }
 
 .dashboard-section {
-    border: 1px solid color-mix(in srgb, var(--color-main), transparent 82%);
-    border-radius: var(--radius-sm);
-    background: linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 24%) 0%, color-mix(in srgb, var(--color-background), var(--color-text) 2%) 100%);
-    box-shadow: 0 16px 34px color-mix(in srgb, var(--color-text), transparent 92%);
-    overflow: hidden;
+    --surface-host-border-color: color-mix(in srgb, var(--color-main), transparent 82%);
+    --surface-host-background: linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 24%) 0%, color-mix(in srgb, var(--color-background), var(--color-text) 2%) 100%);
+    --surface-host-shadow: 0 16px 34px color-mix(in srgb, var(--color-text), transparent 92%);
+    --surface-host-overflow: hidden;
 
     &[open] {
         border-color: color-mix(in srgb, var(--color-main), transparent 64%);
@@ -20,9 +19,9 @@
         cursor: pointer;
         display: grid;
         grid-template-columns: 1fr;
-        gap: 14px;
+        gap: var(--surface-filter-gap-mobile);
         align-items: center;
-        padding: 18px 16px;
+        padding: var(--surface-section-summary-padding-mobile);
 
         &::-webkit-details-marker {
             display: none;
@@ -76,8 +75,8 @@
 
     & .dashboard-section__content {
         display: grid;
-        gap: 16px;
-        padding: 0 0px 16px;
+        gap: var(--surface-section-content-gap);
+        padding: 0 0 var(--surface-section-content-padding-bottom-mobile);
     }
 
     & .dashboard-inline-note {
@@ -89,17 +88,14 @@
 
 @media (min-width: 640px) {
     .dashboard-section {
-        border-radius: var(--radius-lg);
-
         & .dashboard-section__content,
         & .dashboard-section__summary {
-            padding-left: clamp(20px, 3vw, 28px);
-            padding-right: clamp(20px, 3vw, 28px);
+            padding-left: var(--surface-shell-inline-padding-desktop);
+            padding-right: var(--surface-shell-inline-padding-desktop);
         }
 
         & .dashboard-section__content {
-            padding: 0 8px 16px;
-            padding-bottom: clamp(20px, 3vw, 28px);
+            padding: 0 var(--surface-section-content-padding-inline-desktop) var(--surface-shell-inline-padding-desktop);
         }
     }
 }
