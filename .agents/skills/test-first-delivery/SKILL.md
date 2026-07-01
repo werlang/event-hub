@@ -11,7 +11,7 @@ Use this skill whenever a task changes behavior in `api/` or `web/`.
 
 - Code changes alone are not done.
 - If the touched area already has automated coverage, update that coverage and run it.
-- API feature work must update and run the committed Jest unit suite in `api/tests/unit` via `docker compose -f compose.dev.yaml exec api npm test`.
+- API feature work must update and run the committed Jest unit suite in `api/tests/unit` via `docker compose -f compose.dev.yaml exec api npm run test:unit`.
 - API test runs must finish at `100%` passing tests before the task is considered complete.
 - New or changed API behavior should add real-life success cases plus meaningful edge cases, not only happy-path assertions.
 - Prefer the highest practical coverage for the touched API area, especially branches around validation, authorization, fallback defaults, and error handling.
@@ -23,10 +23,10 @@ Use this skill whenever a task changes behavior in `api/` or `web/`.
 
 - This repo is split into two independent Node/Express services: `api/` and `web/`.
 - `api/` now has a committed Jest unit suite rooted at `api/tests/unit` with coverage output in `api/tests/coverage`.
-- The verified API validation command is `docker compose -f compose.dev.yaml exec api npm test`.
+- The verified API validation command is `docker compose -f compose.dev.yaml exec api npm run test:unit`.
 - `web/` now has a committed Node test suite rooted at `web/tests` for route, template, bundle-contract, and UI-state coverage.
-- `web/package.json` does not define `npm test` or `npm run build`; invoke the Node test runner and webpack directly.
-- The practical automated web validation path is `cd web && node --test tests/*.test.mjs`, plus bundle rebuilds when assets changed.
+- `web/package.json` defines `npm test` and `npm run build`.
+- The practical automated web validation path is `docker compose -f compose.dev.yaml exec web npm test`, plus `docker compose -f compose.dev.yaml exec web npm run build` when assets changed.
 - The web suite already supports three stable shapes: pure helper/contract tests, `jsdom` plus VM workflow tests, and spawned Express route/template checks.
 - Manual validation is still required for browser-only interaction work, but it is no longer the default for SSR, template, or many client contract checks.
 - For frontend interaction changes, manual validation should include a real browser pass over the affected page, not only a compile or static DOM review.

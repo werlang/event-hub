@@ -10,17 +10,17 @@ Run this when the task changes behavior already covered by `web/tests`:
 
 ```bash
 cd web
-node --test tests/*.test.mjs
+npm test
 ```
 
-`web/package.json` does not currently define `npm test`, so invoke the Node runner directly.
+`web/package.json` defines `npm test`, so use the package script.
 
 ### Web bundle rebuild
 
 Run this when the task changes `web/src/**`, webpack output expectations, Font Awesome assets, or checked-in files under `web/public/`:
 
 ```bash
-docker compose -f compose.dev.yaml exec web ./node_modules/.bin/webpack --config webpack.config.js --stats errors-warnings
+docker compose -f compose.dev.yaml exec web npm run build
 ```
 
 This command was verified against the running `web` service in the current Compose stack.
@@ -61,7 +61,7 @@ Use this when the task depends on the repo's normal multi-service development en
 
 - Check `GET /ready`.
 - Exercise affected auth routes: `POST /auth/register`, `POST /auth/login`, `GET /auth/me` when relevant.
-- Exercise affected `PUT` routes such as `PUT /auth/password`, `PUT /auth/users/:id/promote`, `PUT /events/:id`, and `PUT /events/:id/moderation` when relevant.
+- Exercise affected `PUT` routes such as `PUT /auth/password`, `PUT /users/:id/promote`, `PUT /events/:id`, and `PUT /events/:id/moderation` when relevant.
 - Exercise affected event routes: `GET /events`, `GET /events/:id`, `POST /events`, `DELETE /events/:id` when relevant.
 - Confirm response envelopes still match the repo contract.
 - If the change depends on MySQL state, mention what data or setup was required.
@@ -85,4 +85,4 @@ Use this when the task depends on the repo's normal multi-service development en
 
 - Run the exact service-local test command added by that task.
 - Keep the command local to `api/` or `web/`.
-- Include the command and result in the final report, because this repo does not have a pre-existing standard `npm test` script for both services.
+- Include the command and result in the final report.

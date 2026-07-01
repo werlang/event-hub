@@ -40,7 +40,8 @@ Client modules:
 
 - `web/src/js/login.js`: login/register tab switching, token persistence, and redirect handling
 - `web/src/js/components/*.js`: class-based UI helpers for tabs, forms, cards, alerts, chips, and lists
-- `web/src/js/helpers/api.js`: API base URL resolution + envelope normalization + token helpers (`ae_token`)
+- `web/src/js/helpers/api.js`: API base URL resolution + envelope normalization + token helpers (`auth_token`)
+- `web/src/js/model/*.js`: thin frontend API facades for auth, users, and events
 - `web/src/js/helpers/query-state.js`: home-page query parsing and URL sync helpers
 
 Build (`web/webpack.config.js`):
@@ -59,11 +60,12 @@ Build (`web/webpack.config.js`):
 
 Response handling:
 
-- Envelope-aware via `requestApi()`, which normalizes both enveloped and non-enveloped payloads.
+- Envelope-aware via `ApiClient`, which normalizes both enveloped and non-enveloped payloads.
+- Page entries and dashboard modules should call `web/src/js/model/` facades instead of owning endpoint strings directly.
 - Error UI should read `response.message` from normalized API results.
 - The shared browser API client is intentionally limited to `GET`, `POST`, `PUT`, and `DELETE`.
 - Login and register flows should redirect to `/dashboard` through the sanitized redirect helper.
-- Dashboard settings flows should align with `GET /auth/me`, `PUT /auth/me`, `PUT /auth/me/preferences`, `PUT /auth/password`, `GET /auth/users`, `PUT /auth/users/password/reset`, and `PUT /auth/users/:id/promote`.
+- Dashboard settings flows should align with `GET /auth/me`, `PUT /auth/me`, `PUT /auth/me/preferences`, `PUT /auth/password`, `GET /users`, `PUT /users/password/reset`, and `PUT /users/:id/promote`.
 - Dashboard event and moderation flows should align with `GET /events/mine`, `GET /events/moderation`, `GET /events`, `PUT /events/:id`, `DELETE /events/:id`, and `PUT /events/:id/moderation`.
 
 When changing API integration behavior, keep this precedence explicit.
@@ -94,7 +96,7 @@ When changing API integration behavior, keep this precedence explicit.
 
 - `web/tests` already covers helper contracts, `jsdom` plus VM workflow flows, and spawned SSR route checks; choose the narrowest matching pattern instead of writing one oversized integration test.
 - Update and run the committed Node test suite under `web/tests` when the touched behavior already has route, template, or contract coverage.
-- `web/package.json` does not currently define `npm test` or `npm run build`; run `node --test tests/*.test.mjs` and webpack directly.
+- `web/package.json` defines `npm test` and `npm run build`; use those scripts instead of direct runner or webpack commands.
 - Rebuild the affected web bundle through the repository workflow.
 - Open the changed page in a browser session when the environment allows it.
 - Use the maintained browser smoke path at [../test-first-delivery/references/browser-smoke-checklist.md](../test-first-delivery/references/browser-smoke-checklist.md) as the baseline route checklist for `/`, `/login`, `/week`, and `/dashboard`, then extend it only where the touched flow needs more detail.

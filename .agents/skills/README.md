@@ -15,6 +15,8 @@ Agent skills for GitHub Copilot in this repository.
 | [test-first-delivery](test-first-delivery/) | Deliver behavior changes with the existing API and web test suites, plus explicit browser/manual validation when browser-only checks are still needed |
 | [api-bug-review](api-bug-review/) | Review `api/` skeptically for real bugs and pair findings with deterministic API regression tests |
 | [skill-updater](skill-updater/) | Keep README, skill guides, prompts, and Copilot instructions aligned with durable conventions and current codebase behavior |
+| [documentation-maintenance](documentation-maintenance/) | Keep README, GUIDE, TESTING, AGENTS, prompts, and local skills synchronized with implementation changes |
+| [document-touched-code](document-touched-code/) | Add focused JSDoc or comments for touched reusable code without narrating obvious statements |
 
 ## Notes
 
@@ -24,3 +26,6 @@ Agent skills for GitHub Copilot in this repository.
 - This project does **not** currently ship a committed Playwright or Cypress suite under `web/`; browser validation means a real manual browser pass unless a task explicitly adds browser automation.
 - Use `frontend-bug-review` for skeptical review of `web/` flows and `api-bug-review` for skeptical review of `api/` flows.
 - Skills are focused on the actual code under `api/`, `web/`, and `compose.dev.yaml`.
+- Admin user routes live under `/users`, not `/auth/users`.
+- Frontend endpoint strings belong in `web/src/js/model/`.
+- Source CSS uses mobile-first `min-width` breakpoints: `640px`, `768px`, `1024px`, `1280px`, `1536px`.

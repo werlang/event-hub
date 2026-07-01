@@ -10,6 +10,7 @@ description: Build and maintain REST API endpoints for authentication, moderatio
 Base app: `api/app.js`
 
 - `app.use('/auth', auth)`
+- `app.use('/users', users)`
 - `app.use('/events', events)`
 - global middleware: `cors()`, `express.json()`, `express.urlencoded()`, explicit 404 forwarding, and terminal error middleware
 - readiness endpoint: `GET /ready`
@@ -22,9 +23,12 @@ Routes:
 - `PUT /auth/me` (requires `Authorization: Bearer <token>`)
 - `PUT /auth/me/preferences` (requires `Authorization: Bearer <token>`)
 - `PUT /auth/password` (requires `Authorization: Bearer <token>`)
-- `GET /auth/users` (requires admin bearer token)
-- `PUT /auth/users/password/reset` (requires admin bearer token)
-- `PUT /auth/users/:id/promote` (requires admin bearer token)
+- `POST /auth/weekly-digest/send` (requires admin bearer token)
+- `POST /users/password-reset`
+- `PUT /users/password-reset`
+- `GET /users` (requires admin bearer token)
+- `PUT /users/password/reset` (requires admin bearer token)
+- `PUT /users/:id/promote` (requires admin bearer token)
 - `GET /events`
 - `GET /events/mine` (requires `Authorization: Bearer <token>`)
 - `GET /events/moderation` (requires admin bearer token)
@@ -88,7 +92,7 @@ Error middleware (`api/middleware/error.js`) derives `type` from HTTP status nam
 - Treat checked-in schema files as the source of truth. Do not add runtime schema upgrade or legacy-compatibility code such as `ensureSchema`, request-time `ALTER TABLE`, `SHOW COLUMNS`, or lazy migration guards in production code.
 - When route behavior includes e-mail notifications, Google Calendar publishing, or background-task side effects, keep the main HTTP outcome resilient and test the side effect orchestration with mocks instead of making route success depend on external delivery.
 - Preserve the global envelope format for both success and errors.
-- After each API feature or behavior change, update the Jest unit suite in `api/tests/unit` and run `docker compose -f compose.dev.yaml exec api npm test` before considering the task complete.
+- After each API feature or behavior change, update the Jest unit suite in `api/tests/unit` and run `docker compose -f compose.dev.yaml exec api npm run test:unit` before considering the task complete.
 - Add tests for both common real-world flows and meaningful edge cases such as missing inputs, malformed identifiers, unauthorized actors, stale state, duplicate data, and fallback defaults.
 - Keep API test work branch-aware: prefer assertions that cover validation failures, authorization checks, normalization, defaults, and unexpected-error wrapping, not only success paths.
 - Reuse established HTTP status codes:
@@ -120,7 +124,7 @@ Error middleware (`api/middleware/error.js`) derives `type` from HTTP status nam
 - requires `currentPassword`, `newPassword`
 - rejects when the new password matches the current password
 
-`PUT /auth/users/password/reset`:
+`PUT /users/password/reset`:
 - requires `email`, `newPassword`
 - only administrators may reset member passwords
 

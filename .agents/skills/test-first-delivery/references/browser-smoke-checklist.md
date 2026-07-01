@@ -18,13 +18,13 @@ This is the maintained manual browser path for this repository. Run the existing
 
    ```bash
    cd web
-   node --test tests/*.test.mjs
+   npm test
    ```
 
 3. If the task changed bundled assets, rebuild them before the browser pass.
 
    ```bash
-   docker compose -f compose.dev.yaml exec web ./node_modules/.bin/webpack --config webpack.config.js --stats errors-warnings
+   docker compose -f compose.dev.yaml exec web npm run build
    ```
 
 4. When using Compose, open `http://localhost:80` in the browser.
