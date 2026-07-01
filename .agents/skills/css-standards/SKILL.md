@@ -45,8 +45,10 @@ Applies to the web client styles under `web/src/css/` and class names used in `w
 7. For hover, focus, active, muted, and surface variations, prefer `color-mix(...)` with existing tokens.
 8. Prefer nested CSS selectors within each component file to keep styles colocated and scoped.
 9. Keep component-specific responsive rules in the same component file as the base styles they modify.
-10. Keep interactions visually soft: subtle lift, border shifts, and shadow changes are preferred over aggressive transforms or high-contrast effects.
-11. Do not introduce alternate icon systems or version-specific Font Awesome font-family strings in component CSS.
+10. On phones, prefer flush section shells when they improve readability: page wrappers may drop outer padding to `0`, primary sections/panels/modals may use `var(--radius-sm)`, and the breathing room should move into inner headers, bodies, facts, nav blocks, and action rows instead of staying on the outer shell.
+11. Restore the roomier framed-card treatment from the first upward breakpoint instead of preserving desktop gutters on narrow screens.
+12. Keep interactions visually soft: subtle lift, border shifts, and shadow changes are preferred over aggressive transforms or high-contrast effects.
+13. Do not introduce alternate icon systems or version-specific Font Awesome font-family strings in component CSS.
 
 ## Token Usage
 
@@ -94,6 +96,7 @@ Example pattern:
 - Keep gradients within the project palette and use them mainly for large branded surfaces.
 - Use `--font-display` only where hierarchy or brand presence matters; do not turn body copy into display text.
 - Preserve roomy spacing in forms and cards. The current UI should feel calmer and more breathable than the previous version.
+- On phone layouts, do not force every section to remain a centered floating card if the page reads better with a flush mobile shell plus inner spacing.
 - When in doubt, match the tone of `base.css`, `header.css`, `hero.css`, and `event-card.css` before inventing a new pattern.
 - The `.github/references/` folder can be used as style inspiration for component ergonomics, but visual decisions must follow the live tokens and component files in `web/src/css/`.
 
@@ -107,5 +110,6 @@ Example pattern:
 - Are tone variants created with `color-mix(...)`?
 - Are nested selectors used for component internals/states?
 - Do responsive overrides stay colocated with the component they modify?
+- On phones, are outer section shells using the available width well, with spacing pushed inward instead of trapped in desktop-style wrapper padding?
 - Are JS visual states represented by CSS classes (not inline styles)?
 - Do headings, badges, buttons, and surfaces still match the current typography and component language?
