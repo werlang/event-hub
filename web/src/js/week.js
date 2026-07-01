@@ -5,9 +5,9 @@ import { EventList } from './components/event-list.js';
 import { Pagination } from './components/pagination.js';
 import { Toast } from './components/toast.js';
 import { Tooltip } from './components/tooltip.js';
-import { apiClient } from './helpers/api.js';
 import { TemplateVar } from './helpers/template-var.js';
 import { getCurrentWeekRangeLocal, normalizeInclusiveEndDateTime } from './helpers/week-range.js';
+import { eventApi } from './model/events.js';
 
 const WEEK_TOAST_GROUP = 'week-status';
 const WEEK_EVENTS_PER_PAGE = 10;
@@ -109,14 +109,13 @@ function readCurrentWeekRange() {
 }
 
 /**
- * Creates the public API path used to load the approved weekly event list.
+ * Creates the public API filters used to load the approved weekly event list.
  */
-function createWeekEventsPath({ from, to }) {
-    const params = new URLSearchParams({
+function createWeekEventParams({ from, to }) {
+    return new URLSearchParams({
         from,
         to: normalizeInclusiveEndDateTime(to),
     });
-    return `/events?${params.toString()}`;
 }
 
 /**
@@ -183,7 +182,7 @@ export function initWeekPage() {
     async function loadWeekEvents() {
         clearWeekToasts();
 
-        const response = await apiClient.request(createWeekEventsPath(weekRange));
+        const response = await eventApi.listPublic(createWeekEventParams(weekRange));
         if (!response.ok) {
             eventList.clear({ showEmptyState: false });
             pagination.render({ items: [], currentPage: 1 });

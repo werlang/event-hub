@@ -2,8 +2,9 @@ import { BaseComponent } from '../components/base-component.js';
 import { Button } from '../components/button.js';
 import { Form } from '../components/form.js';
 import { Toast } from '../components/toast.js';
-import { requestApi, storeToken } from '../helpers/api.js';
 import { resetCurrentSession } from '../helpers/session.js';
+import { authApi } from '../model/auth.js';
+import { userApi } from '../model/users.js';
 
 const DASHBOARD_SETTINGS_TOAST_GROUP = 'dashboard-settings';
 const DASHBOARD_ACTION_TOAST_GROUP = 'dashboard-action';
@@ -336,11 +337,7 @@ export class DashboardSettingsPanels extends BaseComponent {
             return;
         }
 
-        const response = await requestApi('/auth/me', {
-            method: 'PUT',
-            token: this.#readSessionToken(),
-            body: { name, email },
-        });
+        const response = await authApi.updateProfile(this.#readSessionToken(), { name, email });
 
         if (!response.ok) {
             this.#showToast(response.message || 'Não foi possível atualizar o perfil agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
@@ -353,7 +350,7 @@ export class DashboardSettingsPanels extends BaseComponent {
         }
 
         const nextSession = createUpdatedSession(this.#session, response);
-        storeToken(nextSession.token);
+        authApi.storeToken(nextSession.token);
         resetCurrentSession();
         this.#session = nextSession;
         this.render();
@@ -396,11 +393,7 @@ export class DashboardSettingsPanels extends BaseComponent {
             return;
         }
 
-        const response = await requestApi('/auth/password', {
-            method: 'PUT',
-            token: this.#readSessionToken(),
-            body: { currentPassword, newPassword },
-        });
+        const response = await authApi.changePassword(this.#readSessionToken(), { currentPassword, newPassword });
 
         if (!response.ok) {
             this.#showToast(response.message || 'Não foi possível atualizar a senha agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
@@ -428,13 +421,7 @@ export class DashboardSettingsPanels extends BaseComponent {
             emailPreferences.adminPendingRequests = Boolean(form.getField('dashboard-settings-email-admin-pending')?.getValue());
         }
 
-        const response = await requestApi('/auth/me/preferences', {
-            method: 'PUT',
-            token: this.#readSessionToken(),
-            body: {
-                emailPreferences,
-            },
-        });
+        const response = await authApi.updatePreferences(this.#readSessionToken(), emailPreferences);
 
         if (!response.ok) {
             this.#showToast(response.message || 'Não foi possível atualizar as preferências agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
@@ -447,7 +434,7 @@ export class DashboardSettingsPanels extends BaseComponent {
         }
 
         const nextSession = createUpdatedSession(this.#session, response);
-        storeToken(nextSession.token);
+        authApi.storeToken(nextSession.token);
         resetCurrentSession();
         this.#session = nextSession;
         this.render();
@@ -482,11 +469,7 @@ export class DashboardSettingsPanels extends BaseComponent {
             return;
         }
 
-        const response = await requestApi('/users/password/reset', {
-            method: 'PUT',
-            token: this.#readSessionToken(),
-            body: { email, newPassword },
-        });
+        const response = await userApi.adminResetPassword(this.#readSessionToken(), { email, newPassword });
 
         if (!response.ok) {
             this.#showToast(response.message || 'Não foi possível redefinir a senha agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
@@ -536,10 +519,7 @@ export class DashboardSettingsPanels extends BaseComponent {
             return;
         }
 
-        const response = await requestApi(`/users/${lookup.user.id}/promote`, {
-            method: 'PUT',
-            token: this.#readSessionToken(),
-        });
+        const response = await userApi.promote(this.#readSessionToken(), lookup.user.id);
 
         if (!response.ok) {
             this.#showToast(response.message || 'Não foi possível promover o usuário agora.', 'error', DASHBOARD_ACTION_TOAST_GROUP);
@@ -564,12 +544,8 @@ export class DashboardSettingsPanels extends BaseComponent {
             return;
         }
 
-        const response = await requestApi('/auth/weekly-digest/send', {
-            method: 'POST',
-            token: this.#readSessionToken(),
-            body: {
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            },
+        const response = await authApi.sendWeeklyDigest(this.#readSessionToken(), {
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         });
 
         if (!response.ok) {
@@ -594,9 +570,7 @@ export class DashboardSettingsPanels extends BaseComponent {
             };
         }
 
-        const response = await requestApi('/users', {
-            token: this.#readSessionToken(),
-        });
+        const response = await userApi.list(this.#readSessionToken());
 
         if (!response.ok) {
             return {

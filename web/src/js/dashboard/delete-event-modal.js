@@ -1,6 +1,6 @@
 import { Modal } from '../components/modal.js';
 import { Toast } from '../components/toast.js';
-import { requestApi } from '../helpers/api.js';
+import { eventApi } from '../model/events.js';
 import { canDeleteOwnEvent, normalizeEventStatus } from './event-management.js';
 
 const DASHBOARD_DELETE_TOAST_GROUP = 'dashboard-delete';
@@ -40,18 +40,35 @@ function createDeleteConfirmationContent(event) {
 
     const intro = document.createElement('p');
     intro.className = 'dashboard-modal__intro';
-    intro.innerHTML = `Você está prestes a excluir o evento "<strong>${readText(event?.title, 'Sem título')}</strong>".`;
+    intro.append(
+        document.createTextNode('Você está prestes a excluir o evento "'),
+        createStrongText(readText(event?.title, 'Sem título')),
+        document.createTextNode('".'),
+    );
 
     const statusNote = document.createElement('p');
     statusNote.className = 'dashboard-settings-note';
-    statusNote.innerHTML = `Status atual: <strong>${readStatusLabel(event?.status)}</strong>.`;
+    statusNote.append(
+        document.createTextNode('Status atual: '),
+        createStrongText(readStatusLabel(event?.status)),
+        document.createTextNode('.'),
+    );
 
     const consequenceNote = document.createElement('p');
     consequenceNote.className = 'dashboard-settings-note';
-    consequenceNote.innerHTML = 'Essa ação é irreversível e removerá o evento do seu painel.';
+    consequenceNote.textContent = 'Essa ação é irreversível e removerá o evento do seu painel.';
 
     wrapper.append(intro, statusNote, consequenceNote);
     return wrapper;
+}
+
+/**
+ * Creates a bold text node without interpreting user-controlled content as HTML.
+ */
+function createStrongText(value) {
+    const strong = document.createElement('strong');
+    strong.textContent = readText(value, '');
+    return strong;
 }
 
 export class DashboardDeleteEventModal {
@@ -188,10 +205,7 @@ export class DashboardDeleteEventModal {
         this.#setActionsDisabled(true);
 
         try {
-            const response = await requestApi(`/events/${currentEvent.id}`, {
-                method: 'DELETE',
-                token: this.#sessionToken,
-            });
+            const response = await eventApi.delete(this.#sessionToken, currentEvent.id);
 
             if (!response.ok) {
                 this.#showToast(

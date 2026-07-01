@@ -27,6 +27,11 @@ import {
     normalizeEventStatus,
     serializeDateTimeLocalInputValue,
 } from '../src/js/dashboard/event-management.js';
+import {
+    countEvents,
+    createSummaryCards,
+    createSummaryCardElement,
+} from '../src/js/dashboard/summary-cards.js';
 import { Event } from '../src/js/helpers/event.js';
 import { createHomeFilterParams } from '../src/js/helpers/query-state.js';
 import { getCurrentWeekRangeLocal, normalizeInclusiveEndDateTime } from '../src/js/helpers/week-range.js';
@@ -214,7 +219,7 @@ function transformWeekEntrypointSource(source) {
     .replace('\nnew Header();\n', '\n')
         .replace('export function initWeekPage() {', 'function initWeekPage() {')
         .replace(/\ninitWeekPage\(\);\s*$/, '\n')
-        .concat('\nglobalThis.__workflowWeek = { initWeekPage, createWeekEventsPath, readCurrentWeekRange };\n');
+        .concat('\nglobalThis.__workflowWeek = { initWeekPage, createWeekEventParams, readCurrentWeekRange };\n');
 }
 
 /**
@@ -290,6 +295,98 @@ function createToastRecorder() {
                 recorded.flashes.push({ text, options: normalizeValue(options) });
                 return { text, options };
             },
+        },
+    };
+}
+
+/**
+ * Creates a test event API facade that records normalized request calls.
+ */
+function createEventApiRecorder(recordRequest) {
+    const createPublicPath = (params = null) => {
+        const searchParams = params instanceof URLSearchParams
+            ? params
+            : new URLSearchParams(params || {});
+        const query = searchParams.toString();
+        return query ? `/events?${query}` : '/events';
+    };
+
+    return {
+        listPublic(params = null, options = {}) {
+            return recordRequest(createPublicPath(params), options);
+        },
+        listMine(token) {
+            return recordRequest('/events/mine', { token });
+        },
+        listModeration(token, { status = '' } = {}) {
+            const params = new URLSearchParams();
+            if (status) {
+                params.set('status', status);
+            }
+            const query = params.toString();
+            return recordRequest(query ? `/events/moderation?${query}` : '/events/moderation', { token });
+        },
+        create(token, payload) {
+            return recordRequest('/events', { method: 'POST', token, body: payload });
+        },
+        update(token, eventId, payload) {
+            return recordRequest(`/events/${eventId}`, { method: 'PUT', token, body: payload });
+        },
+        delete(token, eventId) {
+            return recordRequest(`/events/${eventId}`, { method: 'DELETE', token });
+        },
+        moderate(token, eventId, payload) {
+            return recordRequest(`/events/${eventId}/moderation`, { method: 'PUT', token, body: payload });
+        },
+    };
+}
+
+/**
+ * Creates a test auth API facade for workflow VM scenarios.
+ */
+function createAuthApiRecorder(recordRequest, { storeToken = () => {} } = {}) {
+    return {
+        login(payload) {
+            return recordRequest('/auth/login', { method: 'POST', body: payload });
+        },
+        register(payload) {
+            return recordRequest('/auth/register', { method: 'POST', body: payload });
+        },
+        updateProfile(token, payload) {
+            return recordRequest('/auth/me', { method: 'PUT', token, body: payload });
+        },
+        changePassword(token, payload) {
+            return recordRequest('/auth/password', { method: 'PUT', token, body: payload });
+        },
+        updatePreferences(token, emailPreferences) {
+            return recordRequest('/auth/me/preferences', { method: 'PUT', token, body: { emailPreferences } });
+        },
+        sendWeeklyDigest(token, payload) {
+            return recordRequest('/auth/weekly-digest/send', { method: 'POST', token, body: payload });
+        },
+        storeToken,
+    };
+}
+
+/**
+ * Creates a test user API facade for workflow VM scenarios.
+ */
+function createUserApiRecorder(recordRequest) {
+    return {
+        requestPasswordReset(email) {
+            return recordRequest('/users/password-reset', { method: 'POST', body: { email } });
+        },
+        confirmPasswordReset(payload) {
+            return recordRequest('/users/password-reset', { method: 'PUT', body: payload });
+        },
+        list(token) {
+            return recordRequest('/users', { token });
+        },
+        adminResetPassword(token, payload) {
+            return recordRequest('/users/password/reset', { method: 'PUT', token, body: payload });
+        },
+        promote(token, userId) {
+            return recordRequest(`/users/${userId}/promote`, { method: 'PUT', token });
         },
     };
 }
@@ -549,12 +646,10 @@ async function loadHomeScenario({ initialFilters, responseFactory }) {
                 window: dom.window,
                 document: dom.window.document,
                 Element: dom.window.Element,
-                apiClient: {
-                    async request(endpoint) {
-                        recorded.requests.push(endpoint);
-                        return responseFactory(endpoint);
-                    },
-                },
+                eventApi: createEventApiRecorder(async (endpoint) => {
+                    recorded.requests.push(endpoint);
+                    return responseFactory(endpoint);
+                }),
                 Event,
                 FilterForm: class FilterFormMock {
                     isReady() {
@@ -691,13 +786,18 @@ async function loadLoginScenario({ requestApiImpl, templateRedirect = '', search
                 },
             },
             Toast,
-            storeToken(token) {
-                recorded.storedToken = token;
-            },
-            requestApi: async (path, options = {}) => {
+            authApi: createAuthApiRecorder(async (path, options = {}) => {
                 recorded.requests.push({ path, options: normalizeValue(options) });
                 return requestApiImpl(path, options);
-            },
+            }, {
+                storeToken(token) {
+                    recorded.storedToken = token;
+                },
+            }),
+            userApi: createUserApiRecorder(async (path, options = {}) => {
+                recorded.requests.push({ path, options: normalizeValue(options) });
+                return requestApiImpl(path, options);
+            }),
         },
     });
 
@@ -734,13 +834,18 @@ async function loadSettingsScenario({ requestApiImpl }) {
                 Button,
                 Form,
                 Toast,
-                requestApi: async (path, options = {}) => {
+                authApi: createAuthApiRecorder(async (path, options = {}) => {
                     requestCalls.push({ path, options: normalizeValue(options) });
                     return requestApiImpl(path, options);
-                },
-                storeToken(token) {
-                    storedTokens.push(token);
-                },
+                }, {
+                    storeToken(token) {
+                        storedTokens.push(token);
+                    },
+                }),
+                userApi: createUserApiRecorder(async (path, options = {}) => {
+                    requestCalls.push({ path, options: normalizeValue(options) });
+                    return requestApiImpl(path, options);
+                }),
                 resetCurrentSession() {
                     resetCalls += 1;
                 },
@@ -804,10 +909,10 @@ async function loadCreateEventModalScenario({ requestApiImpl }) {
                     '/html/dashboard-create-event-modal.html': createEventHtml,
                 }),
                 Toast,
-                requestApi: async (path, options = {}) => {
+                eventApi: createEventApiRecorder(async (path, options = {}) => {
                     requestCalls.push({ path, options: normalizeValue(options) });
                     return requestApiImpl(path, options);
-                },
+                }),
                 canOpenEventForm(event, options) {
                     if (event?.status === 'published' && !options?.allowAdminEdit) {
                         return false;
@@ -872,10 +977,10 @@ async function loadDeleteEventModalScenario({ requestApiImpl }) {
                 Element: dom.window.Element,
                 Modal: createModalStubClass({}),
                 Toast,
-                requestApi: async (path, options = {}) => {
+                eventApi: createEventApiRecorder(async (path, options = {}) => {
                     requestCalls.push({ path, options: normalizeValue(options) });
                     return requestApiImpl(path, options);
-                },
+                }),
                 canDeleteOwnEvent,
                 normalizeEventStatus,
             },
@@ -929,10 +1034,10 @@ async function loadRejectEventModalScenario({ requestApiImpl }) {
                     '/html/dashboard-reject-event-modal.html': rejectEventHtml,
                 }),
                 Toast,
-                requestApi: async (path, options = {}) => {
+                eventApi: createEventApiRecorder(async (path, options = {}) => {
                     requestCalls.push({ path, options: normalizeValue(options) });
                     return requestApiImpl(path, options);
-                },
+                }),
             },
         });
 
@@ -1099,10 +1204,10 @@ async function loadDashboardPageScenario({ session, requestApiImpl }) {
                 Pagination,
                 Toast,
                 Tooltip: TooltipStub,
-                requestApi: async (path, options = {}) => {
+                eventApi: createEventApiRecorder(async (path, options = {}) => {
                     requestCalls.push({ path, options: normalizeValue(options) });
                     return requestApiImpl(path, options);
-                },
+                }),
                 Event,
                 canDeleteOwnEvent,
                 canEditOwnEvent,
@@ -1112,6 +1217,9 @@ async function loadDashboardPageScenario({ session, requestApiImpl }) {
                 formatDashboardBrowseBadge,
                 readDashboardBrowseCaption,
                 readDashboardBrowseEmptyState,
+                countEvents,
+                createSummaryCards,
+                createSummaryCardElement,
             },
         });
 
@@ -1161,12 +1269,10 @@ async function loadWeekScenario({ templateVars, responseFactory }) {
                 window: dom.window,
                 document: dom.window.document,
                 Element: dom.window.Element,
-                apiClient: {
-                    async request(endpoint) {
-                        recorded.requests.push(endpoint);
-                        return responseFactory(endpoint);
-                    },
-                },
+                eventApi: createEventApiRecorder(async (endpoint) => {
+                    recorded.requests.push(endpoint);
+                    return responseFactory(endpoint);
+                }),
                 TemplateVar: {
                     get(key) {
                         return templateVars[key];
@@ -2314,7 +2420,7 @@ test('admin discovery event-form modal submits rejected and published edits thro
 test('admin discovery delete modal confirms rejected and published deletions through the shared admin branch', async () => {
     const rejectedDiscoveryEvent = {
         id: 'evt-rejected-other',
-        title: 'Rejeitado de outra conta',
+        title: 'Rejeitado <img src=x onerror=alert(1)>',
         status: 'rejected',
         organizerId: 'member-8',
     };
@@ -2344,6 +2450,14 @@ test('admin discovery delete modal confirms rejected and published deletions thr
         assert.match(
             scenario.dom.window.document.querySelector('#dashboard-delete-event-modal').textContent,
             /Status atual:\s*Rejeitado/,
+        );
+        assert.equal(
+            scenario.dom.window.document.querySelector('#dashboard-delete-event-modal img'),
+            null,
+        );
+        assert.match(
+            scenario.dom.window.document.querySelector('#dashboard-delete-event-modal').textContent,
+            /Rejeitado <img src=x onerror=alert\(1\)>/,
         );
         await clickElement(scenario.dom, '#dashboard-delete-confirm');
 

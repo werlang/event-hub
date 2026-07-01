@@ -1,4 +1,4 @@
-import { clearToken, readToken, requestApi } from './api.js';
+import { authApi } from '../model/auth.js';
 
 let currentSessionPromise = null;
 
@@ -6,7 +6,7 @@ let currentSessionPromise = null;
  * Resolves the current authenticated session from local storage and the API.
  */
 async function resolveCurrentSession() {
-    const token = readToken();
+    const token = authApi.readToken();
     if (!token) {
         return {
             isAuthenticated: false,
@@ -18,7 +18,7 @@ async function resolveCurrentSession() {
         };
     }
 
-    const response = await requestApi('/auth/me', { token });
+    const response = await authApi.current(token);
     if (response.ok && response.data?.user) {
         return {
             isAuthenticated: true,
@@ -31,7 +31,7 @@ async function resolveCurrentSession() {
     }
 
     if (response.status === 401 || response.status === 403) {
-        clearToken();
+        authApi.clearToken();
         return {
             isAuthenticated: false,
             token: null,

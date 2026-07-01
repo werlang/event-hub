@@ -1,6 +1,5 @@
 import '../css/index.css';
 
-import { apiClient } from './helpers/api.js';
 import { Toast } from './components/toast.js';
 import {
     createHomeFilterParams,
@@ -15,6 +14,7 @@ import { Tooltip } from './components/tooltip.js';
 import { Event } from './helpers/event.js';
 import { getCurrentWeekRangeLocal, getNextDaysRangeLocal } from './helpers/week-range.js';
 import { Header } from './components/header.js';
+import { eventApi } from './model/events.js';
 
 new Header();
 
@@ -191,9 +191,7 @@ export function initHomePage() {
 
         const params = createHomeFilterParams(filters);
 
-        const query = params.toString();
-        const endpoint = query ? `/events?${query}` : '/events';
-        const response = await apiClient.request(endpoint);
+        const response = await eventApi.listPublic(params);
         if (!response.ok) {
             loadedEvents = [];
             currentPage = 1;

@@ -172,6 +172,44 @@ function createToastRecorder() {
 }
 
 /**
+ * Creates an auth facade stub that records request contracts.
+ */
+function createAuthApiRecorder(recordRequest, { storeToken = () => {} } = {}) {
+    return {
+        updateProfile(token, payload) {
+            return recordRequest('/auth/me', { method: 'PUT', token, body: payload });
+        },
+        changePassword(token, payload) {
+            return recordRequest('/auth/password', { method: 'PUT', token, body: payload });
+        },
+        updatePreferences(token, emailPreferences) {
+            return recordRequest('/auth/me/preferences', { method: 'PUT', token, body: { emailPreferences } });
+        },
+        sendWeeklyDigest(token, payload) {
+            return recordRequest('/auth/weekly-digest/send', { method: 'POST', token, body: payload });
+        },
+        storeToken,
+    };
+}
+
+/**
+ * Creates a user facade stub that records request contracts.
+ */
+function createUserApiRecorder(recordRequest) {
+    return {
+        list(token) {
+            return recordRequest('/users', { token });
+        },
+        adminResetPassword(token, payload) {
+            return recordRequest('/users/password/reset', { method: 'PUT', token, body: payload });
+        },
+        promote(token, userId) {
+            return recordRequest(`/users/${userId}/promote`, { method: 'PUT', token });
+        },
+    };
+}
+
+/**
  * Dispatches one submit event against a real form element.
  */
 async function submitForm(dom, selector) {
@@ -205,13 +243,18 @@ async function loadSettingsScenario({ requestApiImpl }) {
             Button,
             Form,
             Toast,
-            requestApi: async (path, options = {}) => {
+            authApi: createAuthApiRecorder(async (path, options = {}) => {
                 requestCalls.push({ path, options: normalizeValue(options) });
                 return requestApiImpl(path, options);
-            },
-            storeToken(token) {
-                storedTokens.push(token);
-            },
+            }, {
+                storeToken(token) {
+                    storedTokens.push(token);
+                },
+            }),
+            userApi: createUserApiRecorder(async (path, options = {}) => {
+                requestCalls.push({ path, options: normalizeValue(options) });
+                return requestApiImpl(path, options);
+            }),
             resetCurrentSession() {
                 resetCalls += 1;
             },

@@ -1,7 +1,7 @@
 import { Form } from '../components/form.js';
 import { Modal } from '../components/modal.js';
 import { Toast } from '../components/toast.js';
-import { requestApi } from '../helpers/api.js';
+import { eventApi } from '../model/events.js';
 
 const REJECT_EVENT_MODAL_FILE = '/html/dashboard-reject-event-modal.html';
 const DASHBOARD_REJECT_EVENT_TOAST_GROUP = 'dashboard-reject-event';
@@ -145,11 +145,7 @@ export class DashboardRejectEventModal {
         const payload = this.#readPayload(formData);
         Toast.dismissGroup(DASHBOARD_REJECT_EVENT_TOAST_GROUP);
 
-        const response = await requestApi(`/events/${this.#activeEvent.id}/moderation`, {
-            method: 'PUT',
-            token: this.#sessionToken,
-            body: payload,
-        });
+        const response = await eventApi.moderate(this.#sessionToken, this.#activeEvent.id, payload);
 
         if (!response.ok) {
             this.#showToast(

@@ -2,7 +2,7 @@ import { Form } from '../components/form.js';
 import { Button } from '../components/button.js';
 import { Modal } from '../components/modal.js';
 import { Toast } from '../components/toast.js';
-import { requestApi } from '../helpers/api.js';
+import { eventApi } from '../model/events.js';
 import {
     canOpenEventForm,
     formatDateTimeLocalInputValue,
@@ -329,11 +329,9 @@ export class DashboardEventFormModal {
 
         Toast.dismissGroup(DASHBOARD_EVENT_FORM_TOAST_GROUP);
 
-        const response = await requestApi(this.#readRequestPath(), {
-            method: this.#readRequestMethod(),
-            token: this.#sessionToken,
-            body: payload,
-        });
+        const response = this.#activeMode === DASHBOARD_EVENT_FORM_MODE_EDIT
+            ? await eventApi.update(this.#sessionToken, this.#activeEvent?.id, payload)
+            : await eventApi.create(this.#sessionToken, payload);
 
         if (!response.ok) {
             this.#showToast(
@@ -418,22 +416,6 @@ export class DashboardEventFormModal {
         if (locationField) {
             locationField.value = readText(this.#activeEvent.location, '');
         }
-    }
-
-    /**
-     * Returns the API path used by the active form mode.
-     */
-    #readRequestPath() {
-        return this.#activeMode === DASHBOARD_EVENT_FORM_MODE_EDIT && this.#activeEvent?.id
-            ? `/events/${this.#activeEvent.id}`
-            : '/events';
-    }
-
-    /**
-     * Returns the HTTP method used by the active form mode.
-     */
-    #readRequestMethod() {
-        return this.#activeMode === DASHBOARD_EVENT_FORM_MODE_EDIT ? 'PUT' : 'POST';
     }
 
     /**

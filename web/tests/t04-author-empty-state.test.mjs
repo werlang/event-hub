@@ -122,8 +122,13 @@ async function runHomePageScenario(apiResponse) {
                     : null;
             },
         },
-        apiClient: {
-            async request(endpoint) {
+        eventApi: {
+            async listPublic(params = null) {
+                const searchParams = params instanceof URLSearchParams
+                    ? params
+                    : new URLSearchParams(params || {});
+                const query = searchParams.toString();
+                const endpoint = query ? `/events?${query}` : '/events';
                 recorded.requests.push(endpoint);
                 return typeof apiResponse === 'function'
                     ? apiResponse(endpoint)

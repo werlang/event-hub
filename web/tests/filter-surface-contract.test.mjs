@@ -111,9 +111,9 @@ test('shared filter surface stylesheet keeps the reusable grid and mobile fallba
     const sharedFilterSurface = await readFile(SHARED_FILTER_SURFACE_PATH, 'utf8');
 
     assert.match(sharedFilterSurface, /\.filter-surface\s*\{/);
-    assert.match(sharedFilterSurface, /grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(180px,\s*1fr\)\)/);
-    assert.match(sharedFilterSurface, /@media\s*\(max-width:\s*720px\)/);
     assert.match(sharedFilterSurface, /grid-template-columns:\s*1fr/);
+    assert.match(sharedFilterSurface, /@media\s*\(min-width:\s*768px\)/);
+    assert.match(sharedFilterSurface, /grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(180px,\s*1fr\)\)/);
 });
 
 test('checkbox treatment lives in the shared checkbox component instead of filter-surface', async () => {

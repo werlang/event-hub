@@ -3,10 +3,11 @@ import '../css/login.css';
 import { AuthTabs } from './components/auth-tabs.js';
 import { Form } from './components/form.js';
 import { Toast } from './components/toast.js';
-import { requestApi, storeToken } from './helpers/api.js';
 import { getCurrentSession } from './helpers/session.js';
 import { TemplateVar } from './helpers/template-var.js';
 import { Header } from './components/header.js';
+import { authApi } from './model/auth.js';
+import { userApi } from './model/users.js';
 
 new Header();
 
@@ -167,12 +168,9 @@ async function submitLogin({ form, values }) {
     const password = String(values.password || '');
     clearAuthToasts();
 
-    const response = await requestApi('/auth/login', {
-        method: 'POST',
-        body: {
-            email,
-            password,
-        },
+    const response = await authApi.login({
+        email,
+        password,
     });
 
     if (!response.ok) {
@@ -186,7 +184,7 @@ async function submitLogin({ form, values }) {
         return;
     }
 
-    storeToken(token);
+    authApi.storeToken(token);
     Toast.flash('Login realizado com sucesso.', {
         tone: 'success',
         group: AUTH_REDIRECT_TOAST_GROUP,
@@ -216,13 +214,10 @@ async function submitRegister({ form, values }) {
 
     clearAuthToasts();
 
-    const response = await requestApi('/auth/register', {
-        method: 'POST',
-        body: {
-            name,
-            email,
-            password,
-        },
+    const response = await authApi.register({
+        name,
+        email,
+        password,
     });
 
     if (!response.ok) {
@@ -236,7 +231,7 @@ async function submitRegister({ form, values }) {
         return;
     }
 
-    storeToken(token);
+    authApi.storeToken(token);
     Toast.flash('Conta criada com sucesso. Redirecionando...', {
         tone: 'success',
         group: AUTH_REDIRECT_TOAST_GROUP,
@@ -258,10 +253,7 @@ async function submitPasswordResetRequest({ form, values, showLoginView = null }
 
     clearAuthToasts();
 
-    const response = await requestApi('/users/password-reset', {
-        method: 'POST',
-        body: { email },
-    });
+    const response = await userApi.requestPasswordReset(email);
 
     if (!response.ok) {
         showAuthToast(response.message || 'Não foi possível solicitar a redefinição.');
@@ -295,12 +287,9 @@ async function submitPasswordResetConfirmation({ form, values, showLoginView = n
 
     clearAuthToasts();
 
-    const response = await requestApi('/users/password-reset', {
-        method: 'PUT',
-        body: {
-            token,
-            newPassword,
-        },
+    const response = await userApi.confirmPasswordReset({
+        token,
+        newPassword,
     });
 
     if (!response.ok) {
