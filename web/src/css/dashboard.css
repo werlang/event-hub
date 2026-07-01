@@ -33,7 +33,7 @@ main {
     flex-grow: 1;
     position: relative;
     overflow: clip;
-    padding: clamp(52px, 7vw, 92px) clamp(18px, 4vw, 34px) clamp(76px, 10vw, 128px);
+    padding: 0;
     background-color: var(--color-background);
 }
 
@@ -52,5 +52,11 @@ main {
         border-color: color-mix(in srgb, var(--color-main), transparent 42%);
         background: color-mix(in srgb, var(--color-main), transparent 88%);
         color: var(--color-main);
+    }
+}
+
+@media (min-width: 640px) {
+    main {
+        padding: clamp(32px, 6vw, 72px) clamp(14px, 4vw, 32px) clamp(52px, 8vw, 96px);
     }
 }

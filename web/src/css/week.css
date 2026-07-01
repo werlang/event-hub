@@ -19,11 +19,12 @@ body {
 
 main {
     flex-grow: 1;
+    padding: 0;
 }
 
 .week-shell {
     display: grid;
-    gap: 24px;
+    gap: 18px;
 }
 
 .week-shell__header {
@@ -32,14 +33,14 @@ main {
 
 .week-shell__intro {
     display: grid;
-    gap: 10px;
+    gap: 8px;
 }
 
 .week-shell__meta {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
+    align-items: flex-start;
+    gap: 8px;
 }
 
 .week-shell__eyebrow {
@@ -55,9 +56,9 @@ main {
 .week-shell__range {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     width: fit-content;
-    padding: 10px 14px;
+    padding: 8px 12px;
     border: 1px solid color-mix(in srgb, var(--color-main), transparent 72%);
     border-radius: var(--radius-pill);
     background: linear-gradient(135deg, color-mix(in srgb, var(--color-main), transparent 90%), color-mix(in srgb, var(--color-main-alt), transparent 92%));
@@ -70,13 +71,15 @@ main {
 }
 
 .week-shell__calendar-link {
-    width: fit-content;
-    white-space: nowrap;
+    width: 100%;
+    justify-content: center;
+    white-space: normal;
     min-height: 42px;
-    padding: 10px 16px;
+    padding: 9px 14px;
     border-radius: var(--radius-pill);
     font-size: 0.82rem;
     letter-spacing: 0.08em;
+    text-align: center;
 }
 
 .week-shell__calendar-tooltip {
@@ -84,11 +87,39 @@ main {
 }
 
 .week-events-pagination {
-    margin-top: 8px;
+    margin-top: 6px;
 }
 
-@media (max-width: 840px) {
+@media (min-width: 640px) {
+
+    main {
+        padding: clamp(32px, 6vw, 72px) clamp(14px, 4vw, 32px) clamp(52px, 8vw, 96px);
+    }
+
+    .week-shell {
+        gap: 24px;
+    }
+
+    .week-shell__intro,
     .week-shell__meta {
-        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .week-shell__range {
+        gap: 10px;
+        padding: 10px 14px;
+    }
+
+    .week-shell__calendar-link {
+        width: fit-content;
+        white-space: nowrap;
+        padding: 10px 16px;
+        text-align: left;
+    }
+}
+
+@media (min-width: 1024px) {
+    .week-shell__meta {
+        align-items: center;
     }
 }

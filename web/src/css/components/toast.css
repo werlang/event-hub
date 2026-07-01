@@ -1,17 +1,15 @@
 .toast-container {
     position: fixed;
-    inset: 20px 20px auto auto;
+    inset: auto 12px 12px 12px;
     z-index: 1200;
     display: grid;
     gap: 12px;
-    width: min(380px, calc(100vw - 32px));
+    width: auto;
     pointer-events: none;
 }
 
 .toast-container--center {
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
+    transform: none;
 }
 
 .toast {
@@ -163,11 +161,15 @@
     }
 }
 
-@media (max-width: 640px) {
-    .toast-container,
+@media (min-width: 640px) {
+    .toast-container {
+        inset: 20px 20px auto auto;
+        width: min(380px, calc(100vw - 32px));
+    }
+
     .toast-container--center {
-        inset: auto 12px 12px 12px;
-        width: auto;
-        transform: none;
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
     }
 }

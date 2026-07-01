@@ -5,34 +5,34 @@
     align-items: center;
     justify-content: center;
     
-    @media (min-width: 600px) {
+    @media (min-width: 640px) {
         height: calc(100vh - 150px);
     }
 
-    @media (min-width: 900px) {
+    @media (min-width: 1024px) {
         margin: 0;
         justify-content: flex-start;
     }
 
     .hero__content {
         z-index: 1;
-        padding: 30px 10px 60px;
+        padding: 24px 14px 44px;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        max-width: 720px;
+        max-width: 680px;
         box-sizing: border-box;
 
-        @media (min-width: 600px) {
-            margin: 30px 10px;
-            padding: 30px 30px 60px;
+        @media (min-width: 640px) {
+            margin: 24px 0;
+            padding: 26px 24px 42px;
             border-radius: var(--radius-lg);
             background-color: color-mix(in srgb, var(--color-background), transparent 50%);
             backdrop-filter: blur(8px);
             border: 1px solid color-mix(in srgb, var(--color-main), transparent 20%);
         }
 
-        @media (min-width: 900px) {
+        @media (min-width: 1024px) {
             background-color: transparent;
             border: none;
             backdrop-filter: none;
@@ -56,11 +56,11 @@
         flex-grow: 1;
         width: 100vw;
 
-        @media (min-width: 600px) {
+        @media (min-width: 640px) {
             display: block;
         }
 
-        @media (min-width: 900px) {
+        @media (min-width: 1024px) {
             position: relative;
             width: auto;
             background-position: 250px center;
@@ -71,12 +71,18 @@
 
 .subtitle {
     color: var(--color-text-secondary);
-    line-height: 2.4rem;
-    font-size: 1.4rem;
-    margin-bottom: 30px;
+    line-height: 1.9rem;
+    font-size: 1.18rem;
+    margin-bottom: 22px;
     text-align: center;
 
-    @media (min-width: 900px) {
+    @media (min-width: 640px) {
+        line-height: 2.2rem;
+        font-size: 1.32rem;
+        margin-bottom: 26px;
+    }
+
+    @media (min-width: 1024px) {
         text-align: left;
     }
 }
@@ -88,17 +94,15 @@ h1 + .subtitle {
 .hero__actions {
     display: flex;
     justify-content: center;
-    gap: 12px;
-    margin-top: 4px;
+    gap: 10px;
+    margin-top: 2px;
     flex-direction: column;
 
-    @media (min-width: 600px) {
+    @media (min-width: 640px) {
         flex-direction: row;
     }
 
-    @media (min-width: 900px) {
+    @media (min-width: 1024px) {
         justify-content: flex-start;
     }
 }
-
-

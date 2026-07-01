@@ -1,7 +1,15 @@
 footer {
     background: rgb(from var(--color-text) r g b / 0.05);
-    padding: 20px 30px;
+    padding: 16px 18px;
     border-top: 1px solid rgb(from var(--color-text) r g b / 0.1);
+
+    @media (min-width: 640px) {
+        padding: 18px 24px;
+    }
+
+    @media (min-width: 1024px) {
+        padding: 20px 30px;
+    }
 
     .footer-content {
         max-width: 900px;
@@ -11,8 +19,9 @@ footer {
         display: flex;
         flex-direction: column;
         gap: 8px;
+        align-items: center;
 
-        @media (min-width: 600px) {
+        @media (min-width: 640px) {
             flex-direction: row;
             justify-content: space-between;
             align-items: center;
@@ -27,7 +36,7 @@ footer {
             align-items: center;
             gap: 6px;
 
-            @media (min-width: 600px) {
+            @media (min-width: 640px) {
                 font-size: 1rem;
             }
 

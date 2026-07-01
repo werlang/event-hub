@@ -1,26 +1,63 @@
 .dashboard-modal {
     display: grid;
-    gap: 18px;
+    gap: 16px;
+    min-height: 100%;
 
     & :is(.dashboard-modal__intro, .dashboard-settings-note) {
         margin: 0;
+        padding: 12px 14px;
+        border: 1px solid color-mix(in srgb, var(--color-main), transparent 86%);
+        border-radius: var(--radius);
+        background: color-mix(in srgb, #ffffff, var(--color-background) 18%);
         color: var(--color-text-secondary);
         line-height: 1.7;
     }
 
     & .form {
         margin-top: 0;
+        gap: 14px;
+        align-content: start;
+        padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+    }
+
+    & .form-row {
+        gap: 14px;
+    }
+
+    & label {
+        gap: 8px;
+        font-size: 0.92rem;
+        padding: 12px;
+        border: 1px solid color-mix(in srgb, var(--color-main), transparent 88%);
+        border-radius: var(--radius);
+        background: color-mix(in srgb, #ffffff, var(--color-background) 16%);
+        box-shadow: 0 10px 20px color-mix(in srgb, var(--color-text), transparent 95%);
+    }
+
+    & :is(input:not([type='hidden']):not([type='checkbox']):not([type='radio']), textarea, select) {
+        font-size: 16px;
+    }
+
+    & textarea {
+        min-height: 128px;
     }
 
     & .dashboard-modal__actions {
-        display: flex;
+        display: grid;
         flex-wrap: wrap;
-        gap: 12px;
+        gap: 10px;
         align-items: center;
+        position: sticky;
+        bottom: calc(-12px - env(safe-area-inset-bottom, 0px));
+        margin-top: auto;
+        padding: 12px 0 calc(2px + env(safe-area-inset-bottom, 0px));
+        background:
+            linear-gradient(180deg, color-mix(in srgb, var(--color-background), transparent 6%) 0%, var(--color-background) 24%);
     }
 
     & .dashboard-modal__actions .button {
         min-width: 210px;
+        width: 100%;
     }
 }
 
@@ -28,14 +65,40 @@
     margin-top: 0;
 }
 
-@media (max-width: 640px) {
+@media (min-width: 640px) {
     .dashboard-modal {
+        gap: 18px;
+
+        & :is(.dashboard-modal__intro, .dashboard-settings-note) {
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+        }
+
         & .dashboard-modal__actions {
-            display: grid;
+            display: flex;
+            gap: 12px;
+            position: static;
+            margin-top: 4px;
+            padding: 0;
+            background: transparent;
         }
 
         & .dashboard-modal__actions .button {
-            width: 100%;
+            width: auto;
+        }
+
+        & .form {
+            padding-bottom: 0;
+        }
+
+        & label {
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
         }
     }
 }

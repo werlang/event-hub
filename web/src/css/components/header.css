@@ -3,15 +3,23 @@ header {
     justify-content: flex-end;
     background: var(--color-main);
     color: rgb(from var(--color-background) r g b / 1);
-    padding: 25px 30px;
+    padding: 18px 16px;
     width: 100%;
     box-shadow: 0 4px 10px rgb(from var(--color-text) r g b / 0.5);
     flex-wrap: wrap;
     z-index: 5;
+
+    @media (min-width: 640px) {
+        padding: 22px 24px;
+    }
     
-    @media (min-width: 720px) {
+    @media (min-width: 768px) {
         height: 150px;
         justify-content: space-between;
+    }
+
+    @media (min-width: 1024px) {
+        padding: 25px 30px;
     }
 
     .header-title {
@@ -21,9 +29,9 @@ header {
         text-decoration: none;
 
         h1 {
-            font-size: 2.7rem;
+            font-size: 2.3rem;
 
-            @media (min-width: 600px) {
+            @media (min-width: 640px) {
                 font-size: 3rem;
             }
         }
@@ -35,10 +43,14 @@ header {
 
     .header-subtitle {
         color: rgb(from var(--color-background) r g b / 0.8);
-        padding-left: 14px;
-        font-size: 1rem;
+        padding-left: 10px;
+        font-size: 0.92rem;
         
-        @media (min-width: 600px) {
+        @media (min-width: 640px) {
+            font-size: 1.15rem;
+        }
+
+        @media (min-width: 1024px) {
             font-size: 1.3rem;
         }
     }
@@ -47,24 +59,24 @@ header {
         display: flex;
         align-items: center;
         justify-content: flex-start;
-        gap: 12px;
-        margin: 15px 0;
+        gap: 10px;
+        margin: 12px 0 0;
         flex-wrap: wrap;
         width: 100%;
 
-        @media (min-width: 720px) {
+        @media (min-width: 768px) {
             justify-content: flex-end;
             width: auto;
         }
 
         .button {
             min-height: auto;
-            padding: 6px 18px;
+            padding: 6px 14px;
             border: none;
             background: transparent;
             color: var(--color-main-contrast);
             box-shadow: none;
-            font-size: 1.2rem;
+            font-size: 1.05rem;
             font-weight: 700;
             letter-spacing: 0.02em;
             text-transform: none;
@@ -113,8 +125,14 @@ header {
     }
 
     #logo {
-        width: 56px;
-        height: 56px;
-        margin-right: 15px;
+        width: 48px;
+        height: 48px;
+        margin-right: 12px;
+
+        @media (min-width: 640px) {
+            width: 56px;
+            height: 56px;
+            margin-right: 15px;
+        }
     }
 }

@@ -1,25 +1,27 @@
 .dashboard-settings-layout {
     display: grid;
-    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
-    gap: 22px;
+    grid-template-columns: 1fr;
+    gap: 14px;
     align-items: start;
 }
 
 .dashboard-settings-overview {
-    position: sticky;
+    position: static;
     top: 24px;
     display: grid;
-    gap: 18px;
-    padding: clamp(20px, 3vw, 26px);
+    gap: 0;
+    padding: 0;
     border: 1px solid color-mix(in srgb, var(--color-main), transparent 82%);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-sm);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--color-main), transparent 91%) 0%, transparent 44%),
         linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 16%) 0%, color-mix(in srgb, var(--color-background), var(--color-text) 2%) 100%);
     box-shadow: 0 14px 28px color-mix(in srgb, var(--color-text), transparent 93%);
+    overflow: hidden;
 
     & .dashboard-settings-overview__eyebrow {
         margin: 0;
+        padding: 14px 12px 0;
         font-family: var(--font-mono);
         font-size: 0.78rem;
         font-weight: 700;
@@ -30,26 +32,31 @@
 
     & .dashboard-settings-overview__title {
         margin: 0;
+        padding: 6px 12px 0;
         font-family: var(--font-display);
         color: var(--color-main-alt);
     }
 
     & .dashboard-settings-overview__intro {
         margin: 0;
+        padding: 10px 12px 14px;
         color: var(--color-text-secondary);
         line-height: 1.7;
+        border-bottom: 1px solid color-mix(in srgb, var(--color-main), transparent 88%);
     }
 }
 
 .dashboard-settings-overview__facts {
     display: grid;
-    gap: 12px;
+    gap: 10px;
     margin: 0;
+    padding: 14px 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-main), transparent 88%);
 
     & .dashboard-settings-overview__fact {
         display: grid;
         gap: 6px;
-        padding: 12px 14px;
+        padding: 10px 12px;
         border-radius: var(--radius);
         border: 1px solid color-mix(in srgb, var(--color-main-alt), transparent 84%);
         background: color-mix(in srgb, #ffffff, var(--color-background) 24%);
@@ -73,7 +80,8 @@
 
 .dashboard-settings-nav {
     display: grid;
-    gap: 10px;
+    gap: 8px;
+    padding: 14px 12px;
 
     & .dashboard-settings-nav__button {
         justify-content: flex-start;
@@ -93,19 +101,20 @@
 
 .dashboard-settings-panels {
     display: grid;
-    gap: 18px;
+    gap: 14px;
 }
 
 .dashboard-settings-panel,
 .dashboard-settings-admin {
     display: grid;
-    gap: 18px;
-    padding: clamp(20px, 3vw, 28px);
+    gap: 0;
+    padding: 0;
     border: 1px solid color-mix(in srgb, var(--color-main), transparent 82%);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-sm);
     background: linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 18%) 0%, color-mix(in srgb, var(--color-background), var(--color-text) 2%) 100%);
     box-shadow: 0 14px 28px color-mix(in srgb, var(--color-text), transparent 93%);
-    scroll-margin-top: 28px;
+    scroll-margin-top: 20px;
+    overflow: hidden;
 }
 
 .dashboard-settings-panel {
@@ -114,6 +123,8 @@
     & .dashboard-settings-panel__header {
         display: grid;
         gap: 10px;
+        padding: 14px 12px;
+        border-bottom: 1px solid color-mix(in srgb, var(--color-main), transparent 88%);
     }
 
     & .dashboard-settings-panel__eyebrow {
@@ -143,21 +154,24 @@
 
 .dashboard-settings-form {
     margin-top: 0;
+    padding: 14px 12px;
 
     & .button {
         min-width: 212px;
         max-height: 55px;
+        width: 100%;
+        justify-content: center;
     }
 }
 
 .dashboard-settings-preferences-list {
     display: grid;
-    gap: 12px;
+    gap: 10px;
 }
 
 .dashboard-settings-preferences-item {
     align-items: flex-start;
-    padding: 12px 0;
+    padding: 10px 0;
 }
 
 .dashboard-settings-preferences-copy {
@@ -181,48 +195,100 @@
     & .dashboard-settings-admin__header {
         display: grid;
         gap: 10px;
+        padding: 14px 12px;
+        border-bottom: 1px solid color-mix(in srgb, var(--color-main), transparent 88%);
     }
 
     & .dashboard-settings-admin__grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 18px;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 14px 0px 12px;
     }
 
     & .dashboard-settings-admin__actions {
         display: grid;
-        gap: 12px;
+        gap: 10px;
         align-content: start;
     }
 }
 
-@media (max-width: 960px) {
+@media (min-width: 640px) {
     .dashboard-settings-layout {
-        grid-template-columns: 1fr;
+        gap: 18px;
     }
 
-    .dashboard-settings-overview {
-        position: static;
+    .dashboard-settings-panels {
+        gap: 16px;
     }
 
-    .dashboard-settings-admin {
-        & .dashboard-settings-admin__grid {
-            grid-template-columns: 1fr;
-        }
-    }
-}
-
-@media (max-width: 640px) {
     .dashboard-settings-panel,
     .dashboard-settings-admin,
     .dashboard-settings-overview {
-        padding: 18px;
+        gap: 16px;
+        padding: clamp(20px, 3vw, 28px);
+        border-radius: var(--radius-lg);
+        overflow: visible;
+    }
+
+    .dashboard-settings-overview {
+        & .dashboard-settings-overview__eyebrow,
+        & .dashboard-settings-overview__title,
+        & .dashboard-settings-overview__intro {
+            padding: 0;
+        }
+
+        & .dashboard-settings-overview__intro,
+        & .dashboard-settings-overview__facts {
+            border-bottom: 0;
+        }
+    }
+
+    .dashboard-settings-overview__facts,
+    .dashboard-settings-nav,
+    .dashboard-settings-form,
+    .dashboard-settings-admin .dashboard-settings-admin__grid {
+        padding: 0;
+    }
+
+    .dashboard-settings-admin__grid {
+        padding: 14px 12px 12px;
+    }
+
+    .dashboard-settings-panel {
+        & .dashboard-settings-panel__header {
+            padding: 0;
+            border-bottom: 0;
+        }
+    }
+
+    .dashboard-settings-admin {
+        & .dashboard-settings-admin__header {
+            padding: 0;
+            border-bottom: 0;
+        }
     }
 
     .dashboard-settings-form {
         & .button {
-            width: 100%;
-            justify-content: center;
+            width: auto;
+            justify-content: initial;
+        }
+    }
+}
+
+@media (min-width: 1024px) {
+    .dashboard-settings-layout {
+        grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+    }
+
+    .dashboard-settings-overview {
+        position: sticky;
+    }
+
+    .dashboard-settings-admin {
+        & .dashboard-settings-admin__grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
 }

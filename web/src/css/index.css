@@ -18,11 +18,11 @@
 
 
 #home-filter-surface {
-    gap: 24px;
+    gap: 18px;
 }
 
 .home-filters {
-    gap: 18px;
+    gap: 14px;
 }
 
 .home-filters__form {
@@ -42,13 +42,27 @@
 
 .home-filters__submit {
     width: 100%;
-    min-height: 56px;
+    min-height: 52px;
 }
 
 .home-filters__chips {
-    padding-top: 2px;
+    padding-top: 0;
 }
 
 .home-events-pagination {
-    margin-top: 18px;
+    margin-top: 16px;
+}
+
+@media (min-width: 640px) {
+    #home-filter-surface {
+        gap: 24px;
+    }
+
+    .home-filters {
+        gap: 18px;
+    }
+
+    .home-filters__chips {
+        padding-top: 2px;
+    }
 }

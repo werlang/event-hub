@@ -3,15 +3,16 @@
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
-    gap: 24px;
-    padding: clamp(24px, 4vw, 38px);
+    gap: 18px;
+    padding: 18px;
     isolation: isolate;
     animation: dashboard-rise 0.55s ease both;
     width: min(100%, 1200px);
 
     & .dashboard-shell__intro {
         display: flex;
-        gap: 12px;
+        flex-wrap: wrap;
+        gap: 10px;
         align-items: center;
     }
 
@@ -21,7 +22,8 @@
     }
 
     & .dashboard-shell__welcome {
-        font-size: 1.05rem;
+        font-size: 0.98rem;
+        line-height: 1.6;
         color: var(--color-text-secondary);
         max-width: 58ch;
     }
@@ -30,8 +32,8 @@
 .dashboard-command-bar {
     width: 100%;
     display: grid;
-    gap: 18px;
-    padding: 18px 20px 0;
+    gap: 14px;
+    padding: 14px;
     border-radius: var(--radius-lg);
     border: 1px solid color-mix(in srgb, var(--color-main), transparent 80%);
     background:
@@ -41,16 +43,15 @@
 
     & .dashboard-command-bar__copy {
         display: grid;
-        gap: 10px;
+        gap: 8px;
     }
 
     & .dashboard-command-bar__tabs {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: flex-end;
-        gap: 8px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 4px;
         width: 100%;
-        padding-top: 6px;
+        padding-top: 4px;
         border-top: 1px solid color-mix(in srgb, var(--color-main), transparent 86%);
     }
 
@@ -58,17 +59,18 @@
         position: relative;
         display: inline-flex;
         align-items: center;
-        gap: 10px;
-        min-height: 50px;
-        padding: 0 16px;
+        gap: 8px;
+        justify-content: flex-start;
+        min-height: 44px;
+        padding: 0 10px;
         border: none;
-        border-radius: var(--radius) var(--radius) 0 0;
+        border-radius: var(--radius);
         background: transparent;
         color: var(--color-text-secondary);
         font-family: var(--font-mono);
-        font-size: 1rem;
+        font-size: 0.9rem;
         font-weight: 700;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
         cursor: pointer;
         transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
@@ -94,10 +96,12 @@
         &::after {
             content: '';
             position: absolute;
-            left: 14px;
-            right: 14px;
-            bottom: 0;
-            height: 3px;
+            left: 12px;
+            right: auto;
+            top: 8px;
+            bottom: 8px;
+            width: 3px;
+            height: auto;
             border-radius: var(--radius-pill);
             background: linear-gradient(90deg, var(--color-main), color-mix(in srgb, var(--color-main), var(--color-main-alt) 36%));
         }
@@ -110,13 +114,21 @@
     color: var(--color-main);
 }
 
-@media (max-width: 820px) {
+@media (min-width: 640px) {
+    .dashboard-shell {
+        gap: 24px;
+        padding: clamp(24px, 4vw, 38px);
+    }
+
     .dashboard-command-bar {
+        padding: 18px 20px 0;
+
         & .dashboard-command-bar__tabs {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             align-items: stretch;
             gap: 8px;
+            padding-top: 6px;
         }
 
         & .dashboard-action-tab {
@@ -124,42 +136,40 @@
             min-height: 48px;
             padding: 0 12px;
             text-align: center;
+            border-radius: var(--radius) var(--radius) 0 0;
+            font-size: 1rem;
+            letter-spacing: 0.08em;
         }
 
         & .dashboard-action-tab--current::after {
             left: 10px;
             right: 10px;
+            top: auto;
+            bottom: 0;
+            width: auto;
+            height: 3px;
         }
     }
 }
 
-@media (max-width: 640px) {
-    .dashboard-shell {
-        gap: 20px;
-    }
-
+@media (min-width: 1024px) {
     .dashboard-command-bar {
-        padding: 16px;
-
         & .dashboard-command-bar__tabs {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 8px;
         }
 
         & .dashboard-action-tab {
-            justify-content: flex-start;
-            border-radius: var(--radius);
-            min-height: 46px;
+            justify-content: center;
+            min-height: 50px;
+            padding: 0 16px;
         }
 
         & .dashboard-action-tab--current::after {
-            left: 12px;
-            right: auto;
-            top: 10px;
-            bottom: 10px;
-            width: 3px;
-            height: auto;
+            left: 14px;
+            right: 14px;
         }
     }
 }
