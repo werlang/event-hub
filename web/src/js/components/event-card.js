@@ -157,7 +157,7 @@ export class EventCard extends BaseComponent {
 	#render() {
 		const element = this.get();
 		const pastEvent = this.#event.isPast();
-		element.className = pastEvent ? 'card card--past' : 'card';
+		element.className = pastEvent ? 'card surface-card card--past' : 'card surface-card';
 
 		const fragment = document.createDocumentFragment();
 		const header = document.createElement('div');

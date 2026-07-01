@@ -1,8 +1,4 @@
-.panel,
-.dashboard-section,
-.dashboard-settings-panel,
-.dashboard-settings-admin,
-.dashboard-settings-overview {
+.surface-host {
     border: 1px solid var(--surface-host-border-color);
     border-radius: var(--surface-host-radius-mobile);
     background: var(--surface-host-background);
@@ -10,12 +6,7 @@
     overflow: var(--surface-host-overflow);
 }
 
-.card,
-.dashboard-event,
-.dashboard-summary-card,
-.filter-surface,
-.dashboard-command-bar,
-.panel__block {
+.surface-card {
     border: 1px solid var(--surface-content-border-color);
     border-radius: var(--surface-content-radius);
     background: var(--surface-content-background);
@@ -24,11 +15,7 @@
 }
 
 @media (min-width: 640px) {
-    .panel,
-    .dashboard-section,
-    .dashboard-settings-panel,
-    .dashboard-settings-admin,
-    .dashboard-settings-overview {
+    .surface-host {
         border-radius: var(--surface-host-radius-desktop);
     }
 }

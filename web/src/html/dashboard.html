@@ -21,7 +21,7 @@
             </div>
             <h1 id="dashboard-heading">Central de eventos</h1>
 
-            <div class="dashboard-command-bar" aria-label="Ações principais da central">
+            <div class="dashboard-command-bar surface-card" aria-label="Ações principais da central">
                 <div class="dashboard-command-bar__copy">
                     <p class="dashboard-shell__welcome"> Bem-vindo de volta, <span class="dashboard-shell__user-name"></span>! </p>
                     <p class="dashboard-shell__instruction" id="dashboard-shell-instruction">Use os botões abaixo para navegar entre seus envios, criar novos eventos ou revisar as configurações da sua conta.</p>
@@ -52,7 +52,7 @@
         </div>
 
         <div class="dashboard-sections">
-            <details class="dashboard-section" id="dashboard-overview-section" open>
+            <details class="dashboard-section surface-host" id="dashboard-overview-section" open>
                 <summary class="dashboard-section__summary">
                     <div class="dashboard-section__summary-copy">
                         <p class="dashboard-section__eyebrow">Resumo</p>
@@ -77,7 +77,7 @@
                 </div>
             </details>
 
-            <details class="dashboard-section" id="dashboard-events-section" open>
+            <details class="dashboard-section surface-host" id="dashboard-events-section" open>
                 <summary class="dashboard-section__summary">
                     <div class="dashboard-section__summary-copy">
                         <p class="dashboard-section__eyebrow" id="dashboard-events-eyebrow">Eventos</p>
@@ -99,7 +99,7 @@
                         A lista será preenchida assim que a sua área for carregada.
                     </p>
 
-                    <div class="dashboard-events-filters filter-surface" id="dashboard-events-filters" aria-label="Filtros da lista de eventos">
+                    <div class="dashboard-events-filters filter-surface surface-card" id="dashboard-events-filters" aria-label="Filtros da lista de eventos">
                         <div class="dashboard-events-filters__grid filter-surface__grid">
                             <label class="select-field" for="dashboard-events-filter-status" id="dashboard-events-filter-status-field">
                                 <span><i class="fa-solid fa-tag"></i> Status</span>
@@ -154,7 +154,7 @@
                 </div>
             </details>
 
-            <details class="dashboard-section" id="dashboard-settings-section" hidden>
+            <details class="dashboard-section surface-host" id="dashboard-settings-section" hidden>
                 <summary class="dashboard-section__summary">
                     <div class="dashboard-section__summary-copy">
                         <p class="dashboard-section__eyebrow">Configurações</p>
@@ -172,7 +172,7 @@
 
                 <div class="dashboard-section__content">
                     <div class="dashboard-settings-layout">
-                        <aside class="dashboard-settings-overview">
+                        <aside class="dashboard-settings-overview surface-host">
                             <p class="dashboard-settings-overview__eyebrow">Sua sessão</p>
                             <h3 class="dashboard-settings-overview__title" id="dashboard-settings-account-name">Conta ativa</h3>
                             <p class="dashboard-settings-overview__intro" id="dashboard-settings-intro">
@@ -220,7 +220,7 @@
                         </aside>
 
                         <div class="dashboard-settings-panels">
-                            <article class="dashboard-settings-panel" id="dashboard-settings-panel-profile" data-dashboard-settings-panel="profile" tabindex="-1">
+                            <article class="dashboard-settings-panel surface-host" id="dashboard-settings-panel-profile" data-dashboard-settings-panel="profile" tabindex="-1">
                                 <div class="dashboard-settings-panel__header">
                                     <p class="dashboard-settings-panel__eyebrow">Perfil</p>
                                     <h3>Atualize seu nome e e-mail</h3>
@@ -246,7 +246,7 @@
                                 </form>
                             </article>
 
-                            <article class="dashboard-settings-panel" id="dashboard-settings-panel-password" data-dashboard-settings-panel="password" tabindex="-1">
+                            <article class="dashboard-settings-panel surface-host" id="dashboard-settings-panel-password" data-dashboard-settings-panel="password" tabindex="-1">
                                 <div class="dashboard-settings-panel__header">
                                     <p class="dashboard-settings-panel__eyebrow">Segurança</p>
                                     <h3>Troque sua senha</h3>
@@ -282,7 +282,7 @@
                                 </form>
                             </article>
 
-                            <article class="dashboard-settings-panel" id="dashboard-settings-panel-emails" data-dashboard-settings-panel="emails" tabindex="-1">
+                            <article class="dashboard-settings-panel surface-host" id="dashboard-settings-panel-emails" data-dashboard-settings-panel="emails" tabindex="-1">
                                 <div class="dashboard-settings-panel__header">
                                     <p class="dashboard-settings-panel__eyebrow">Comunicações</p>
                                     <h3>Controle seus avisos por e-mail</h3>
@@ -317,7 +317,7 @@
                                 </form>
                             </article>
 
-                            <section class="dashboard-settings-admin" id="dashboard-settings-admin-group" hidden>
+                            <section class="dashboard-settings-admin surface-host" id="dashboard-settings-admin-group" hidden>
                                 <div class="dashboard-settings-admin__header" id="dashboard-settings-panel-admin" data-dashboard-settings-panel="admin" tabindex="-1">
                                     <p class="dashboard-settings-panel__eyebrow">Administração</p>
                                     <h3>Ferramentas para contas dos usuários</h3>
@@ -327,7 +327,7 @@
                                 </div>
 
                                 <div class="dashboard-settings-admin__grid">
-                                    <article class="dashboard-settings-panel dashboard-settings-panel--admin">
+                                    <article class="dashboard-settings-panel surface-host dashboard-settings-panel--admin">
                                         <div class="dashboard-settings-panel__header">
                                             <p class="dashboard-settings-panel__eyebrow">Reset de senha</p>
                                             <h4>Redefinir senha de membro</h4>
@@ -354,7 +354,7 @@
                                         </form>
                                     </article>
 
-                                    <article class="dashboard-settings-panel dashboard-settings-panel--admin">
+                                    <article class="dashboard-settings-panel surface-host dashboard-settings-panel--admin">
                                         <div class="dashboard-settings-panel__header">
                                             <p class="dashboard-settings-panel__eyebrow">Permissões</p>
                                             <h4>Promover usuário</h4>
@@ -376,7 +376,7 @@
                                         </form>
                                     </article>
 
-                                    <article class="dashboard-settings-panel dashboard-settings-panel--admin">
+                                    <article class="dashboard-settings-panel surface-host dashboard-settings-panel--admin">
                                         <div class="dashboard-settings-panel__header">
                                             <p class="dashboard-settings-panel__eyebrow">Agenda semanal</p>
                                             <h4>Enviar email agora</h4>

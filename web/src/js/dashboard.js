@@ -583,7 +583,7 @@ function createDashboardEventElement(event, {
     const isAdminDiscoveryView = isModerationView && isEditOnlyModerationScope(moderationScope);
     const isOwnerActionable = !isModerationView && (canEditOwnEvent(event) || canDeleteOwnEvent(event));
     const article = document.createElement('article');
-    article.className = `dashboard-event dashboard-event--${statusMeta.tone}`;
+    article.className = `dashboard-event surface-card dashboard-event--${statusMeta.tone}`;
     article.dataset.eventId = eventRecord.readId('');
 
     if (isPastEvent) {

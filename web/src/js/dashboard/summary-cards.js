@@ -157,8 +157,8 @@ export function createSummaryCards(events) {
 export function createSummaryCardElement(card) {
     const element = document.createElement('article');
     element.className = card.featured
-        ? `dashboard-summary-card dashboard-summary-card--${card.tone} dashboard-summary-card--featured`
-        : `dashboard-summary-card dashboard-summary-card--${card.tone}`;
+        ? `dashboard-summary-card surface-card dashboard-summary-card--${card.tone} dashboard-summary-card--featured`
+        : `dashboard-summary-card surface-card dashboard-summary-card--${card.tone}`;
 
     const top = document.createElement('div');
     top.className = 'dashboard-summary-card__top';
@@ -221,4 +221,3 @@ export function createSummaryCardElement(card) {
     element.append(note, meta);
     return element;
 }
-
