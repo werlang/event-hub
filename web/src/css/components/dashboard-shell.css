@@ -3,8 +3,8 @@
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
-    gap: var(--surface-shell-section-gap-mobile);
-    padding: var(--space-8);
+    gap: var(--space-5);
+    padding: var(--space-5);
     isolation: isolate;
     animation: dashboard-rise 0.55s ease both;
     width: min(100%, 1200px);
@@ -38,8 +38,8 @@
     --surface-content-shadow: 0 14px 30px color-mix(in srgb, var(--color-text), transparent 93%);
     width: 100%;
     display: grid;
-    gap: var(--surface-command-gap-mobile);
-    padding: var(--surface-command-padding-mobile);
+    gap: var(--space-4);
+    padding: var(--space-4);
 
     & .dashboard-command-bar__copy {
         display: grid;
@@ -116,18 +116,18 @@
 
 @media (min-width: 640px) {
     .dashboard-shell {
-        gap: var(--surface-shell-section-gap-desktop);
+        gap: var(--space-6);
         padding: clamp(24px, 4vw, 38px);
     }
 
     .dashboard-command-bar {
-        padding: var(--surface-command-padding-desktop);
+        padding: var(--space-5) var(--space-5) 0;
 
         & .dashboard-command-bar__tabs {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             align-items: stretch;
-            gap: var(--space-3);
+            gap: var(--space-2);
             padding-top: 6px;
         }
 

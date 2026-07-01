@@ -106,7 +106,7 @@ Page entries and dashboard modules should call these facades instead of hard-cod
 ## CSS Standards
 
 - Page CSS entry files import `tokens.css` and `base.css` first, then component partials.
-- Keep global tokens in `web/src/css/tokens.css`.
+- Keep global tokens in `web/src/css/tokens.css`, and keep them primitive-only: fonts, colors, radii, and the shared spacing scale.
 - Keep shared element defaults in `web/src/css/base.css`.
 - Component partials must stay scoped to their component class names.
 - Use mobile-first media queries only.

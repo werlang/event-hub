@@ -26,8 +26,8 @@ main {
 main > .panel {
     max-width: 560px;
     display: grid;
-    gap: var(--surface-filter-gap-mobile);
-    padding: var(--space-8);
+    gap: var(--space-4);
+    padding: var(--space-5);
     isolation: isolate;
     background: linear-gradient(180deg, color-mix(in srgb, #ffffff, var(--color-background) 58%) 0%, var(--color-background) 100%);
 }
@@ -150,7 +150,7 @@ main > .panel {
     }
 
     main > .panel {
-        gap: var(--surface-shell-section-gap-mobile);
+        gap: var(--space-5);
         padding: clamp(24px, 4vw, 34px);
     }
 

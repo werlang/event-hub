@@ -1,7 +1,7 @@
 #events-grid {
     display: flex;
     flex-direction: column;
-    gap: var(--surface-filter-gap-mobile);
+    gap: var(--space-4);
 }
 
 .card,
@@ -9,8 +9,8 @@
     --surface-content-overflow: visible;
     position: relative;
     display: grid;
-    gap: var(--surface-card-gap);
-    padding: var(--surface-card-padding-mobile);
+    gap: var(--space-3);
+    padding: var(--space-4);
 
     &::before {
         content: '';
@@ -254,7 +254,7 @@
 @media (min-width: 640px) {
     .card,
     .dashboard-event {
-        padding: var(--surface-card-padding-desktop);
+        padding: var(--space-5);
 
         & :is(.card__headline, .dashboard-event__headline) {
             gap: 12px;

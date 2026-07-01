@@ -1,7 +1,7 @@
 .dashboard-summary-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: var(--surface-filter-gap-mobile);
+    gap: var(--space-4);
 }
 
 .dashboard-summary-card {
@@ -16,9 +16,9 @@
     position: relative;
     display: grid;
     align-content: start;
-    gap: var(--surface-card-gap);
+    gap: var(--space-3);
     min-height: auto;
-    padding: var(--surface-summary-padding-mobile);
+    padding: var(--space-4);
     isolation: isolate;
 
     &::before {
@@ -131,7 +131,7 @@
     &.dashboard-summary-card--featured {
         grid-column: span 1;
         min-height: auto;
-        padding: var(--surface-summary-padding-mobile);
+        padding: var(--space-4);
         background:
             radial-gradient(circle at top right, color-mix(in srgb, var(--dashboard-summary-accent), transparent 84%) 0%, transparent 42%),
             linear-gradient(145deg, color-mix(in srgb, #ffffff, var(--color-background) 10%) 0%, color-mix(in srgb, var(--dashboard-summary-accent), #ffffff 94%) 100%);
@@ -199,7 +199,7 @@
     .dashboard-summary-card {
         grid-column: span 6;
         min-height: 214px;
-        padding: var(--surface-summary-padding-desktop);
+        padding: var(--space-6);
 
         & .dashboard-summary-card__metric {
             gap: 10px;
@@ -212,7 +212,7 @@
         &.dashboard-summary-card--featured {
             grid-column: span 12;
             min-height: 242px;
-            padding: var(--surface-summary-padding-featured-desktop);
+            padding: var(--space-6);
         }
     }
 }

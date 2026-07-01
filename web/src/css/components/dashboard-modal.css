@@ -1,11 +1,11 @@
 .dashboard-modal {
     display: grid;
-    gap: var(--surface-section-content-gap);
+    gap: var(--space-4);
     min-height: 100%;
 
     & :is(.dashboard-modal__intro, .dashboard-settings-note) {
         margin: 0;
-        padding: var(--space-5) var(--space-6);
+        padding: var(--space-3) var(--space-4);
         border: 1px solid color-mix(in srgb, var(--color-main), transparent 86%);
         border-radius: var(--radius);
         background: color-mix(in srgb, #ffffff, var(--color-background) 18%);
@@ -15,19 +15,19 @@
 
     & .form {
         margin-top: 0;
-        gap: var(--surface-filter-gap-mobile);
+        gap: var(--space-4);
         align-content: start;
         padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
     }
 
     & .form-row {
-        gap: var(--surface-filter-gap-mobile);
+        gap: var(--space-4);
     }
 
     & label {
         gap: 8px;
         font-size: 0.92rem;
-        padding: var(--space-5);
+        padding: var(--space-3);
         border: 1px solid color-mix(in srgb, var(--color-main), transparent 88%);
         border-radius: var(--radius);
         background: color-mix(in srgb, #ffffff, var(--color-background) 16%);
@@ -45,7 +45,7 @@
     & .dashboard-modal__actions {
         display: grid;
         flex-wrap: wrap;
-        gap: var(--space-4);
+        gap: var(--space-3);
         align-items: center;
         position: sticky;
         bottom: calc(-12px - env(safe-area-inset-bottom, 0px));
@@ -67,7 +67,7 @@
 
 @media (min-width: 640px) {
     .dashboard-modal {
-        gap: var(--surface-shell-section-gap-mobile);
+        gap: var(--space-5);
 
         & :is(.dashboard-modal__intro, .dashboard-settings-note) {
             padding: 0;
@@ -78,7 +78,7 @@
 
         & .dashboard-modal__actions {
             display: flex;
-            gap: var(--surface-card-gap);
+            gap: var(--space-3);
             position: static;
             margin-top: 4px;
             padding: 0;

@@ -8,13 +8,13 @@
     );
     --surface-content-shadow: none;
     display: grid;
-    gap: var(--surface-filter-gap-mobile);
-    padding: var(--surface-filter-padding-mobile);
+    gap: var(--space-4);
+    padding: var(--space-4);
 
     & .filter-surface__grid {
         display: grid;
         grid-template-columns: 1fr;
-        gap: var(--surface-filter-gap-mobile);
+        gap: var(--space-4);
         align-items: end;
 
         & label {
@@ -58,15 +58,14 @@
 
 @media (min-width: 768px) {
     .filter-surface {
-        padding: var(--surface-filter-padding-desktop);
+        padding: var(--space-5);
 
         & .filter-surface__grid {
-            gap: var(--surface-filter-gap-desktop);
+            gap: var(--space-4);
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         }
     }
 }
-
 
 
 

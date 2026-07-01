@@ -1,21 +1,28 @@
 .surface-host {
-    border: 1px solid var(--surface-host-border-color);
-    border-radius: var(--surface-host-radius-mobile);
-    background: var(--surface-host-background);
-    box-shadow: var(--surface-host-shadow);
-    overflow: var(--surface-host-overflow);
+    border: 1px solid var(--surface-host-border-color, var(--color-border));
+    border-radius: var(--surface-host-radius-mobile, var(--radius-sm));
+    background: var(--surface-host-background, var(--color-background));
+    box-shadow: var(--surface-host-shadow, 0 18px 48px var(--color-shadow));
+    overflow: var(--surface-host-overflow, hidden);
 }
 
 .surface-card {
-    border: 1px solid var(--surface-content-border-color);
-    border-radius: var(--surface-content-radius);
-    background: var(--surface-content-background);
-    box-shadow: var(--surface-content-shadow);
-    overflow: var(--surface-content-overflow);
+    border: 1px solid var(--surface-content-border-color, color-mix(in srgb, var(--color-main), transparent 82%));
+    border-radius: var(--surface-content-radius, var(--radius));
+    background: var(
+        --surface-content-background,
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, #ffffff, var(--color-background) 18%) 0%,
+            color-mix(in srgb, var(--color-background), var(--color-text) 3%) 100%
+        )
+    );
+    box-shadow: var(--surface-content-shadow, 0 12px 28px color-mix(in srgb, var(--color-text), transparent 93%));
+    overflow: var(--surface-content-overflow, visible);
 }
 
 @media (min-width: 640px) {
     .surface-host {
-        border-radius: var(--surface-host-radius-desktop);
+        border-radius: var(--surface-host-radius-desktop, var(--radius-lg));
     }
 }
