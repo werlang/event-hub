@@ -68,7 +68,7 @@ export class EmailTemplateManager {
     }
 
     /**
-     * Escapes one string for safe interpolation into MJML or HTML content.
+     * Escapes one string for safe interpolation into MJML or HTML content, converting line breaks to <br /> tags.
      *
      * @param {unknown} value The value to escape.
      * @returns {string} The escaped string.
@@ -79,7 +79,10 @@ export class EmailTemplateManager {
             .replaceAll('<', '&lt;')
             .replaceAll('>', '&gt;')
             .replaceAll('"', '&quot;')
-            .replaceAll("'", '&#39;');
+            .replaceAll("'", '&#39;')
+            .replaceAll('\r\n', '<br />')
+            .replaceAll('\r', '<br />')
+            .replaceAll('\n', '<br />');
     }
 
     /**
