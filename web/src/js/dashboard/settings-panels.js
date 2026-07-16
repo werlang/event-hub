@@ -63,6 +63,7 @@ export class DashboardSettingsPanels extends BaseComponent {
     #sessionChangeHandlers = new Set();
     #renderedProfileKey = '';
     #renderedPreferenceKey = '';
+    #anchorByButton = new Map();
 
     /**
      * Creates the inline settings controller used inside the dashboard.
@@ -74,6 +75,10 @@ export class DashboardSettingsPanels extends BaseComponent {
         if (!this.isReady()) {
             return;
         }
+
+        this.#elements.navButtons.forEach((button) => {
+            this.#anchorByButton.set(button, readText(button.dataset.dashboardSettingsAnchor, ''));
+        });
 
         this.#forms = {
             profile: new Form(this.#elements.profileForm),
@@ -281,7 +286,7 @@ export class DashboardSettingsPanels extends BaseComponent {
                 return;
             }
 
-            this.#focusPanel(button.dataset.dashboardSettingsAnchor);
+            this.#focusPanel(this.#anchorByButton.get(button) || 'profile');
         });
     }
 
@@ -672,7 +677,7 @@ export class DashboardSettingsPanels extends BaseComponent {
      */
     #updateNavigationState(panelName) {
         this.#elements.navButtons.forEach((button) => {
-            const isCurrent = readText(button.dataset.dashboardSettingsAnchor, '') === panelName;
+            const isCurrent = this.#anchorByButton.get(button) === panelName;
             button.setAttribute('aria-current', isCurrent ? 'true' : 'false');
         });
     }

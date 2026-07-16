@@ -24,7 +24,8 @@ function setChipContent(button, chip) {
 }
 
 export class QuickChips extends BaseComponent {
-	#chips = [];
+    #chips = [];
+    #chipByButton = new Map();
 
 	/**
 	 * Creates a wrapper around the quick-filter chip container.
@@ -36,24 +37,26 @@ export class QuickChips extends BaseComponent {
 	/**
 	 * Renders the current quick-chip definitions into buttons.
 	 */
-	render(chips = []) {
-		if (!this.isReady()) {
-			return this;
-		}
+    render(chips = []) {
+        if (!this.isReady()) {
+            return this;
+        }
 
-		this.#chips = Array.isArray(chips)
-			? chips.filter(chip => chip && typeof chip.id !== 'undefined' && typeof chip.label === 'string')
-			: [];
+        this.#chips = Array.isArray(chips)
+            ? chips.filter(chip => chip && typeof chip.id !== 'undefined' && typeof chip.label === 'string')
+            : [];
 
-		const fragment = document.createDocumentFragment();
-		this.#chips.forEach((chip) => {
-			const button = document.createElement('button');
-			button.className = 'chip';
-			button.type = 'button';
-			button.dataset.chipId = String(chip.id);
-			setChipContent(button, chip);
-			fragment.appendChild(button);
-		});
+        this.#chipByButton.clear();
+        const fragment = document.createDocumentFragment();
+        this.#chips.forEach((chip) => {
+            const button = document.createElement('button');
+            button.className = 'chip';
+            button.type = 'button';
+            button.dataset.chipId = String(chip.id);
+            this.#chipByButton.set(button, chip);
+            setChipContent(button, chip);
+            fragment.appendChild(button);
+        });
 
 		this.get().replaceChildren(fragment);
 		return this;
@@ -68,13 +71,13 @@ export class QuickChips extends BaseComponent {
 		}
 
 		this.destroy();
-		this.on(this.get(), 'click', (event) => {
-			const button = event.target.closest('[data-chip-id]');
-			if (!button || !this.get().contains(button)) {
-				return;
-			}
+        this.on(this.get(), 'click', (event) => {
+            const button = event.target.closest('[data-chip-id]');
+            if (!button || !this.get().contains(button)) {
+                return;
+            }
 
-			const chip = this.#chips.find(item => String(item.id) === button.dataset.chipId);
+            const chip = this.#chipByButton.get(button);
 			if (!chip || typeof chip.buildFilters !== 'function') {
 				return;
 			}

@@ -13,19 +13,23 @@ function normalizeForm(form) {
 }
 
 export class AuthTabs extends BaseComponent {
-	#tabs;
-	#forms;
-	#registerEnabled = false;
-	#activeTab = LOGIN_TAB;
-	#onChange;
+    #tabs;
+    #tabNameByButton = new Map();
+    #forms;
+    #registerEnabled = false;
+    #activeTab = LOGIN_TAB;
+    #onChange;
 
 	/**
 	 * Creates the auth tab controller for the login and register forms.
 	 */
-	constructor({ tabs = [], loginForm = null, registerForm = null, onChange = null }) {
-		super(tabs[0]?.closest('[role="tablist"]') || tabs[0]?.parentElement || null);
-		this.#tabs = Array.isArray(tabs) ? tabs.filter(Boolean) : [];
-		this.#forms = {
+    constructor({ tabs = [], loginForm = null, registerForm = null, onChange = null }) {
+        super(tabs[0]?.closest('[role="tablist"]') || tabs[0]?.parentElement || null);
+        this.#tabs = Array.isArray(tabs) ? tabs.filter(Boolean) : [];
+        this.#tabs.forEach((button) => {
+            this.#tabNameByButton.set(button, this.#normalizeTab(button.dataset.tab));
+        });
+        this.#forms = {
 			login: normalizeForm(loginForm),
 			register: normalizeForm(registerForm),
 		};
@@ -101,44 +105,44 @@ export class AuthTabs extends BaseComponent {
 			return this;
 		}
 
-		this.destroy();
-		this.on(this.get(), 'click', (event) => {
-			const button = event.target.closest('[data-tab]');
-			if (!button || !this.#tabs.includes(button)) {
-				return;
-			}
+        this.destroy();
+        this.on(this.get(), 'click', (event) => {
+            const button = event.target.closest('[data-tab]');
+            if (!button || !this.#tabs.includes(button)) {
+                return;
+            }
 
-			this.setActive(button.dataset.tab);
-		});
+            this.setActive(this.#tabNameByButton.get(button) || LOGIN_TAB);
+        });
 
-		this.on(this.get(), 'keydown', (event) => {
-			const button = event.target.closest('[data-tab]');
-			if (!button || !this.#tabs.includes(button)) {
-				return;
-			}
+        this.on(this.get(), 'keydown', (event) => {
+            const button = event.target.closest('[data-tab]');
+            if (!button || !this.#tabs.includes(button)) {
+                return;
+            }
 
-			switch (event.key) {
-			case 'ArrowRight':
-				event.preventDefault();
-				this.#focusRelativeTab(button, 1);
-				break;
-			case 'ArrowLeft':
-				event.preventDefault();
-				this.#focusRelativeTab(button, -1);
-				break;
-			case 'Home':
-				event.preventDefault();
-				this.#focusFirstTab();
-				break;
-			case 'End':
-				event.preventDefault();
-				this.#focusLastTab();
-				break;
-			case 'Enter':
-			case ' ':
-				event.preventDefault();
-				this.setActive(button.dataset.tab);
-				break;
+            switch (event.key) {
+            case 'ArrowRight':
+                event.preventDefault();
+                this.#focusRelativeTab(button, 1);
+                break;
+            case 'ArrowLeft':
+                event.preventDefault();
+                this.#focusRelativeTab(button, -1);
+                break;
+            case 'Home':
+                event.preventDefault();
+                this.#focusFirstTab();
+                break;
+            case 'End':
+                event.preventDefault();
+                this.#focusLastTab();
+                break;
+            case 'Enter':
+            case ' ':
+                event.preventDefault();
+                this.setActive(this.#tabNameByButton.get(button) || LOGIN_TAB);
+                break;
 			default:
 				break;
 			}
@@ -164,9 +168,9 @@ export class AuthTabs extends BaseComponent {
 	/**
 	 * Returns the tab button matching a normalized tab name.
 	 */
-	#getTab(tabName) {
-		return this.#tabs.find(button => this.#normalizeTab(button.dataset.tab) === tabName) || null;
-	}
+    #getTab(tabName) {
+        return this.#tabs.find(button => this.#tabNameByButton.get(button) === tabName) || null;
+    }
 
 	/**
 	 * Moves focus to the next enabled tab relative to the current one.
@@ -200,10 +204,10 @@ export class AuthTabs extends BaseComponent {
 	/**
 	 * Synchronizes the selected and disabled states for every tab button.
 	 */
-	#syncTabs() {
-		this.#tabs.forEach((button) => {
-			const tabName = this.#normalizeTab(button.dataset.tab);
-			const isDisabled = tabName === REGISTER_TAB && !this.#registerEnabled;
+    #syncTabs() {
+        this.#tabs.forEach((button) => {
+            const tabName = this.#tabNameByButton.get(button) || LOGIN_TAB;
+            const isDisabled = tabName === REGISTER_TAB && !this.#registerEnabled;
 			const isActive = tabName === this.#activeTab;
 
 			button.classList.toggle('tab--active', isActive);

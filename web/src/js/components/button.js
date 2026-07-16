@@ -162,7 +162,6 @@ export class Button extends BaseComponent {
 		if (showBusy && !this.#busy) {
 			this.#snapshotIdleMarkup();
 			this.#busy = true;
-			this.get().dataset.buttonBusy = 'true';
 
 			const spinner = document.createElement('i');
 			spinner.className = 'fa-solid fa-spinner fa-spin-pulse';
@@ -183,7 +182,6 @@ export class Button extends BaseComponent {
 	enable() {
 		if (this.#busy) {
 			this.get().innerHTML = this.#idleMarkup;
-			delete this.get().dataset.buttonBusy;
 			this.#busy = false;
 		}
 

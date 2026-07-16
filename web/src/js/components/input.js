@@ -59,6 +59,7 @@ function normalizeBoolean(value) {
 export class Input extends BaseComponent {
 	#mask = null;
 	#maskBound = false;
+	#errorMessage = '';
 
 	/**
 	 * Creates a wrapper around a form control element.
@@ -185,7 +186,7 @@ export class Input extends BaseComponent {
 		field.setAttribute('aria-invalid', 'true');
 
 		if (isString(message) && message) {
-			field.dataset.errorMessage = message;
+			this.#errorMessage = message;
 			field.setAttribute('title', message);
 		}
 
@@ -211,8 +212,8 @@ export class Input extends BaseComponent {
 		const field = this.get();
 		field.classList.remove('error');
 		field.removeAttribute('aria-invalid');
-		if (field.dataset.errorMessage) {
-			delete field.dataset.errorMessage;
+		if (this.#errorMessage) {
+			this.#errorMessage = '';
 			field.removeAttribute('title');
 		}
 

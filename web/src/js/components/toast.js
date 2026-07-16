@@ -127,7 +127,7 @@ function removeEmptyContainers() {
  */
 function resolveToastContainer(position) {
     const normalizedPosition = normalizePosition(position);
-    const selector = `${TOAST_CONTAINER_SELECTOR}[data-position="${normalizedPosition}"]`;
+    const selector = `.toast-container--${normalizedPosition}`;
     const existingContainer = document.querySelector(selector);
     if (existingContainer) {
         return existingContainer;
@@ -135,7 +135,6 @@ function resolveToastContainer(position) {
 
     const container = document.createElement('div');
     container.className = `toast-container toast-container--${normalizedPosition}`;
-    container.dataset.position = normalizedPosition;
     container.setAttribute('role', 'region');
     container.setAttribute('aria-label', 'Notificacoes do sistema');
     document.body.appendChild(container);
@@ -143,11 +142,14 @@ function resolveToastContainer(position) {
 }
 
 export class Toast extends BaseComponent {
+    static #activeByGroup = new Map();
+
     #container;
     #title;
     #body;
     #closeButton;
     #duration;
+    #group = '';
     #fadeTimer = null;
     #dismissTimer = null;
     #removeTimer = null;
@@ -197,7 +199,11 @@ export class Toast extends BaseComponent {
         const normalizedGroup = normalizeGroup(group);
         if (normalizedGroup) {
             Toast.dismissGroup(normalizedGroup);
-            this.get().dataset.group = normalizedGroup;
+            this.#group = normalizedGroup;
+            if (!Toast.#activeByGroup.has(normalizedGroup)) {
+                Toast.#activeByGroup.set(normalizedGroup, new Set());
+            }
+            Toast.#activeByGroup.get(normalizedGroup).add(this);
         }
 
         this.#container = resolveToastContainer(position);
@@ -289,11 +295,13 @@ export class Toast extends BaseComponent {
             return;
         }
 
-        document.querySelectorAll(TOAST_SELECTOR).forEach((element) => {
-            if (element.dataset.group === normalizedGroup) {
-                element.remove();
+        const toasts = Toast.#activeByGroup.get(normalizedGroup);
+        if (toasts) {
+            const toastsToClose = [...toasts];
+            for (const toast of toastsToClose) {
+                toast.close({ immediate: true });
             }
-        });
+        }
 
         removeEmptyContainers();
     }
@@ -310,7 +318,6 @@ export class Toast extends BaseComponent {
             'toast--error',
         );
         this.get().classList.add(`toast--${normalizedTone}`);
-        this.get().dataset.tone = normalizedTone;
         this.get().setAttribute('role', normalizedTone === 'error' ? 'alert' : 'status');
         this.get().setAttribute('aria-live', normalizedTone === 'error' ? 'assertive' : 'polite');
         return this;
@@ -385,6 +392,7 @@ export class Toast extends BaseComponent {
         const removeToast = () => {
             this.clearListeners();
             this.get().remove();
+            this.#unregisterGroup();
             removeEmptyContainers();
         };
 
@@ -418,6 +426,20 @@ export class Toast extends BaseComponent {
         this.get().classList.remove('toast--timed');
         void this.get().offsetWidth;
         this.get().classList.add('toast--timed');
+    }
+
+    /**
+     * Removes this toast from the static group registry.
+     */
+    #unregisterGroup() {
+        if (!this.#group) {
+            return;
+        }
+
+        const toasts = Toast.#activeByGroup.get(this.#group);
+        if (toasts) {
+            toasts.delete(this);
+        }
     }
 
     /**

@@ -2,6 +2,7 @@ import { BaseComponent } from '../components/base-component.js';
 import { Button } from '../components/button.js';
 
 const actionTabButtonMap = new WeakMap();
+const actionTabNameMap = new WeakMap();
 
 /**
  * Returns the reusable Button wrapper associated with one dashboard action tab.
@@ -25,7 +26,7 @@ function getActionTabButton(button) {
  * Returns the configured tab name for one dashboard action button.
  */
 function readTabName(button) {
-    return String(button?.dataset?.dashboardActionTab || '').trim().toLowerCase();
+    return actionTabNameMap.get(button) || '';
 }
 
 /**
@@ -42,6 +43,9 @@ export class DashboardActionTabs extends BaseComponent {
     constructor({ tabList = null, tabs = [], onAction = null } = {}) {
         super(tabList || tabs[0]?.parentElement || null);
         this.#tabs = Array.isArray(tabs) ? tabs.filter(Boolean) : [];
+        this.#tabs.forEach((button) => {
+            actionTabNameMap.set(button, String(button?.dataset?.dashboardActionTab || '').trim().toLowerCase());
+        });
         this.#onAction = typeof onAction === 'function' ? onAction : null;
     }
 
@@ -184,7 +188,7 @@ export class DashboardActionTabs extends BaseComponent {
         });
 
         try {
-            await this.activate(button.dataset.dashboardActionTab);
+            await this.activate(actionTabNameMap.get(button) || '');
         } finally {
             this.#tabs.forEach((currentButton) => {
                 getActionTabButton(currentButton)?.enable();

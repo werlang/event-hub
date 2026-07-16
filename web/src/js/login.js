@@ -347,6 +347,10 @@ function initAuthTabs() {
         registerForm,
         onChange: syncAuthHash,
     });
+    const authViewByButton = new Map();
+    elements.authViewButtons.forEach((button) => {
+        authViewByButton.set(button, button.dataset.authView || LOGIN_TAB);
+    });
     const forms = {
         login: loginForm,
         register: registerForm,
@@ -364,7 +368,7 @@ function initAuthTabs() {
 
     elements.authViewButtons.forEach((button) => {
         button.addEventListener('click', () => {
-            showAuthView(button.dataset.authView || LOGIN_TAB, { elements, forms, authTabs });
+            showAuthView(authViewByButton.get(button) || LOGIN_TAB, { elements, forms, authTabs });
         });
     });
 

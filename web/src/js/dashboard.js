@@ -315,7 +315,7 @@ function createDateMetaPill(event) {
 /**
  * Creates one dashboard action button for manageable event cards.
  */
-function createEventActionButton({ action, label, icon, modifier = '' } = {}) {
+function createEventActionButton({ action, label, icon, modifier = '' } = {}, buttonActionMap = null) {
     const resolvedLabel = readText(label, 'Continuar');
     const classNames = ['button', 'button--ghost', 'dashboard-event__action-button'];
     const normalizedModifier = readText(modifier, '');
@@ -333,6 +333,9 @@ function createEventActionButton({ action, label, icon, modifier = '' } = {}) {
     });
 
     button.get().type = 'button';
+    if (buttonActionMap instanceof WeakMap) {
+        buttonActionMap.set(button.get(), readText(action, ''));
+    }
     button.get().dataset.dashboardAction = readText(action, '');
     button.get().setAttribute('aria-label', resolvedLabel);
     return button.get();
@@ -371,7 +374,7 @@ function createEventActionGuide({ content, label, customClass = '' } = {}) {
 /**
  * Creates the owner-management toolbar attached to a manageable event card.
  */
-function createOwnerEventActionToolbar(event, statusMeta) {
+function createOwnerEventActionToolbar(event, statusMeta, buttonActionMap = null) {
     const toolbar = document.createElement('div');
     toolbar.className = 'dashboard-event__toolbar';
 
@@ -384,7 +387,7 @@ function createOwnerEventActionToolbar(event, statusMeta) {
             label: 'Editar',
             icon: 'pen-to-square',
             modifier: 'edit',
-            }),
+            }, buttonActionMap),
         );
     }
 
@@ -395,7 +398,7 @@ function createOwnerEventActionToolbar(event, statusMeta) {
             label: 'Excluir',
             icon: 'trash',
             modifier: 'danger',
-            }),
+            }, buttonActionMap),
         );
     }
 
@@ -459,14 +462,14 @@ function readModerationEventActionDefinitions({ scope = DASHBOARD_MODERATION_SCO
 /**
  * Creates the moderation toolbar attached to one pending admin queue card.
  */
-function createModerationEventActionToolbar({ scope = DASHBOARD_MODERATION_SCOPE_QUEUE } = {}) {
+function createModerationEventActionToolbar({ scope = DASHBOARD_MODERATION_SCOPE_QUEUE } = {}, buttonActionMap = null) {
     const toolbar = document.createElement('div');
     toolbar.className = 'dashboard-event__toolbar';
 
     const actions = document.createElement('div');
     actions.className = 'dashboard-event__actions';
     readModerationEventActionDefinitions({ scope }).forEach((actionDefinition) => {
-        actions.appendChild(createEventActionButton(actionDefinition));
+        actions.appendChild(createEventActionButton(actionDefinition, buttonActionMap));
     });
 
     toolbar.append(createEventActionGuide({
@@ -575,6 +578,9 @@ function createModerationFeedbackElement(event) {
 function createDashboardEventElement(event, {
     mode = DASHBOARD_VIEW_BROWSE,
     moderationScope = DASHBOARD_MODERATION_SCOPE_QUEUE,
+} = {}, {
+    cardEventMap = null,
+    buttonActionMap = null,
 } = {}) {
     const eventRecord = Event.from(event);
     const isPastEvent = eventRecord.isPast();
@@ -584,6 +590,11 @@ function createDashboardEventElement(event, {
     const isOwnerActionable = !isModerationView && (canEditOwnEvent(event) || canDeleteOwnEvent(event));
     const article = document.createElement('article');
     article.className = `dashboard-event surface-card dashboard-event--${statusMeta.tone}`;
+
+    if (cardEventMap instanceof WeakMap) {
+        cardEventMap.set(article, eventRecord.readId(''));
+    }
+
     article.dataset.eventId = eventRecord.readId('');
 
     if (isPastEvent) {
@@ -641,11 +652,11 @@ function createDashboardEventElement(event, {
     header.appendChild(headline);
 
     if (isAdminDiscoveryView) {
-        header.appendChild(createModerationEventActionToolbar({ scope: moderationScope }));
+        header.appendChild(createModerationEventActionToolbar({ scope: moderationScope }, buttonActionMap));
     } else if (isModerationView && isPendingModerationEvent(event)) {
-        header.appendChild(createModerationEventActionToolbar({ scope: moderationScope }));
+        header.appendChild(createModerationEventActionToolbar({ scope: moderationScope }, buttonActionMap));
     } else if (isOwnerActionable) {
-        header.appendChild(createOwnerEventActionToolbar(event, statusMeta));
+        header.appendChild(createOwnerEventActionToolbar(event, statusMeta, buttonActionMap));
     }
 
     const description = document.createElement('p');
@@ -696,6 +707,8 @@ class DashboardPage extends BaseComponent {
     #settingsPanels;
     #actionTabs;
     #pagination;
+    #cardEventMap = new WeakMap();
+    #buttonActionMap = new WeakMap();
 
     /**
      * Creates the dashboard page controller around the page root.
@@ -1100,9 +1113,9 @@ class DashboardPage extends BaseComponent {
             return;
         }
 
-        const requestedAction = readText(actionButton.dataset.dashboardAction, '');
+        const requestedAction = this.#buttonActionMap.get(actionButton) || '';
         const eventCard = actionButton.closest('[data-event-id]');
-        const managedEvent = this.#findActiveEventById(eventCard?.dataset.eventId);
+        const managedEvent = this.#findActiveEventById(this.#cardEventMap.get(eventCard));
 
         if (!managedEvent) {
             return;
@@ -1417,6 +1430,9 @@ class DashboardPage extends BaseComponent {
             fragment.appendChild(createDashboardEventElement(event, {
                 mode: this.#currentView,
                 moderationScope: this.#moderationScope,
+            }, {
+                cardEventMap: this.#cardEventMap,
+                buttonActionMap: this.#buttonActionMap,
             }));
         });
 

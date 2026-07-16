@@ -38,7 +38,7 @@ function readPageSequence(currentPage, totalPages) {
 /**
  * Creates one interactive page button.
  */
-function createPaginationButton({ label, page, icon, current = false, disabled = false, navigation = false } = {}) {
+function createPaginationButton({ label, page, icon, current = false, disabled = false, navigation = false, pageByButton = null } = {}) {
     const button = document.createElement('button');
     button.type = 'button';
     const buttonClasses = ['button', 'button--ghost', 'pagination__button'];
@@ -63,6 +63,7 @@ function createPaginationButton({ label, page, icon, current = false, disabled =
 
     if (!disabled && Number.isInteger(page)) {
         button.dataset.page = String(page);
+        pageByButton?.set(button, page);
     }
 
     if (typeof icon === 'string' && icon.trim()) {
@@ -95,6 +96,7 @@ export class Pagination extends BaseComponent {
     #pageSize;
     #onPageChange = null;
     #ariaLabel;
+    #pageByButton = new Map();
 
     /**
      * Creates one reusable pagination controller around one container that owns its markup.
@@ -200,6 +202,9 @@ export class Pagination extends BaseComponent {
         this.setHidden(false);
         this.#summary.textContent = `Mostrando ${startIndex} a ${endIndex} de ${totalItems} eventos.`;
 
+        this.#pageByButton.clear();
+        const pageByButton = this.#pageByButton;
+
         const controls = document.createDocumentFragment();
         controls.appendChild(createPaginationButton({
             label: 'Anterior',
@@ -207,6 +212,7 @@ export class Pagination extends BaseComponent {
             icon: 'arrow-left',
             disabled: safePage === 1,
             navigation: true,
+            pageByButton,
         }));
 
         readPageSequence(safePage, totalPages).forEach((item) => {
@@ -219,6 +225,7 @@ export class Pagination extends BaseComponent {
                 label: String(item),
                 page: item,
                 current: item === safePage,
+                pageByButton,
             }));
         });
 
@@ -228,9 +235,11 @@ export class Pagination extends BaseComponent {
             icon: 'arrow-right',
             disabled: safePage === totalPages,
             navigation: true,
+            pageByButton,
         }));
 
         this.#controls.replaceChildren(controls);
+
         return this;
     }
 
@@ -246,7 +255,7 @@ export class Pagination extends BaseComponent {
             return;
         }
 
-        const page = Number.parseInt(button.dataset.page || '', 10);
+        const page = this.#pageByButton.get(button);
         if (!Number.isInteger(page)) {
             return;
         }
