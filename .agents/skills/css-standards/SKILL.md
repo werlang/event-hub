@@ -50,6 +50,7 @@ Applies to the web client styles under `web/src/css/` and class names used in `w
 12. Restore the roomier framed-card treatment from the first upward breakpoint instead of preserving desktop gutters on narrow screens.
 13. Keep interactions visually soft: subtle lift, border shifts, and shadow changes are preferred over aggressive transforms or high-contrast effects.
 14. Do not introduce alternate icon systems or version-specific Font Awesome font-family strings in component CSS.
+15. Do not use `data-*` attributes to store domain data (IDs, values, lookup mappings). Data attributes are for framework selectors and DOM behavior hooks only. Domain data belongs in JavaScript structures resolved at interaction time.
 
 ## Token Usage
 
