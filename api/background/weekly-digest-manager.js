@@ -346,10 +346,24 @@ export class WeeklyDigestManager {
         if (recipients.length === 0) {
             this.#logger.info('Weekly digest skipped because there are no persisted recipient email addresses.');
             return {
+                deliveries: [],
                 eventCount: digest.events.length,
                 manualTriggeredAt: digest.manualTriggeredAt,
                 manualTriggeredAtLabel: digest.manualTriggeredAtLabel,
                 recipientCount: 0,
+                sentCount: 0,
+                weekRange: digest.weekRange,
+            };
+        }
+
+        if (!Array.isArray(digest.events) || digest.events.length === 0) {
+            this.#logger.info('Weekly digest skipped because there are no approved events for this week.');
+            return {
+                deliveries: [],
+                eventCount: 0,
+                manualTriggeredAt: digest.manualTriggeredAt,
+                manualTriggeredAtLabel: digest.manualTriggeredAtLabel,
+                recipientCount: recipients.length,
                 sentCount: 0,
                 weekRange: digest.weekRange,
             };
@@ -408,11 +422,16 @@ export class WeeklyDigestManager {
     #buildEventBlocks(events, strings) {
         if (!Array.isArray(events) || events.length === 0) {
             return this.#templateManager.loadTemplate(DIGEST_EVENT_TEMPLATE_KEY, {
-                calendarHtml: '',
-                eventDescription: strings.emptyStateText || '',
                 eventCardLabel: strings.eventCardLabel || '',
                 eventTitle: strings.emptyStateTitle || '',
-                metaHtml: '',
+                organizer: '',
+                eventDescription: strings.emptyStateText || '',
+                eventDateLabel: '',
+                eventDateValue: '',
+                locationLabel: '',
+                locationValue: '',
+                categoryLabel: '',
+                categoryValue: '',
             });
         }
 

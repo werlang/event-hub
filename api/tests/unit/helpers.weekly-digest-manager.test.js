@@ -237,4 +237,44 @@ describe('helpers/weekly-digest-manager', () => {
             sentCount: 1,
         });
     });
+
+    test('renderDigestEmail handles empty event list without leaving unreplaced template placeholders', async () => {
+        const manager = new WeeklyDigestManager({
+            emailHelper: { send: jest.fn() },
+            eventModel: { listCurrentWeek: jest.fn(async () => []) },
+            templateManager: new EmailTemplateManager(),
+            userModel: { list: jest.fn(async () => []) },
+            webBaseUrl: 'https://agenda-ch.test',
+        });
+
+        const digest = await manager.getCurrentWeekDigest(new Date(2026, 6, 20));
+        const message = manager.renderDigestEmail(digest);
+
+        expect(message.content).toContain('Nenhum evento aprovado nesta semana');
+        expect(message.content).not.toContain('{{');
+        expect(message.content).not.toContain('ORGANIZER');
+        expect(message.content).not.toContain('EVENTDATELABEL');
+    });
+
+    test('sendCurrentWeekDigest skips sending emails when there are no approved events for the week', async () => {
+        const emailHelper = { send: jest.fn() };
+        const manager = new WeeklyDigestManager({
+            emailHelper,
+            eventModel: { listCurrentWeek: jest.fn(async () => []) },
+            templateManager: new EmailTemplateManager(),
+            userModel: {
+                list: jest.fn(async () => [buildUser({ email: 'docente@ifsul.edu.br' })]),
+            },
+        });
+
+        const result = await manager.sendCurrentWeekDigest(new Date(2026, 6, 20));
+
+        expect(emailHelper.send).not.toHaveBeenCalled();
+        expect(result).toMatchObject({
+            eventCount: 0,
+            recipientCount: 1,
+            sentCount: 0,
+            deliveries: [],
+        });
+    });
 });
