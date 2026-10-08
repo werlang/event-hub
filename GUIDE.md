@@ -32,6 +32,8 @@ Keep the public route surface stable unless a task explicitly changes the API co
 Auth routes:
 
 - `POST /auth/register`
+- `POST /auth/verify-email`
+- `POST /auth/verify-email/resend`
 - `POST /auth/login`
 - `GET /auth/me`
 - `PUT /auth/me`

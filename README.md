@@ -55,7 +55,7 @@ Web routes:
 
 API route groups:
 
-- `/auth`: register, login, current session, profile, password, preferences, and manual weekly digest.
+- `/auth`: register, e-mail verification, login, current session, profile, password, preferences, and manual weekly digest.
 - `/users`: self-service password reset and admin user tools.
 - `/events`: public event browsing, owner events, moderation queue, event writes, and moderation decisions.
 
