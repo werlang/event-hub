@@ -208,7 +208,7 @@ function transformLoginEntrypointSource(source) {
     return stripImports(source)
     .replace('\nnew Header();\n', '\n')
         .replace(/\ninitAuthTabs\(\);\s*$/, '\n')
-        .concat('\nglobalThis.__workflowLogin = { readRedirectTarget, submitLogin, submitRegister, submitEmailVerification, submitVerificationResend, submitPasswordResetRequest, submitPasswordResetConfirmation };\n');
+        .concat('\nglobalThis.__workflowLogin = { readRedirectTarget, submitLogin, submitRegister, submitEmailVerification, submitPasswordResetRequest, submitPasswordResetConfirmation };\n');
 }
 
 /**
@@ -354,9 +354,6 @@ function createAuthApiRecorder(recordRequest, { storeToken = () => {} } = {}) {
         },
         verifyEmail(token) {
             return recordRequest('/auth/verify-email', { method: 'POST', body: { token } });
-        },
-        resendVerification(email) {
-            return recordRequest('/auth/verify-email/resend', { method: 'POST', body: { email } });
         },
         updateProfile(token, payload) {
             return recordRequest('/auth/me', { method: 'PUT', token, body: payload });
@@ -1571,55 +1568,41 @@ test('register workflow validates fields and asks for e-mail confirmation instea
     assert.equal(scenario.toastRecorded.shows.at(-1)?.text, 'Cadastro recebido. Verifique seu e-mail para confirmar a conta.');
 });
 
-test('e-mail verification workflow confirms tokens and resends pending links', async () => {
-    const scenario = await loadLoginScenario({
+test('e-mail verification workflow confirms valid tokens and rejects missing ones', async () => {
+    const confirmedScenario = await loadLoginScenario({
+        search: '?token=valid-token',
         requestApiImpl(path, options) {
-            if (path === '/auth/verify-email') {
-                return options?.body?.token === 'valid-token'
-                    ? { ok: true, message: 'E-mail confirmado. Você já pode entrar.', data: {} }
-                    : { ok: false, message: 'Link de confirmação inválido ou expirado.' };
+            if (path === '/auth/verify-email' && options?.body?.token === 'valid-token') {
+                return { ok: true, message: 'E-mail confirmado. Você já pode entrar.', data: {} };
             }
 
-            if (path === '/auth/verify-email/resend') {
-                return { ok: true, message: 'Se o e-mail estiver pendente de confirmação, enviaremos um novo link.', data: {} };
-            }
-
-            return { ok: false, message: 'Falha inesperada.' };
+            return { ok: false, message: 'Link de confirmação inválido ou expirado.' };
         },
     });
-    const focusedFields = [];
-    const loginViews = [];
-    const form = {
-        getField(fieldName) {
-            return {
-                focus() {
-                    focusedFields.push(fieldName);
-                },
-            };
-        },
-    };
-    const showLoginView = () => {
-        loginViews.push(true);
-    };
+    const confirmedViews = [];
+    await confirmedScenario.hooks.submitEmailVerification({ showLoginView: () => confirmedViews.push(true) });
 
-    await scenario.hooks.submitEmailVerification({ showLoginView });
-    assert.equal(scenario.recorded.requests.length, 0);
-    assert.equal(scenario.toastRecorded.shows.at(-1)?.text, 'Link de confirmação inválido ou expirado.');
-    assert.equal(loginViews.length, 1);
-
-    await scenario.hooks.submitVerificationResend({ form, values: { email: '' } });
-    assert.equal(focusedFields.at(-1), 'email');
-    assert.equal(scenario.toastRecorded.shows.at(-1)?.text, 'Informe o e-mail da conta para reenviar a confirmação.');
-
-    await scenario.hooks.submitVerificationResend({ form, values: { email: 'novo@ifsul.edu.br' } });
-    assert.deepEqual(scenario.recorded.requests.at(-1), {
-        path: '/auth/verify-email/resend',
+    assert.deepEqual(confirmedScenario.recorded.requests.at(-1), {
+        path: '/auth/verify-email',
         options: {
             method: 'POST',
-            body: { email: 'novo@ifsul.edu.br' },
+            body: { token: 'valid-token' },
         },
     });
-    assert.equal(scenario.toastRecorded.shows.at(-1)?.text, 'Se o e-mail estiver pendente de confirmação, enviaremos um novo link.');
+    assert.equal(confirmedScenario.toastRecorded.shows.at(-1)?.text, 'E-mail confirmado. Você já pode entrar.');
+    assert.equal(confirmedViews.length, 1);
+
+    const missingScenario = await loadLoginScenario({
+        requestApiImpl() {
+            return { ok: false, message: 'Link de confirmação inválido ou expirado.' };
+        },
+    });
+    const missingViews = [];
+    await missingScenario.hooks.submitEmailVerification({ showLoginView: () => missingViews.push(true) });
+
+    assert.equal(missingScenario.recorded.requests.length, 0);
+    assert.equal(missingScenario.toastRecorded.shows.at(-1)?.text, 'Link de confirmação inválido ou expirado.');
+    assert.equal(missingViews.length, 1);
 });
 
 test('password reset workflow requests a link and consumes reset tokens', async () => {

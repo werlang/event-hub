@@ -111,6 +111,7 @@ Error middleware (`api/middleware/error.js`) derives `type` from HTTP status nam
 - rejects duplicate email
 - silently discards honeypot submissions with a filled `website` field (same 201 message, no account, no e-mail)
 - creates a pending account (`email_verified_at` null) and sends the confirmation e-mail
+- re-registering a pending e-mail refreshes name/password and resends the link (verified duplicates still 409)
 - returns no session token; the owner confirms through `POST /auth/verify-email`
 
 `POST /auth/verify-email`:
