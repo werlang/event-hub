@@ -230,7 +230,9 @@ router.post('/register', async (req, res, next) => {
         if (existing) {
             const refreshedProfile = await User.updateProfile(existing.id, { name, email });
             const refreshedUser = await User.updatePassword(refreshedProfile.id, password);
-            await sendVerificationEmail(refreshedUser);
+            sendVerificationEmail(refreshedUser).catch(error => {
+                console.error('Failed to send e-mail verification message:', error);
+            });
 
             return sendCreated(res, {
                 data: { user: publicUser(refreshedUser), verificationRequired: true },
@@ -245,7 +247,9 @@ router.post('/register', async (req, res, next) => {
             emailVerifiedAt: null,
         });
 
-        await sendVerificationEmail(user);
+        sendVerificationEmail(user).catch(error => {
+            console.error('Failed to send e-mail verification message:', error);
+        });
 
         return sendCreated(res, {
             data: { user: publicUser(user), verificationRequired: true },

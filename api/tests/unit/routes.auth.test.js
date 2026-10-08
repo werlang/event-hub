@@ -90,6 +90,44 @@ describe('routes/auth', () => {
         }]);
     });
 
+    test('register responds immediately without blocking on asynchronous e-mail delivery', async () => {
+        let emailResolved = false;
+        trackReplacement(restores, User, 'findByEmail', async () => null);
+        trackReplacement(restores, User, 'create', async payload => buildUser({
+            name: payload.name,
+            email: payload.email.toLowerCase(),
+            emailVerifiedAt: null,
+        }));
+        trackReplacement(restores, EmailVerificationToken, 'invalidateActiveForUser', async () => true);
+        trackReplacement(restores, EmailVerificationToken, 'createForUser', async () => ({
+            token: 'raw-verification-token',
+            record: { id: 'token-1', userId: 'user-1' },
+        }));
+        trackReplacement(restores, EmailVerificationEmailManager.prototype, 'sendVerificationEmail', () => new Promise(resolve => {
+            setTimeout(() => {
+                emailResolved = true;
+                resolve({ messageId: 'msg:slow' });
+            }, 500);
+        }));
+
+        const req = createRequest({
+            body: {
+                name: 'Grace Hopper',
+                email: 'grace@example.com',
+                password: 'secret123',
+            },
+        });
+        const res = createResponseDouble();
+        const next = jest.fn();
+
+        await runRouteHandlers(registerHandlers, req, res, next);
+
+        expect(next).not.toHaveBeenCalled();
+        expect(res.statusCode).toBe(201);
+        expect(res.body.data.verificationRequired).toBe(true);
+        expect(emailResolved).toBe(false);
+    });
+
     test('register rejects missing fields, duplicates, and unexpected failures', async () => {
         const missingNext = jest.fn();
         await runRouteHandlers(registerHandlers, createRequest({ body: { name: 'Ada' } }), createResponseDouble(), missingNext);
