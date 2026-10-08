@@ -208,7 +208,7 @@ function transformLoginEntrypointSource(source) {
     return stripImports(source)
     .replace('\nnew Header();\n', '\n')
         .replace(/\ninitAuthTabs\(\);\s*$/, '\n')
-        .concat('\nglobalThis.__workflowLogin = { readRedirectTarget, submitLogin, submitRegister, submitPasswordResetRequest, submitPasswordResetConfirmation };\n');
+        .concat('\nglobalThis.__workflowLogin = { readRedirectTarget, submitLogin, submitRegister, submitEmailVerification, submitVerificationResend, submitPasswordResetRequest, submitPasswordResetConfirmation };\n');
 }
 
 /**
@@ -351,6 +351,12 @@ function createAuthApiRecorder(recordRequest, { storeToken = () => {} } = {}) {
         },
         register(payload) {
             return recordRequest('/auth/register', { method: 'POST', body: payload });
+        },
+        verifyEmail(token) {
+            return recordRequest('/auth/verify-email', { method: 'POST', body: { token } });
+        },
+        resendVerification(email) {
+            return recordRequest('/auth/verify-email/resend', { method: 'POST', body: { email } });
         },
         updateProfile(token, payload) {
             return recordRequest('/auth/me', { method: 'PUT', token, body: payload });
@@ -1466,15 +1472,17 @@ test('auth redirect helper keeps only safe internal dashboard targets', async ()
     assert.equal(unsafeLoginScenario.hooks.readRedirectTarget(), '/dashboard');
 });
 
-test('register workflow validates required fields and confirmation before starting the new session', async () => {
+test('register workflow validates fields and asks for e-mail confirmation instead of starting a session', async () => {
     const scenario = await loadLoginScenario({
         templateRedirect: '/dashboard',
         requestApiImpl(_path, options) {
             if (options?.body?.email === 'novo@ifsul.edu.br') {
                 return {
                     ok: true,
+                    message: 'Cadastro recebido. Verifique seu e-mail para confirmar a conta.',
                     data: {
-                        token: 'jwt-register-token',
+                        user: { email: 'novo@ifsul.edu.br' },
+                        verificationRequired: true,
                     },
                 };
             }
@@ -1486,6 +1494,8 @@ test('register workflow validates required fields and confirmation before starti
         },
     });
     const focusedFields = [];
+    const resetCalls = [];
+    const loginViews = [];
     const form = {
         getField(fieldName) {
             return {
@@ -1494,6 +1504,12 @@ test('register workflow validates required fields and confirmation before starti
                 },
             };
         },
+        reset() {
+            resetCalls.push(true);
+        },
+    };
+    const showLoginView = () => {
+        loginViews.push(true);
     };
 
     await scenario.hooks.submitRegister({
@@ -1504,6 +1520,7 @@ test('register workflow validates required fields and confirmation before starti
             password: 'abc123',
             confirmPassword: 'abc123',
         },
+        showLoginView,
     });
 
     assert.equal(scenario.recorded.requests.length, 0);
@@ -1517,6 +1534,7 @@ test('register workflow validates required fields and confirmation before starti
             password: 'abc123',
             confirmPassword: 'xyz987',
         },
+        showLoginView,
     });
 
     assert.equal(scenario.recorded.requests.length, 0);
@@ -1531,6 +1549,7 @@ test('register workflow validates required fields and confirmation before starti
             password: 'abc123',
             confirmPassword: 'abc123',
         },
+        showLoginView,
     });
 
     assert.deepEqual(scenario.recorded.requests.at(-1), {
@@ -1544,9 +1563,62 @@ test('register workflow validates required fields and confirmation before starti
             },
         },
     });
-    assert.equal(scenario.recorded.storedToken, 'jwt-register-token');
-    assert.equal(scenario.recorded.assignedTarget, '/dashboard');
-    assert.equal(scenario.toastRecorded.flashes.at(-1)?.text, 'Conta criada com sucesso. Redirecionando...');
+    assert.equal(scenario.recorded.storedToken, null);
+    assert.equal(scenario.recorded.assignedTarget, null);
+    assert.equal(resetCalls.length, 1);
+    assert.equal(loginViews.length, 1);
+    assert.equal(scenario.toastRecorded.shows.at(-1)?.text, 'Cadastro recebido. Verifique seu e-mail para confirmar a conta.');
+});
+
+test('e-mail verification workflow confirms tokens and resends pending links', async () => {
+    const scenario = await loadLoginScenario({
+        requestApiImpl(path, options) {
+            if (path === '/auth/verify-email') {
+                return options?.body?.token === 'valid-token'
+                    ? { ok: true, message: 'E-mail confirmado. Você já pode entrar.', data: {} }
+                    : { ok: false, message: 'Link de confirmação inválido ou expirado.' };
+            }
+
+            if (path === '/auth/verify-email/resend') {
+                return { ok: true, message: 'Se o e-mail estiver pendente de confirmação, enviaremos um novo link.', data: {} };
+            }
+
+            return { ok: false, message: 'Falha inesperada.' };
+        },
+    });
+    const focusedFields = [];
+    const loginViews = [];
+    const form = {
+        getField(fieldName) {
+            return {
+                focus() {
+                    focusedFields.push(fieldName);
+                },
+            };
+        },
+    };
+    const showLoginView = () => {
+        loginViews.push(true);
+    };
+
+    await scenario.hooks.submitEmailVerification({ showLoginView });
+    assert.equal(scenario.recorded.requests.length, 0);
+    assert.equal(scenario.toastRecorded.shows.at(-1)?.text, 'Link de confirmação inválido ou expirado.');
+    assert.equal(loginViews.length, 1);
+
+    await scenario.hooks.submitVerificationResend({ form, values: { email: '' } });
+    assert.equal(focusedFields.at(-1), 'email');
+    assert.equal(scenario.toastRecorded.shows.at(-1)?.text, 'Informe o e-mail da conta para reenviar a confirmação.');
+
+    await scenario.hooks.submitVerificationResend({ form, values: { email: 'novo@ifsul.edu.br' } });
+    assert.deepEqual(scenario.recorded.requests.at(-1), {
+        path: '/auth/verify-email/resend',
+        options: {
+            method: 'POST',
+            body: { email: 'novo@ifsul.edu.br' },
+        },
+    });
+    assert.equal(scenario.toastRecorded.shows.at(-1)?.text, 'Se o e-mail estiver pendente de confirmação, enviaremos um novo link.');
 });
 
 test('password reset workflow requests a link and consumes reset tokens', async () => {

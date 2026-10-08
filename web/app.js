@@ -82,6 +82,20 @@ app.get('/reset-password', (req, res) => {
 });
 
 /**
+ * Renders the e-mail confirmation view reached from one-time verification links.
+ */
+app.get('/verify-email', (req, res) => {
+    res.templateRender('login', {
+        page: 'login',
+        verificationToken: req.query.token || '',
+        metaTitle: `Confirmar e-mail · ${SITE_NAME}`,
+        metaDescription: 'Confirme seu e-mail para ativar sua conta na AgendaCharq.',
+        metaRobots: 'noindex, nofollow',
+        canonicalPath: '/verify-email',
+    });
+});
+
+/**
  * Renders the public page listing approved events scheduled for the current week.
  */
 app.get('/week', (req, res) => {

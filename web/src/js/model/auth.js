@@ -36,6 +36,26 @@ export class AuthApi {
     }
 
     /**
+     * Confirms a pending account with a one-time e-mail token.
+     */
+    verifyEmail(token) {
+        return this.#client.request('/auth/verify-email', {
+            method: 'POST',
+            body: { token },
+        });
+    }
+
+    /**
+     * Resends the confirmation link without disclosing account eligibility.
+     */
+    resendVerification(email) {
+        return this.#client.request('/auth/verify-email/resend', {
+            method: 'POST',
+            body: { email },
+        });
+    }
+
+    /**
      * Loads the current authenticated profile.
      */
     current(token) {
