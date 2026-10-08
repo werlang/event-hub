@@ -8,6 +8,9 @@ services:
         working_dir: /app
         env_file:
             - .env
+        dns:
+            - 1.1.1.1
+            - 8.8.8.8
         command: npm run production
         depends_on:
             - mysql
@@ -23,6 +26,9 @@ services:
         working_dir: /app
         env_file:
             - .env
+        dns:
+            - 1.1.1.1
+            - 8.8.8.8
         command: npm run production
         depends_on:
             - api

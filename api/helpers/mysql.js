@@ -322,7 +322,14 @@ export class Mysql {
 
         const lock = opt.forUpdate ? 'FOR UPDATE' : '';
 
-        const sql = `SELECT ${view} FROM ${Mysql.#quoteIdentifier(table)} ${where} ${order} ${limit} ${offset} ${lock}`;
+        const sql = [
+            `SELECT ${view} FROM ${Mysql.#quoteIdentifier(table)}`,
+            where,
+            order,
+            limit,
+            offset,
+            lock,
+        ].filter(Boolean).join(' ');
         // console.log(sql, values);
         return Mysql.#query(sql, values, context);
     }
