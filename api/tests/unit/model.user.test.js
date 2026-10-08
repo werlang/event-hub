@@ -55,6 +55,7 @@ describe('model/user', () => {
                 eventUpdates: true,
                 adminPendingRequests: false,
             },
+            emailVerifiedAt: null,
             passwordHash: 'hashed',
             createdAt: '2026-04-02T12:00:00.000Z',
         });
@@ -75,6 +76,7 @@ describe('model/user', () => {
             role: 'member',
             passwordHash: 'hashed',
             createdAt: undefined,
+            emailVerifiedAt: null,
             emailPreferences: {
                 eventUpdates: true,
                 adminPendingRequests: true,
@@ -108,6 +110,7 @@ describe('model/user', () => {
             email: 'ada@example.com',
             role: 'admin',
             password_hash: 'hashed',
+            email_verified_at: null,
             email_event_updates_enabled: true,
             email_admin_pending_requests_enabled: false,
             created_at: 'mysql:2026-04-02T12:00:00.000Z',
@@ -135,6 +138,7 @@ describe('model/user', () => {
             email: 'grace@example.com',
             role: 'admin',
             password_hash: 'ready-hash',
+            email_verified_at: null,
             email_event_updates_enabled: true,
             email_admin_pending_requests_enabled: true,
             created_at: expect.stringMatching(/^mysql:/),
@@ -156,6 +160,7 @@ describe('model/user', () => {
             email: 'linus@example.com',
             role: 'member',
             password_hash: 'stored-hash',
+            email_verified_at: null,
             email_event_updates_enabled: false,
             email_admin_pending_requests_enabled: true,
             created_at: expect.stringMatching(/^mysql:/),
@@ -390,5 +395,37 @@ describe('model/user', () => {
 
         expect(calls).toEqual([{ id: 'user-2', role: 'admin' }]);
         expect(updated.role).toBe('admin');
+    });
+
+    test('normalizeEmailVerifiedAt maps timestamps to ISO strings and missing values to null', () => {
+        expect(User.normalizeEmailVerifiedAt(null)).toBeNull();
+        expect(User.normalizeEmailVerifiedAt('')).toBeNull();
+        expect(User.normalizeEmailVerifiedAt('not-a-date')).toBeNull();
+        expect(User.normalizeEmailVerifiedAt('2026-04-02T12:00:00.000Z')).toBe('2026-04-02T12:00:00.000Z');
+        expect(User.isEmailVerified(buildUser())).toBe(true);
+        expect(User.isEmailVerified(buildUser({ emailVerifiedAt: null }))).toBe(false);
+        expect(User.isEmailVerified(null)).toBe(false);
+    });
+
+    test('markEmailVerified stamps the verification date and reloads the entity', async () => {
+        const updateCalls = [];
+        trackReplacement(restores, User, 'driver', {
+            toDateTime(value) {
+                return `mysql:${value}`;
+            },
+            async update(table, payload, id) {
+                updateCalls.push({ table, payload, id });
+            },
+        });
+        trackReplacement(restores, User, 'get', async id => buildUser({ id }));
+
+        const updated = await User.markEmailVerified('user-1');
+
+        expect(updateCalls).toHaveLength(1);
+        expect(updateCalls[0].table).toBe('users');
+        expect(updateCalls[0].id).toBe('user-1');
+        expect(updateCalls[0].payload.email_verified_at).toMatch(/^mysql:/);
+        expect(updated.id).toBe('user-1');
+        await expect(User.markEmailVerified('')).resolves.toBeNull();
     });
 });

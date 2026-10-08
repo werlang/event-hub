@@ -1,0 +1,11 @@
+{
+    "subject": "Confirme seu e-mail na AgendaCharq",
+    "brandName": "AgendaCharq",
+    "eyebrowText": "Confirmação de conta",
+    "emailTitle": "Confirme seu e-mail",
+    "greetingWithName": "Olá {{name}},",
+    "introText": "Recebemos seu cadastro na AgendaCharq. Para ativar sua conta, confirme que este e-mail é seu.",
+    "reviewText": "Use o botão abaixo para confirmar sua conta. Este link expira em 24 horas. Se você não criou essa conta, ignore esta mensagem.",
+    "buttonText": "Confirmar minha conta",
+    "footerText": "Mensagem automática da AgendaCharq."
+}

@@ -9,6 +9,7 @@ export function buildUser(overrides = {}) {
         name: 'Ada Lovelace',
         email: 'ada@example.com',
         role: 'member',
+        emailVerifiedAt: '2026-04-02T12:00:00.000Z',
         emailPreferences: {
             eventUpdates: true,
             adminPendingRequests: true,

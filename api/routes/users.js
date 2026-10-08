@@ -24,6 +24,7 @@ function publicUser(user) {
         name: user.name,
         email: user.email,
         role: user.role,
+        emailVerifiedAt: user.emailVerifiedAt ?? user.email_verified_at ?? null,
         emailPreferences: User.normalizeEmailPreferences(user?.emailPreferences || user),
     };
 }
@@ -35,6 +36,10 @@ async function loadAuthenticatedUser(userId) {
     const storedUser = await User.findById(userId);
     if (!storedUser) {
         throw new HttpError(401, 'Sessão expirada.');
+    }
+
+    if (!User.isEmailVerified(storedUser)) {
+        throw new HttpError(403, 'Confirme seu e-mail para acessar sua conta.');
     }
 
     return storedUser;
