@@ -110,6 +110,34 @@ describe('routes/auth', () => {
         expect(unexpectedNext.mock.calls[0][0].message).toBe('Não foi possível criar a conta.');
     });
 
+    test('register silently discards honeypot submissions without creating accounts', async () => {
+        const createCalls = [];
+        const emailCalls = [];
+        trackReplacement(restores, User, 'findByEmail', async () => {
+            throw new Error('lookup must not run for spam');
+        });
+        trackReplacement(restores, User, 'create', async payload => {
+            createCalls.push(payload);
+            return buildUser(payload);
+        });
+        trackReplacement(restores, EmailVerificationEmailManager.prototype, 'sendVerificationEmail', async (user, token) => {
+            emailCalls.push({ user, token });
+            return { messageId: 'msg:verification' };
+        });
+
+        const res = createResponseDouble();
+        const next = jest.fn();
+        await runRouteHandlers(registerHandlers, createRequest({
+            body: { name: 'Bot', email: 'bot@example.com', password: 'secret123', website: 'https://spam.example' },
+        }), res, next);
+
+        expect(next).not.toHaveBeenCalled();
+        expect(res.statusCode).toBe(201);
+        expect(res.body.message).toBe('Cadastro recebido. Verifique seu e-mail para confirmar a conta.');
+        expect(createCalls).toEqual([]);
+        expect(emailCalls).toEqual([]);
+    });
+
     test('verify-email confirms pending accounts and rejects invalid links', async () => {
         trackReplacement(restores, EmailVerificationToken, 'findUsableByToken', async token => (token === 'valid-token'
             ? { id: 'token-1', userId: 'user-1' }

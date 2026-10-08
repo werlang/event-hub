@@ -26,6 +26,31 @@ function publicUser(user) {
 }
 
 /**
+ * Validates the public registration payload.
+ * A filled `website` field means an automated bot hit the hidden honeypot:
+ * the request is accepted silently without creating an account.
+ */
+function parseRegisterPayload(payload = {}) {
+    const website = typeof payload.website === 'string'
+        ? payload.website.trim()
+        : '';
+
+    if (website) {
+        return { isSpam: true };
+    }
+
+    const name = typeof payload.name === 'string' ? payload.name.trim() : '';
+    const email = typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '';
+    const password = typeof payload.password === 'string' ? payload.password : '';
+
+    if (!name || !email || !password) {
+        throw new HttpError(400, 'Nome, e-mail e senha são obrigatórios.');
+    }
+
+    return { name, email, password, isSpam: false };
+}
+
+/**
  * Validates the account verification payload carrying a one-time token.
  */
 function parseVerificationPayload(payload = {}) {
@@ -188,10 +213,13 @@ async function sendVerificationEmail(user) {
  */
 router.post('/register', async (req, res, next) => {
     try {
-        const { name, email, password } = req.body || {};
+        const { name, email, password, isSpam } = parseRegisterPayload(req.body);
 
-        if (!name || !email || !password) {
-            throw new HttpError(400, 'Nome, e-mail e senha são obrigatórios.');
+        if (isSpam) {
+            return sendCreated(res, {
+                data: { verificationRequired: true },
+                message: 'Cadastro recebido. Verifique seu e-mail para confirmar a conta.',
+            });
         }
 
         const existing = await User.findByEmail(email);
