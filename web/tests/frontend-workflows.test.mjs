@@ -1560,6 +1560,7 @@ test('register workflow validates fields and asks for e-mail confirmation instea
                 name: 'Novo Usuario',
                 email: 'novo@ifsul.edu.br',
                 password: 'abc123',
+                website: '',
             },
         },
     });

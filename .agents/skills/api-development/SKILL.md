@@ -109,6 +109,7 @@ Error middleware (`api/middleware/error.js`) derives `type` from HTTP status nam
 `POST /auth/register`:
 - requires `name`, `email`, `password`
 - rejects duplicate email
+- silently discards honeypot submissions with a filled `website` field (same 201 message, no account, no e-mail)
 - creates a pending account (`email_verified_at` null) and sends the confirmation e-mail
 - returns no session token; the owner confirms through `POST /auth/verify-email`
 

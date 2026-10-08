@@ -233,6 +233,7 @@ async function submitRegister({ form, values, showLoginView = null }) {
         name,
         email,
         password,
+        website: String(values.website || '').trim(),
     });
 
     if (!response.ok) {
