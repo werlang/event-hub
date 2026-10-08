@@ -22,8 +22,8 @@ export class User extends Model {
     static table = 'users';
     static EMAIL_PREFERENCE_KEYS = EMAIL_PREFERENCE_KEYS;
     static EMAIL_PREFERENCE_COLUMNS = EMAIL_PREFERENCE_COLUMNS;
-    static view = ['id', 'name', 'email', 'role', 'password_hash', 'created_at', ...Object.values(EMAIL_PREFERENCE_COLUMNS)];
-    static SAFE_VIEW = ['id', 'name', 'email', 'role', 'created_at', ...Object.values(EMAIL_PREFERENCE_COLUMNS)];
+    static view = ['id', 'name', 'email', 'role', 'password_hash', 'email_verified_at', 'created_at', ...Object.values(EMAIL_PREFERENCE_COLUMNS)];
+    static SAFE_VIEW = ['id', 'name', 'email', 'role', 'email_verified_at', 'created_at', ...Object.values(EMAIL_PREFERENCE_COLUMNS)];
     static BCRYPT_ROUNDS = 12;
     static ALLOWED_ROLES = ['admin', 'member'];
 
@@ -32,13 +32,14 @@ export class User extends Model {
     /**
      * Creates a user entity with normalized credentials and role data.
      */
-    constructor({ id, name, email, role, password, passwordHash, emailPreferences } = {}) {
+    constructor({ id, name, email, role, password, passwordHash, emailPreferences, emailVerifiedAt } = {}) {
         super();
         this.id = id || crypto.randomUUID();
         this.name = User.normalizeName(name);
         this.email = User.normalizeEmail(email);
         this.role = User.normalizeRole(role);
         this.emailPreferences = User.normalizeEmailPreferences(emailPreferences);
+        this.emailVerifiedAt = User.normalizeEmailVerifiedAt(emailVerifiedAt);
         this.#passwordHash = passwordHash || User.hashPassword(password.toString().trim());
     }
 
@@ -54,6 +55,26 @@ export class User extends Model {
      */
     static normalizeEmail(email) {
         return typeof email === 'string' ? email.trim().toLowerCase() : '';
+    }
+
+    /**
+     * Normalizes an e-mail verification timestamp into an ISO string or null.
+     * Missing values mean the account is still pending confirmation.
+     */
+    static normalizeEmailVerifiedAt(value) {
+        if (!value) {
+            return null;
+        }
+
+        const date = value instanceof Date ? value : new Date(value);
+        return Number.isNaN(date.getTime()) ? null : date.toISOString();
+    }
+
+    /**
+     * Reports whether one user snapshot already confirmed its e-mail address.
+     */
+    static isEmailVerified(user) {
+        return Boolean(user?.emailVerifiedAt || user?.email_verified_at);
     }
 
     /**
@@ -188,6 +209,7 @@ export class User extends Model {
             email: this.email,
             role: this.role,
             emailPreferences: this.emailPreferences,
+            emailVerifiedAt: this.emailVerifiedAt,
             passwordHash: this.#passwordHash,
         };
     }
@@ -205,6 +227,7 @@ export class User extends Model {
             email: row.email,
             role: User.normalizeRole(row.role),
             emailPreferences: User.normalizeEmailPreferences(row.emailPreferences || row),
+            emailVerifiedAt: User.normalizeEmailVerifiedAt(row.emailVerifiedAt ?? row.email_verified_at),
             passwordHash: row.passwordHash || row.password_hash,
             createdAt: createdAtRaw ? new Date(createdAtRaw).toISOString() : undefined,
         };
@@ -228,6 +251,7 @@ export class User extends Model {
             email: this.normalizeEmail(json.email),
             role: User.normalizeRole(json.role),
             password_hash: json.passwordHash,
+            email_verified_at: json.emailVerifiedAt ? this.driver.toDateTime(json.emailVerifiedAt) : null,
             ...this.serializeEmailPreferences(json.emailPreferences),
             created_at: this.driver.toDateTime(payload.createdAt || Date.now()),
         };
@@ -363,6 +387,21 @@ export class User extends Model {
 
         await this.driver.update(this.table, {
             role: this.normalizeRole(role),
+        }, id);
+
+        return this.get(id);
+    }
+
+    /**
+     * Marks a pending account as e-mail verified and returns the refreshed entity.
+     */
+    static async markEmailVerified(id) {
+        if (!id) {
+            return null;
+        }
+
+        await this.driver.update(this.table, {
+            email_verified_at: this.driver.toDateTime(Date.now()),
         }, id);
 
         return this.get(id);

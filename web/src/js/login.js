@@ -15,6 +15,7 @@ const LOGIN_TAB = 'login';
 const REGISTER_TAB = 'register';
 const RESET_REQUEST_VIEW = 'reset-request';
 const RESET_PASSWORD_VIEW = 'reset-password';
+const VERIFY_EMAIL_VIEW = 'verify-email';
 const AUTH_TOAST_GROUP = 'auth-status';
 const AUTH_REDIRECT_TOAST_GROUP = 'auth-redirect';
 const VISIBILITY_STATE_KEY = 'visibility';
@@ -31,6 +32,7 @@ function createElements() {
         passwordResetRequestForm: document.querySelector('#password-reset-request-form'),
         passwordResetForm: document.querySelector('#password-reset-form'),
         passwordResetTokenInput: document.querySelector('#password-reset-token'),
+        resendVerificationButton: document.querySelector('#resend-verification-link'),
         forgotPasswordButton: document.querySelector('#forgot-password-link'),
         authViewButtons: Array.from(document.querySelectorAll('[data-auth-view]')),
     };
@@ -48,6 +50,18 @@ function readInitialAuthTab() {
  */
 function readResetToken() {
     const templateToken = TemplateVar.get('resetToken');
+    if (typeof templateToken === 'string' && templateToken.trim()) {
+        return templateToken.trim();
+    }
+
+    return new URLSearchParams(window.location.search).get('token') || '';
+}
+
+/**
+ * Reads the one-time verification token supplied by the verify-email route.
+ */
+function readVerificationToken() {
+    const templateToken = TemplateVar.get('verificationToken');
     if (typeof templateToken === 'string' && templateToken.trim()) {
         return templateToken.trim();
     }
@@ -143,7 +157,8 @@ function setFormVisible(form, isVisible) {
 function showAuthView(view, { elements, forms, authTabs }) {
     const isResetRequest = view === RESET_REQUEST_VIEW;
     const isResetPassword = view === RESET_PASSWORD_VIEW;
-    const isAuthTabsView = !isResetRequest && !isResetPassword;
+    const isVerifyEmail = view === VERIFY_EMAIL_VIEW;
+    const isAuthTabsView = !isResetRequest && !isResetPassword && !isVerifyEmail;
 
     if (elements.tabsContainer) {
         elements.tabsContainer.hidden = !isAuthTabsView;
@@ -193,9 +208,9 @@ async function submitLogin({ form, values }) {
 }
 
 /**
- * Submits the register form and starts the new session when successful.
+ * Submits the register form and asks the owner to confirm the new account by e-mail.
  */
-async function submitRegister({ form, values }) {
+async function submitRegister({ form, values, showLoginView = null }) {
     const name = String(values.name || '').trim();
     const email = String(values.email || '').trim();
     const password = String(values.password || '');
@@ -225,18 +240,55 @@ async function submitRegister({ form, values }) {
         return;
     }
 
-    const token = response.data?.token;
+    form.reset();
+    showAuthToast(response.message || 'Cadastro recebido. Verifique seu e-mail para confirmar a conta.', 'success');
+    showLoginView?.();
+}
+
+/**
+ * Consumes a one-time verification token and reports whether the account is active.
+ */
+async function submitEmailVerification({ showLoginView = null } = {}) {
+    const token = readVerificationToken();
+
     if (!token) {
-        showAuthToast('Resposta de autenticação inválida.');
+        showAuthToast('Link de confirmação inválido ou expirado.');
+        showLoginView?.();
         return;
     }
 
-    authApi.storeToken(token);
-    Toast.flash('Conta criada com sucesso. Redirecionando...', {
-        tone: 'success',
-        group: AUTH_REDIRECT_TOAST_GROUP,
-    });
-    window.location.assign(readRedirectTarget());
+    clearAuthToasts();
+
+    const response = await authApi.verifyEmail(token);
+
+    window.history?.replaceState?.(null, '', '/login');
+    if (!response.ok) {
+        showAuthToast(response.message || 'Não foi possível confirmar a conta.');
+        showLoginView?.();
+        return;
+    }
+
+    showAuthToast(response.message || 'E-mail confirmado. Você já pode entrar.', 'success');
+    showLoginView?.();
+}
+
+/**
+ * Resends the confirmation link for the e-mail typed in the login form.
+ */
+async function submitVerificationResend({ form, values }) {
+    const email = String(values.email || '').trim();
+
+    if (!email) {
+        showAuthToast('Informe o e-mail da conta para reenviar a confirmação.');
+        form.getField('email')?.focus();
+        return;
+    }
+
+    clearAuthToasts();
+
+    const response = await authApi.resendVerification(email);
+
+    showAuthToast(response.message || 'Se o e-mail estiver pendente de confirmação, enviaremos um novo link.', 'success');
 }
 
 /**
@@ -383,6 +435,7 @@ function initAuthTabs() {
         await submitRegister({
             form,
             values,
+            showLoginView,
         });
     });
 
@@ -402,8 +455,16 @@ function initAuthTabs() {
         });
     });
 
+    elements.resendVerificationButton?.addEventListener('click', async () => {
+        await submitVerificationResend({ form: loginForm, values: loginForm.readData() });
+    });
+
     const resetToken = readResetToken();
-    if (resetToken) {
+    const verificationToken = readVerificationToken();
+    if (verificationToken) {
+        showAuthView(VERIFY_EMAIL_VIEW, { elements, forms, authTabs });
+        submitEmailVerification({ showLoginView });
+    } else if (resetToken) {
         elements.passwordResetTokenInput.value = resetToken;
         showAuthView(RESET_PASSWORD_VIEW, { elements, forms, authTabs });
     } else {

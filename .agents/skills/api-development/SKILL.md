@@ -18,6 +18,8 @@ Base app: `api/app.js`
 Routes:
 
 - `POST /auth/register`
+- `POST /auth/verify-email`
+- `POST /auth/verify-email/resend`
 - `POST /auth/login`
 - `GET /auth/me` (requires `Authorization: Bearer <token>`)
 - `PUT /auth/me` (requires `Authorization: Bearer <token>`)
@@ -107,10 +109,21 @@ Error middleware (`api/middleware/error.js`) derives `type` from HTTP status nam
 `POST /auth/register`:
 - requires `name`, `email`, `password`
 - rejects duplicate email
+- creates a pending account (`email_verified_at` null) and sends the confirmation e-mail
+- returns no session token; the owner confirms through `POST /auth/verify-email`
+
+`POST /auth/verify-email`:
+- requires a one-time `token` (24-hour expiry)
+- marks the account verified so login is allowed
+
+`POST /auth/verify-email/resend`:
+- requires `email`
+- returns a generic accepted response without disclosing account eligibility
 
 `POST /auth/login`:
 - requires `email`, `password`
 - validates credentials
+- rejects pending accounts with `403` until the e-mail is confirmed
 
 `PUT /auth/me`:
 - requires `name`, `email`

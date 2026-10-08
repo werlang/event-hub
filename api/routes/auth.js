@@ -1,6 +1,8 @@
 import express from 'express';
 import { sendWeeklyDigest } from '../background/weekly-digest-task.js';
+import { EmailVerificationEmailManager } from '../helpers/email-verification-email-manager.js';
 import { User } from '../model/user.js';
+import { EmailVerificationToken } from '../model/email-verification-token.js';
 import { signToken } from '../helpers/token.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { requireAdminUser } from '../middleware/authorization.js';
@@ -18,8 +20,39 @@ function publicUser(user) {
         name: user.name,
         email: user.email,
         role: user.role,
+        emailVerifiedAt: user.emailVerifiedAt ?? user.email_verified_at ?? null,
         emailPreferences: User.normalizeEmailPreferences(user?.emailPreferences || user),
     };
+}
+
+/**
+ * Validates the account verification payload carrying a one-time token.
+ */
+function parseVerificationPayload(payload = {}) {
+    const token = typeof payload.token === 'string'
+        ? payload.token.trim()
+        : '';
+
+    if (!token) {
+        throw new HttpError(400, 'Informe o link de confirmação.');
+    }
+
+    return { token };
+}
+
+/**
+ * Validates the verification resend payload carrying the account e-mail.
+ */
+function parseVerificationResendPayload(payload = {}) {
+    const email = typeof payload.email === 'string'
+        ? payload.email.trim().toLowerCase()
+        : '';
+
+    if (!email) {
+        throw new HttpError(400, 'Informe o e-mail da conta.');
+    }
+
+    return { email };
 }
 
 /**
@@ -128,11 +161,30 @@ async function loadAuthenticatedUser(userId) {
         throw new HttpError(401, 'Sessão expirada.');
     }
 
+    if (!User.isEmailVerified(storedUser)) {
+        throw new HttpError(403, 'Confirme seu e-mail para acessar sua conta.');
+    }
+
     return storedUser;
 }
 
 /**
- * Handles account creation and returns the initial session token.
+ * Issues a fresh confirmation token and sends the verification e-mail.
+ * Failures are logged without breaking registration so the link can be resent.
+ */
+async function sendVerificationEmail(user) {
+    try {
+        await EmailVerificationToken.invalidateActiveForUser(user.id);
+        const confirmation = await EmailVerificationToken.createForUser(user.id);
+        const mailer = new EmailVerificationEmailManager();
+        await mailer.sendVerificationEmail(user, confirmation.token);
+    } catch (error) {
+        console.error('Failed to send e-mail verification message:', error);
+    }
+}
+
+/**
+ * Handles account creation as a pending account and sends the confirmation e-mail.
  */
 router.post('/register', async (req, res, next) => {
     try {
@@ -151,14 +203,69 @@ router.post('/register', async (req, res, next) => {
             name,
             email,
             password,
+            emailVerifiedAt: null,
         });
 
-        const token = createSessionToken(user);
+        await sendVerificationEmail(user);
+
         return sendCreated(res, {
-            data: { user: publicUser(user), token },
+            data: { user: publicUser(user), verificationRequired: true },
+            message: 'Cadastro recebido. Verifique seu e-mail para confirmar a conta.',
         });
     } catch (err) {
         return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível criar a conta.', err));
+    }
+});
+
+/**
+ * Confirms a pending account through a one-time e-mail token.
+ */
+router.post('/verify-email', async (req, res, next) => {
+    try {
+        const { token } = parseVerificationPayload(req.body);
+        const confirmation = await EmailVerificationToken.findUsableByToken(token);
+
+        if (!confirmation) {
+            throw new HttpError(400, 'Link de confirmação inválido ou expirado.');
+        }
+
+        const user = await User.findById(confirmation.userId);
+        if (!user) {
+            throw new HttpError(400, 'Link de confirmação inválido ou expirado.');
+        }
+
+        const verifiedUser = User.isEmailVerified(user)
+            ? user
+            : await User.markEmailVerified(user.id);
+        await EmailVerificationToken.invalidateActiveForUser(user.id);
+
+        return sendSuccess(res, {
+            data: { user: publicUser(verifiedUser) },
+            message: 'E-mail confirmado. Você já pode entrar.',
+        });
+    } catch (err) {
+        return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível confirmar a conta.', err));
+    }
+});
+
+/**
+ * Resends the confirmation link without disclosing whether the account is pending.
+ */
+router.post('/verify-email/resend', async (req, res, next) => {
+    try {
+        const { email } = parseVerificationResendPayload(req.body);
+        const user = await User.findByEmail(email);
+
+        if (user && !User.isEmailVerified(user)) {
+            await sendVerificationEmail(user);
+        }
+
+        return sendSuccess(res, {
+            status: 202,
+            message: 'Se o e-mail estiver pendente de confirmação, enviaremos um novo link.',
+        });
+    } catch (err) {
+        return next(err instanceof HttpError ? err : new HttpError(500, 'Não foi possível reenviar a confirmação.', err));
     }
 });
 
@@ -180,6 +287,10 @@ router.post('/login', async (req, res, next) => {
         const user = new User(stored);
         if (!user.validatePassword(password)) {
             throw new HttpError(401, 'Credenciais inválidas.');
+        }
+
+        if (!User.isEmailVerified(stored)) {
+            throw new HttpError(403, 'Confirme seu e-mail para acessar sua conta.');
         }
 
         const token = createSessionToken(user);

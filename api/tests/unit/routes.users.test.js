@@ -243,6 +243,7 @@ describe('routes/users', () => {
             name: 'Grace Hopper',
             email: 'ada@example.com',
             role: 'member',
+            emailVerifiedAt: '2026-04-02T12:00:00.000Z',
             emailPreferences: {
                 eventUpdates: true,
                 adminPendingRequests: true,
@@ -266,6 +267,15 @@ describe('routes/users', () => {
 
         expect(next.mock.calls[0][0].status).toBe(500);
         expect(next.mock.calls[0][0].message).toBe('Não foi possível carregar os usuários.');
+    });
+
+    test('users rejects pending accounts until the e-mail is confirmed', async () => {
+        trackReplacement(restores, User, 'findById', async id => buildUser({ id, role: 'admin', emailVerifiedAt: null }));
+
+        const next = jest.fn();
+        await runRouteHandlers(usersHandlers, createRequest({ user: { id: 'admin-1', role: 'admin' } }), createResponseDouble(), next);
+
+        expect(next.mock.calls[0][0].status).toBe(403);
     });
 
     test('promote handles the common admin workflows and edge cases', async () => {

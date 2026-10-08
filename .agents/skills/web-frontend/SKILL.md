@@ -12,6 +12,8 @@ Server (`web/app.js`):
 - Express + Mustache view engine
 - `GET /` renders `index.html`
 - `GET /login` renders `login.html`
+- `GET /reset-password` renders `login.html` with a reset token
+- `GET /verify-email` renders `login.html` with a verification token
 - `GET /week` renders `week.html`
 - `GET /dashboard` renders `dashboard.html`
 - static assets served from `web/public/`
@@ -64,7 +66,7 @@ Response handling:
 - Page entries and dashboard modules should call `web/src/js/model/` facades instead of owning endpoint strings directly.
 - Error UI should read `response.message` from normalized API results.
 - The shared browser API client is intentionally limited to `GET`, `POST`, `PUT`, and `DELETE`.
-- Login and register flows should redirect to `/dashboard` through the sanitized redirect helper.
+- Login flow redirects to `/dashboard` through the sanitized redirect helper; register asks for e-mail confirmation and returns to the login tab without starting a session.
 - Dashboard settings flows should align with `GET /auth/me`, `PUT /auth/me`, `PUT /auth/me/preferences`, `PUT /auth/password`, `GET /users`, `PUT /users/password/reset`, and `PUT /users/:id/promote`.
 - Dashboard event and moderation flows should align with `GET /events/mine`, `GET /events/moderation`, `GET /events`, `PUT /events/:id`, `DELETE /events/:id`, and `PUT /events/:id/moderation`.
 
