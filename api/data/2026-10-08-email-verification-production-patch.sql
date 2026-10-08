@@ -2,8 +2,10 @@
 -- New accounts are created with email_verified_at NULL (pending) and can only
 -- log in after confirming the link. Existing accounts already passed the
 -- previous creation boundary and must remain usable after deployment.
+-- NOTE: plain ADD COLUMN (MySQL has no ADD COLUMN IF NOT EXISTS).
+-- One-shot patch: safe to run once on databases created from the old schema.
 ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS email_verified_at DATETIME DEFAULT NULL
+    ADD COLUMN email_verified_at DATETIME DEFAULT NULL
     AFTER password_hash;
 
 UPDATE users
