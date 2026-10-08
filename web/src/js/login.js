@@ -32,7 +32,6 @@ function createElements() {
         passwordResetRequestForm: document.querySelector('#password-reset-request-form'),
         passwordResetForm: document.querySelector('#password-reset-form'),
         passwordResetTokenInput: document.querySelector('#password-reset-token'),
-        resendVerificationButton: document.querySelector('#resend-verification-link'),
         forgotPasswordButton: document.querySelector('#forgot-password-link'),
         authViewButtons: Array.from(document.querySelectorAll('[data-auth-view]')),
     };
@@ -274,25 +273,6 @@ async function submitEmailVerification({ showLoginView = null } = {}) {
 }
 
 /**
- * Resends the confirmation link for the e-mail typed in the login form.
- */
-async function submitVerificationResend({ form, values }) {
-    const email = String(values.email || '').trim();
-
-    if (!email) {
-        showAuthToast('Informe o e-mail da conta para reenviar a confirmação.');
-        form.getField('email')?.focus();
-        return;
-    }
-
-    clearAuthToasts();
-
-    const response = await authApi.resendVerification(email);
-
-    showAuthToast(response.message || 'Se o e-mail estiver pendente de confirmação, enviaremos um novo link.', 'success');
-}
-
-/**
  * Requests a one-time password-reset link for the submitted e-mail.
  */
 async function submitPasswordResetRequest({ form, values, showLoginView = null }) {
@@ -454,10 +434,6 @@ function initAuthTabs() {
             values,
             showLoginView,
         });
-    });
-
-    elements.resendVerificationButton?.addEventListener('click', async () => {
-        await submitVerificationResend({ form: loginForm, values: loginForm.readData() });
     });
 
     const resetToken = readResetToken();

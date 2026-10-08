@@ -46,16 +46,6 @@ export class AuthApi {
     }
 
     /**
-     * Resends the confirmation link without disclosing account eligibility.
-     */
-    resendVerification(email) {
-        return this.#client.request('/auth/verify-email/resend', {
-            method: 'POST',
-            body: { email },
-        });
-    }
-
-    /**
      * Loads the current authenticated profile.
      */
     current(token) {

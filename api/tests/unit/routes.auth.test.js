@@ -138,6 +138,60 @@ describe('routes/auth', () => {
         expect(emailCalls).toEqual([]);
     });
 
+    test('register refreshes pending accounts and resends the confirmation e-mail', async () => {
+        const emailCalls = [];
+        const profileCalls = [];
+        const passwordCalls = [];
+        trackReplacement(restores, User, 'findByEmail', async () => buildUser({ emailVerifiedAt: null }));
+        trackReplacement(restores, User, 'updateProfile', async (id, payload) => {
+            profileCalls.push({ id, payload });
+            return buildUser({ id, ...payload });
+        });
+        trackReplacement(restores, User, 'updatePassword', async (id, password) => {
+            passwordCalls.push({ id, password });
+            return buildUser({ id, emailVerifiedAt: null });
+        });
+        trackReplacement(restores, EmailVerificationToken, 'invalidateActiveForUser', async () => true);
+        trackReplacement(restores, EmailVerificationToken, 'createForUser', async () => ({
+            token: 'raw-verification-token',
+            record: { id: 'token-2', userId: 'user-1' },
+        }));
+        trackReplacement(restores, EmailVerificationEmailManager.prototype, 'sendVerificationEmail', async (user, token) => {
+            emailCalls.push({ user, token });
+            return { messageId: 'msg:verification' };
+        });
+
+        const res = createResponseDouble();
+        const next = jest.fn();
+        await runRouteHandlers(registerHandlers, createRequest({
+            body: { name: 'Ada Updated', email: 'ada@example.com', password: 'new-secret' },
+        }), res, next);
+
+        expect(next).not.toHaveBeenCalled();
+        expect(res.statusCode).toBe(201);
+        expect(res.body.data.user).toEqual({
+            id: 'user-1',
+            name: 'Ada Lovelace',
+            email: 'ada@example.com',
+            role: 'member',
+            emailVerifiedAt: null,
+            emailPreferences: {
+                eventUpdates: true,
+                adminPendingRequests: true,
+            },
+        });
+        expect(res.body.data.verificationRequired).toBe(true);
+        expect(profileCalls).toEqual([{
+            id: 'user-1',
+            payload: { name: 'Ada Updated', email: 'ada@example.com' },
+        }]);
+        expect(passwordCalls).toEqual([{ id: 'user-1', password: 'new-secret' }]);
+        expect(emailCalls).toEqual([{
+            user: expect.objectContaining({ email: 'ada@example.com' }),
+            token: 'raw-verification-token',
+        }]);
+    });
+
     test('verify-email confirms pending accounts and rejects invalid links', async () => {
         trackReplacement(restores, EmailVerificationToken, 'findUsableByToken', async token => (token === 'valid-token'
             ? { id: 'token-1', userId: 'user-1' }

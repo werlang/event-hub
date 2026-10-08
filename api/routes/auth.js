@@ -223,8 +223,19 @@ router.post('/register', async (req, res, next) => {
         }
 
         const existing = await User.findByEmail(email);
-        if (existing) {
+        if (existing && User.isEmailVerified(existing)) {
             throw new HttpError(409, 'Já existe uma conta com este e-mail.');
+        }
+
+        if (existing) {
+            const refreshedProfile = await User.updateProfile(existing.id, { name, email });
+            const refreshedUser = await User.updatePassword(refreshedProfile.id, password);
+            await sendVerificationEmail(refreshedUser);
+
+            return sendCreated(res, {
+                data: { user: publicUser(refreshedUser), verificationRequired: true },
+                message: 'Cadastro recebido. Verifique seu e-mail para confirmar a conta.',
+            });
         }
 
         const user = await User.create({
