@@ -1,4 +1,5 @@
 import { Email } from './email.js';
+import { buildUrl } from './urls.js';
 import { EmailTemplateManager } from './email-template-manager.js';
 import { User } from '../model/user.js';
 
@@ -101,7 +102,7 @@ export class EventUpdateNotificationManager {
         }),
         templateManager = new EmailTemplateManager(),
         logger = console,
-        webBaseUrl = process.env.WEB_URL || '',
+        webBaseUrl = buildUrl(process.env.WEB_URL, process.env.WEB_PORT) || '',
     } = {}) {
         this.#emailHelper = emailHelper;
         this.#templateManager = templateManager;

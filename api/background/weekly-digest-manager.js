@@ -1,4 +1,5 @@
 import { Email } from '../helpers/email.js';
+import { buildUrl } from '../helpers/urls.js';
 import { EmailTemplateManager } from '../helpers/email-template-manager.js';
 import { getCurrentWeekRangeLocal } from '../helpers/week-range.js';
 import { Event } from '../model/event.js';
@@ -246,7 +247,7 @@ export class WeeklyDigestManager {
         eventModel = Event,
         userModel = User,
         logger = console,
-        webBaseUrl = process.env.WEB_URL || '',
+        webBaseUrl = buildUrl(process.env.WEB_URL, process.env.WEB_PORT) || '',
         mailList = null,
         singleEmail = false,
         timeZone = null,

@@ -1,6 +1,7 @@
 import express from 'express';
 import mustacheExpress from 'mustache-express';
 import { renderMiddleware } from './middleware/render.js';
+import { buildUrl } from './middleware/urls.js';
 import { getCurrentWeekRangeLocal } from './src/js/helpers/week-range.js';
 
 const app = express();
@@ -33,9 +34,11 @@ app.set('views', new URL('./src/html/', import.meta.url).pathname);
 const SITE_NAME = 'AgendaCharq';
 
 // render middleware, setting some variables to be used in all views
+const apiUrl = buildUrl(process.env.API_URL, process.env.API_PORT);
+const webUrl = buildUrl(process.env.WEB_URL, process.env.WEB_PORT);
 app.use(renderMiddleware({
-    apiUrl: process.env.API_URL,
-    webUrl: process.env.WEB_URL,
+    apiUrl,
+    webUrl,
     year: new Date().getFullYear(),
     metaTitle: 'Agenda Acadêmica – IFSul Campus Charqueadas',
     metaDescription: 'Acompanhe os eventos acadêmicos do Campus Charqueadas do Instituto Federal Sul-Rio-Grandense.',

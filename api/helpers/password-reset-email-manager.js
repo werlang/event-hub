@@ -1,4 +1,5 @@
 import { Email } from './email.js';
+import { buildUrl } from './urls.js';
 import { EmailTemplateManager } from './email-template-manager.js';
 
 const PASSWORD_RESET_TEMPLATE_KEY = 'password-reset-email';
@@ -41,7 +42,7 @@ export class PasswordResetEmailManager {
             testing: process.env.EMAIL_TESTING === 'true',
         }),
         templateManager = new EmailTemplateManager(),
-        webBaseUrl = process.env.WEB_URL || '',
+        webBaseUrl = buildUrl(process.env.WEB_URL, process.env.WEB_PORT) || '',
     } = {}) {
         this.#emailHelper = emailHelper;
         this.#templateManager = templateManager;
