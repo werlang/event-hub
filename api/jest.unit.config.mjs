@@ -7,6 +7,7 @@ const config = {
         'middleware/**/*.js',
         'model/**/*.js',
         'routes/**/*.js',
+        'scripts/**/*.js',
     ],
     coverageDirectory: 'tests/coverage',
     coverageProvider: 'v8',
