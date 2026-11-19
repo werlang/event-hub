@@ -1611,7 +1611,7 @@ test('e-mail verification workflow confirms valid tokens and rejects missing one
     assert.equal(missingViews.length, 1);
 });
 
-test('opening a password reset link shows the new password form without verifying the account email', async () => {
+test('a password reset link opens the new password form and submits the reset token', async () => {
     const dom = createDom(await readFile(LOGIN_TEMPLATE_PATH, 'utf8'), 'http://localhost/reset-password?token=reset-token');
     const restoreDom = installDomGlobals(dom);
 
@@ -1619,15 +1619,27 @@ test('opening a password reset link shows the new password form without verifyin
         const scenario = await loadLoginScenario({
             dom,
             templateVars: { resetToken: 'reset-token' },
-            requestApiImpl: () => ({ ok: false }),
+            requestApiImpl: (route) => ({ ok: route === '/users/password-reset' }),
         });
 
         scenario.hooks.initAuthTabs();
         await flushMicrotasks();
 
         assert.deepEqual(scenario.recorded.requests, []);
-        assert.equal(dom.window.document.querySelector('#password-reset-form').hidden, false);
-        assert.equal(dom.window.document.querySelector('#password-reset-token').value, 'reset-token');
+        const form = dom.window.document.querySelector('#password-reset-form');
+        assert.equal(form.hidden, false);
+        assert.equal(form.elements.token.value, 'reset-token');
+
+        form.elements.newPassword.value = 'nova-senha';
+        form.elements.confirmPassword.value = 'nova-senha';
+        form.querySelector('button[type="submit"]').click();
+        await flushMicrotasks();
+
+        assert.deepEqual(scenario.recorded.requests, [{
+            path: '/users/password-reset',
+            options: { method: 'PUT', body: { token: 'reset-token', newPassword: 'nova-senha' } },
+        }]);
+        assert.equal(dom.window.location.pathname, '/login');
     } finally {
         restoreDom();
         dom.window.close();
