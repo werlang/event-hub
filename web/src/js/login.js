@@ -49,11 +49,7 @@ function readInitialAuthTab() {
  */
 function readResetToken() {
     const templateToken = TemplateVar.get('resetToken');
-    if (typeof templateToken === 'string' && templateToken.trim()) {
-        return templateToken.trim();
-    }
-
-    return new URLSearchParams(window.location.search).get('token') || '';
+    return typeof templateToken === 'string' ? templateToken.trim() : '';
 }
 
 /**
@@ -61,11 +57,7 @@ function readResetToken() {
  */
 function readVerificationToken() {
     const templateToken = TemplateVar.get('verificationToken');
-    if (typeof templateToken === 'string' && templateToken.trim()) {
-        return templateToken.trim();
-    }
-
-    return new URLSearchParams(window.location.search).get('token') || '';
+    return typeof templateToken === 'string' ? templateToken.trim() : '';
 }
 
 /**

@@ -95,6 +95,8 @@ Models should call these methods instead of constructing SQL fragments.
 
 Browser code reads these values through `TemplateVar`.
 
+The shared login bundle uses `resetToken` from `/reset-password` to open the new-password form and `verificationToken` from `/verify-email` to confirm the account. Each route supplies its own template variable from the link's `token` query parameter.
+
 ## Frontend API Calls
 
 Frontend endpoint paths belong in `web/src/js/model/`.

@@ -6,6 +6,7 @@ import vm from 'node:vm';
 
 import { JSDOM } from 'jsdom';
 
+import { AuthTabs } from '../src/js/components/auth-tabs.js';
 import { BaseComponent } from '../src/js/components/base-component.js';
 import { Button } from '../src/js/components/button.js';
 import { Form } from '../src/js/components/form.js';
@@ -39,6 +40,7 @@ import { getCurrentWeekRangeLocal, normalizeInclusiveEndDateTime } from '../src/
 const WEB_ROOT = path.resolve(import.meta.dirname, '..');
 const HOME_ENTRY_PATH = path.join(WEB_ROOT, 'src/js/index.js');
 const LOGIN_ENTRY_PATH = path.join(WEB_ROOT, 'src/js/login.js');
+const LOGIN_TEMPLATE_PATH = path.join(WEB_ROOT, 'src/html/login.html');
 const WEEK_ENTRY_PATH = path.join(WEB_ROOT, 'src/js/week.js');
 const DASHBOARD_ENTRY_PATH = path.join(WEB_ROOT, 'src/js/dashboard.js');
 const DASHBOARD_SETTINGS_PANELS_PATH = path.join(WEB_ROOT, 'src/js/dashboard/settings-panels.js');
@@ -208,7 +210,7 @@ function transformLoginEntrypointSource(source) {
     return stripImports(source)
     .replace('\nnew Header();\n', '\n')
         .replace(/\ninitAuthTabs\(\);\s*$/, '\n')
-        .concat('\nglobalThis.__workflowLogin = { readRedirectTarget, submitLogin, submitRegister, submitEmailVerification, submitPasswordResetRequest, submitPasswordResetConfirmation };\n');
+        .concat('\nglobalThis.__workflowLogin = { initAuthTabs, readRedirectTarget, submitLogin, submitRegister, submitEmailVerification, submitPasswordResetRequest, submitPasswordResetConfirmation };\n');
 }
 
 /**
@@ -762,7 +764,7 @@ async function loadHomeScenario({ initialFilters, responseFactory }) {
 /**
  * Loads the login entry helpers in isolation.
  */
-async function loadLoginScenario({ requestApiImpl, templateRedirect = '', search = '' }) {
+async function loadLoginScenario({ requestApiImpl, templateRedirect = '', templateVars = {}, search = '', dom }) {
     const recorded = {
         requests: [],
         storedToken: null,
@@ -775,7 +777,7 @@ async function loadLoginScenario({ requestApiImpl, templateRedirect = '', search
         transform: transformLoginEntrypointSource,
         hookName: '__workflowLogin',
         context: {
-            window: {
+            window: dom?.window ?? {
                 location: {
                     search,
                     assign(target) {
@@ -783,9 +785,13 @@ async function loadLoginScenario({ requestApiImpl, templateRedirect = '', search
                     },
                 },
             },
+            document: dom?.window.document,
+            AuthTabs,
+            Form,
+            getCurrentSession: async () => ({ isAuthenticated: false }),
             TemplateVar: {
                 get(key) {
-                    return key === 'redirect' ? templateRedirect : '';
+                    return key === 'redirect' ? templateRedirect : templateVars[key];
                 },
             },
             Toast,
@@ -1570,7 +1576,7 @@ test('register workflow validates fields and asks for e-mail confirmation instea
 
 test('e-mail verification workflow confirms valid tokens and rejects missing ones', async () => {
     const confirmedScenario = await loadLoginScenario({
-        search: '?token=valid-token',
+        templateVars: { verificationToken: 'valid-token' },
         requestApiImpl(path, options) {
             if (path === '/auth/verify-email' && options?.body?.token === 'valid-token') {
                 return { ok: true, message: 'E-mail confirmado. Você já pode entrar.', data: {} };
@@ -1603,6 +1609,29 @@ test('e-mail verification workflow confirms valid tokens and rejects missing one
     assert.equal(missingScenario.recorded.requests.length, 0);
     assert.equal(missingScenario.toastRecorded.shows.at(-1)?.text, 'Link de confirmação inválido ou expirado.');
     assert.equal(missingViews.length, 1);
+});
+
+test('opening a password reset link shows the new password form without verifying the account email', async () => {
+    const dom = createDom(await readFile(LOGIN_TEMPLATE_PATH, 'utf8'), 'http://localhost/reset-password?token=reset-token');
+    const restoreDom = installDomGlobals(dom);
+
+    try {
+        const scenario = await loadLoginScenario({
+            dom,
+            templateVars: { resetToken: 'reset-token' },
+            requestApiImpl: () => ({ ok: false }),
+        });
+
+        scenario.hooks.initAuthTabs();
+        await flushMicrotasks();
+
+        assert.deepEqual(scenario.recorded.requests, []);
+        assert.equal(dom.window.document.querySelector('#password-reset-form').hidden, false);
+        assert.equal(dom.window.document.querySelector('#password-reset-token').value, 'reset-token');
+    } finally {
+        restoreDom();
+        dom.window.close();
+    }
 });
 
 test('password reset workflow requests a link and consumes reset tokens', async () => {
