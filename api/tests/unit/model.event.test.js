@@ -217,6 +217,30 @@ describe('model/event', () => {
         }]);
     });
 
+    test('list includes organizer names in the free-text search', async () => {
+        trackReplacement(restores, Event, 'find', async () => [
+            buildEvent({ id: 'event-1', organizerName: undefined }),
+            buildEvent({
+                id: 'event-2',
+                title: 'Feira de Artes',
+                description: 'Exposicao aberta a comunidade.',
+                location: 'Patio',
+                category: 'extensao',
+                organizerId: 'user-2',
+                organizerName: undefined,
+            }),
+        ]);
+        trackReplacement(restores, Relation.prototype, 'getMany', async () => [
+            { id: 'user-1', name: 'Ada Lovelace' },
+            { id: 'user-2', name: 'Grace Hopper' },
+        ]);
+
+        const events = await Event.list({ search: 'hopper' });
+
+        expect(events.map(event => event.id)).toEqual(['event-2']);
+        expect(events[0].organizerName).toBe('Grace Hopper');
+    });
+
     test('list supports open-ended date filters and returns all events when no search is present', async () => {
         const driver = {
             toDateTime(value) {

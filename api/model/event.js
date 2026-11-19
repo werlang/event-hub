@@ -439,7 +439,7 @@ export class Event extends Model {
     }
 
     /**
-     * Lists events filtered by period, category, and free-text search.
+     * Lists events filtered by period, category, and free-text search across event content and organizer name.
      */
     static async list(filters = {}) {
         const { search, category, from, to, timezone } = filters;
@@ -473,22 +473,26 @@ export class Event extends Model {
 
         const normalizedCategory = normalizeEventCategoryId(category, { fallback: '' }).toLowerCase();
         const normalizedSearch = search?.toLowerCase();
+        const categoryFilteredEvents = rows.filter(event => (
+            !normalizedCategory
+            || normalizeEventCategoryId(event.category, { fallback: '' }).toLowerCase() === normalizedCategory
+        ));
+        const eventsWithOrganizerNames = await this.#hydrateOrganizerNames(categoryFilteredEvents);
 
-        const filteredEvents = rows.filter(event => {
-            if (normalizedCategory && normalizeEventCategoryId(event.category, { fallback: '' }).toLowerCase() !== normalizedCategory) {
-                return false;
-            }
+        if (!normalizedSearch) {
+            return eventsWithOrganizerNames;
+        }
 
-            if (!normalizedSearch) {
-                return true;
-            }
-
-            return [event.title, event.description, event.location, event.categoryLabel, event.category]
-                .filter(Boolean)
-                .some(value => value.toLowerCase().includes(normalizedSearch));
-        });
-
-            return this.#hydrateOrganizerNames(filteredEvents);
+        return eventsWithOrganizerNames.filter(event => [
+            event.title,
+            event.description,
+            event.location,
+            event.categoryLabel,
+            event.category,
+            event.organizerName,
+        ]
+            .filter(Boolean)
+            .some(value => String(value).toLowerCase().includes(normalizedSearch)));
     }
 
     /**

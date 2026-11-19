@@ -29,7 +29,7 @@ description: Work with domain models for users and events, including password ha
 - `from` / `to` are pushed into the SQL query through the `Mysql` driver's range helpers
 - result rows are fetched ordered by `date` ascending
 - `category`: case-insensitive exact match after normalization
-- `search`: checks combined `title + description + location + category` after rows are normalized
+- `search`: checks combined `title + description + location + category + organizerName` after rows and organizer names are normalized
 
 ## Safe Change Guidelines
 
