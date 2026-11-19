@@ -35,6 +35,12 @@ jobs:
             docker compose build --pull api web
             docker compose run --rm api npm install
             docker compose run --rm web npm install
+            echo "[Deploy] Running pre-migration database backup..."
+            docker compose run --rm api npm run db:backup
+            echo "[Deploy] Pre-migration database backup step completed."
+            echo "[Deploy] Running database migrations..."
+            docker compose run --rm api npm run db:migrate
+            echo "[Deploy] Database migrations completed."
             echo "[Deploy] Restarting application services..."
             docker compose up -d --no-deps --force-recreate api web
             echo "[Deploy] Services restarted successfully."
