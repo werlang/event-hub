@@ -39,7 +39,7 @@ description: Work with domain models for users and events, including password ha
   - model constructor
   - `toJSON()`
   - `serialize()` and `normalize()`
-  - schema columns and SQL names if persistence changes
+  - schema columns (`api/data/schema.sql`) and a new numbered forward-only migration in `api/migrations/` applied via `npm run db:migrate`
   - route validation and docs
 - Keep models extending the shared `Model` base class and let the `Mysql` driver handle query building.
 - When a model needs fields from another table, load them through `api/model/relation.js` and compose the final payload in model code instead of adding direct SQL joins.

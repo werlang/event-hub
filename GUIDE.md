@@ -12,6 +12,7 @@ browser page script -> web frontend models -> API routes -> API models -> Mysql 
 - `api/routes/` owns HTTP route flow and request validation.
 - `api/model/` owns persistence-facing entity behavior.
 - `api/helpers/mysql.js` is the only place that builds SQL.
+- `api/migrations/` owns forward-only versioned schema changes applied through `api/scripts/migrate.js` (`npm run db:migrate`).
 - `web/app.js` owns SSR routes, static files, and render middleware.
 - `web/src/html/` owns Mustache page templates.
 - `web/src/js/model/` owns frontend API endpoint paths.
@@ -70,6 +71,7 @@ Use only `GET`, `POST`, `PUT`, and `DELETE`.
 - Use `api/model/relation.js` for cross-table composition instead of ad hoc joins.
 - Do not expose a public raw-query helper from `Mysql`.
 - Do not add runtime schema migration, `SHOW COLUMNS`, lazy `ALTER TABLE`, or legacy compatibility branches.
+- Pair every schema change to `api/data/schema.sql` with a numbered, forward-only, idempotent migration in `api/migrations/` (`NNN_description.sql`) applied through `npm run db:migrate`.
 - Preserve response envelopes and HTTP status semantics.
 - Keep external side effects, such as e-mail and Google Calendar, resilient and covered with mocks.
 

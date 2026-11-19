@@ -92,6 +92,7 @@ Error middleware (`api/middleware/error.js`) derives `type` from HTTP status nam
 - When API code needs data from another table, resolve it through `api/model/relation.js` or model composition. Do not introduce direct SQL joins in models, routes, or helpers.
 - Treat raw SQL execution as an internal MySQL-driver concern. Do not expose or rely on a public `Mysql.query(...)` style API from application code.
 - Treat checked-in schema files as the source of truth. Do not add runtime schema upgrade or legacy-compatibility code such as `ensureSchema`, request-time `ALTER TABLE`, `SHOW COLUMNS`, or lazy migration guards in production code.
+- Pair every schema change to `api/data/schema.sql` with a numbered, forward-only, idempotent SQL migration under `api/migrations/` (`NNN_description.sql`) applied through `npm run db:migrate`.
 - When route behavior includes e-mail notifications, Google Calendar publishing, or background-task side effects, keep the main HTTP outcome resilient and test the side effect orchestration with mocks instead of making route success depend on external delivery.
 - Preserve the global envelope format for both success and errors.
 - After each API feature or behavior change, update the Jest unit suite in `api/tests/unit` and run `docker compose -f compose.dev.yaml exec api npm run test:unit` before considering the task complete.

@@ -10,6 +10,7 @@ These rules apply to future human and automated changes in this repository.
 - Do not rename `api/routes` or migrate the API Jest suite to another runner without an explicit request.
 - Keep API route handlers explicit about request validation and entity loading.
 - Keep MySQL SQL construction inside `api/helpers/mysql.js`.
+- Keep database schema evolution in `api/migrations/` as numbered forward-only SQL files applied via `api/scripts/migrate.js` (`npm run db:migrate`), and keep `api/data/schema.sql` in sync for fresh volumes.
 - Keep browser endpoint paths inside `web/src/js/model/`.
 - Keep DOM rendering and event wiring inside page modules, dashboard collaborators, or reusable components.
 - Keep page-specific collaborators small; extract only when it clarifies a real responsibility.
@@ -45,6 +46,7 @@ These rules apply to future human and automated changes in this repository.
 ## Validation
 
 - API: `docker compose -f compose.dev.yaml exec api npm run test:unit`
+- Migrations: `docker compose -f compose.dev.yaml exec api npm run db:migrate`
 - Web tests: `docker compose -f compose.dev.yaml exec web npm test`
 - Web build: `docker compose -f compose.dev.yaml exec web npm run build`
 - Compose: `docker compose -f compose.dev.yaml config`

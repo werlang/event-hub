@@ -23,6 +23,7 @@ Open `http://localhost:${WEB_PORT:-80}`. The default API URL is `http://localhos
 Useful service commands:
 
 ```bash
+docker compose -f compose.dev.yaml exec api npm run db:migrate
 docker compose -f compose.dev.yaml exec api npm run test:unit
 docker compose -f compose.dev.yaml exec web npm test
 docker compose -f compose.dev.yaml exec web npm run build
@@ -34,6 +35,8 @@ API:
 
 - `npm test`
 - `npm run test:unit`
+- `npm run db:backup`
+- `npm run db:migrate`
 - `npm run development`
 - `npm run production`
 
@@ -90,7 +93,14 @@ Optional integrations:
 
 ## Data
 
-- Canonical schema: `api/data/schema.sql`
+- Fresh-volume schema snapshot: `api/data/schema.sql`
+- Forward-only versioned migrations: `api/migrations/` (applied via `api/scripts/migrate.js`)
 - Dashboard pagination sample: `api/data/dashboard-pagination-sample.sql`
 
-Application code must not mutate schema at runtime. Update checked-in SQL artifacts for schema changes.
+Application code must not mutate schema at runtime. Every schema change must update `api/data/schema.sql` and add a new numbered forward-only SQL migration under `api/migrations/` (`NNN_description.sql`).
+
+MySQL runs `schema.sql` only when it initializes an empty volume. Existing development and production databases are brought up to date with `npm run db:migrate`, which acquires a MySQL advisory lock, tracks applied versions in `schema_migrations`, and runs pending migrations in numeric order. The production deploy workflow runs `docker compose run --rm api npm run db:backup` and then `docker compose run --rm api npm run db:migrate` before restarting the API. To apply pending migrations to an existing development database, run:
+
+```bash
+docker compose -f compose.dev.yaml exec api npm run db:migrate
+```

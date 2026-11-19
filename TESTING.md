@@ -12,6 +12,7 @@ docker compose -f compose.dev.yaml up -d --build
 ## API
 
 ```bash
+docker compose -f compose.dev.yaml exec api npm run db:migrate
 docker compose -f compose.dev.yaml exec api npm run test:unit
 ```
 
@@ -19,6 +20,7 @@ Service-local equivalent:
 
 ```bash
 cd api
+npm run db:migrate
 npm run test:unit
 ```
 
